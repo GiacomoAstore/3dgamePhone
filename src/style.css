@@ -1,0 +1,232 @@
+/**
+ * Stili di Brumavento - Mobile First & Responsive Overlay
+ * Autore: Pip & Nonna Bussola dev team
+ * Ultima modifica: 2026-11-10 - v0.1.0
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #1a2332;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  touch-action: none; /* Disattiva pinch-zoom e scroll browser per esperienza nativa */
+}
+
+#game-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#webgl-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Permette al touch/click di passare al 3D salvo sugli elementi attivi */
+  z-index: 10;
+}
+
+/* Barra superiore */
+#top-bar {
+  position: absolute;
+  top: env(safe-area-inset-top, 16px);
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.hud-pill {
+  background: rgba(26, 35, 50, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f7ede2;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.badge-fps {
+  font-family: monospace;
+  font-size: 12px;
+  color: #84a98c;
+}
+
+/* Schermate e dialoghi */
+.screen-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+.dialog-card {
+  background: #253342;
+  color: #fdf0d5;
+  padding: 28px 24px;
+  border-radius: 24px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  border: 2px solid #52796f;
+}
+
+.dialog-card h1 {
+  font-size: 32px;
+  letter-spacing: 1px;
+  color: #f4a261;
+  margin-bottom: 4px;
+}
+
+.dialog-card .subtitle {
+  font-size: 15px;
+  color: #cad2c5;
+  margin-bottom: 20px;
+}
+
+.dialog-card .instructions {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  margin-bottom: 24px;
+  color: #e0e1dd;
+}
+
+.dialog-card .instructions p + p {
+  margin-top: 8px;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #e76f51, #f4a261);
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(231, 111, 81, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primary-button:active {
+  transform: scale(0.96);
+}
+
+/* Controlli Touch Mobile */
+.touch-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.touch-layer.hidden {
+  display: none;
+}
+
+#joystick-zone {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 24px) + 20px);
+  left: 24px;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+#joystick-base {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+}
+
+#joystick-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f4a261 0%, #e76f51 100%);
+  border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  pointer-events: none;
+  transform: translate(0px, 0px);
+}
+
+#action-zone {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 24px) + 20px);
+  right: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.touch-button {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(38, 70, 83, 0.85);
+  color: white;
+  font-size: 26px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.touch-button:active, .touch-button.active {
+  transform: scale(0.92);
+  background: rgba(231, 111, 81, 0.9);
+}
+
+.jump-btn {
+  width: 74px;
+  height: 74px;
+  background: rgba(42, 157, 143, 0.85);
+}

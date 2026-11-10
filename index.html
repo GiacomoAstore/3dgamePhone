@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a2332" />
+    <title>Brumavento - L'Arcipelago della Nebbia</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Canvas WebGL principale -->
+    <div id="game-container">
+      <canvas id="webgl-canvas"></canvas>
+    </div>
+
+    <!-- UI / HUD Overlay -->
+    <div id="ui-layer">
+      <!-- Barra superiore con info e bussola -->
+      <header id="top-bar">
+        <div class="hud-pill badge-title">
+          <span class="icon">🧭</span>
+          <span class="text">Brumavento</span>
+        </div>
+        <div class="hud-pill badge-fps" id="fps-counter">60 FPS</div>
+      </header>
+
+      <!-- Schermata di caricamento / inizio -->
+      <div id="start-screen" class="screen-overlay">
+        <div class="dialog-card">
+          <h1>Brumavento</h1>
+          <p class="subtitle">L'Arcipelago della Nebbia</p>
+          <div class="instructions">
+            <p><strong>Desktop:</strong> WASD o Frecce per muoverti, Spazio per saltare, Mouse per ruotare la visuale.</p>
+            <p><strong>Smartphone:</strong> Joystick virtuale a sinistra, pulsante salto a destra, trascina lo schermo a destra per la visuale.</p>
+          </div>
+          <button id="btn-start" class="primary-button">Inizia Esplorazione</button>
+        </div>
+      </div>
+
+      <!-- Controlli Touch Mobile (visibili automaticamente su schermi touch o viewport ridotto) -->
+      <div id="touch-controls" class="touch-layer hidden">
+        <!-- Area joystick a sinistra -->
+        <div id="joystick-zone">
+          <div id="joystick-base">
+            <div id="joystick-thumb"></div>
+          </div>
+        </div>
+        <!-- Area pulsanti a destra -->
+        <div id="action-zone">
+          <button id="btn-touch-action" class="touch-button action-btn" aria-label="Lanterna">🏮</button>
+          <button id="btn-touch-jump" class="touch-button jump-btn" aria-label="Salto">⤴</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
