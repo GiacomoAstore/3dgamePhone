@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima Missione), pianificazione Fase 3
+Ultima modifica: 2026-11-10 - v0.3.0 - Completamento Fase 3 (Atmosfera, Ciclo Circadiano, Web Audio e Impostazioni), pianificazione Fase 4
 -->
 
 ## 🏁 Fasi Completate
@@ -28,16 +28,23 @@ Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima
 - [x] **Ritirata della Nebbia e Viraggio Cromatico**: Transizione animata fluida che dirada la nebbia a 0.008, scalda il cielo verso turchese dorato e ravviva l'erba dell'isola.
 - [x] **Sospensione Comandi**: Blocco pulito di movimento e camera durante dialoghi o diario, con reset istantaneo dei touch pointer del joystick.
 - [x] **Stato Serializzabile (POJO)**: `QuestSystem` e `DialogueSystem` gestiti come oggetti puri per i salvataggi della Fase 4.
-- [x] **Test Unitari**: 22/22 test verdi (compresi nuovi test per quest, dialoghi e collezionabili).
+- [x] **Test Unitari**: 23/23 test verdi (compreso test di integrazione prima missione).
+
+### ✅ Fase 3: Atmosfera, Ciclo Circadiano, Web Audio e Impostazioni (v0.3.0)
+- [x] **Ciclo Giorno / Notte (`DayNightCycle`)**: Simulazione circadiana continua (giorno da 8 minuti) con archi polari realistici per Sole e Luna, intensità modulate ed elevazione sopra l'orizzonte.
+- [x] **Color Grading Dinamico**: Interpolazione a 4 fasi (notte blu notte, alba rosa pesca, giorno turchese splendente, tramonto arancio corallo) per cielo, nebbia e luce ambientale.
+- [x] **Sistema Particellare Unificato (`ParticleSystem`)**: 750 particelle raggruppate in un'unica draw call `THREE.Points` (lucciole pulsanti sui funghi, polline del vento, spuma d'onda sulla costa, stelle scintillanti di notte).
+- [x] **Motore Web Audio Procedurale (`AudioSystem`)**: Sintesi nativa in codice puro (0 KB di file audio esterni): passi di Pip, salto cartoon, toggle lanterna, chime di raccolta, fanfara del frammento e rumore d'onda/brezza marina con LFO a 0.25 Hz. Sblocco automatico tramite gesture su "Inizia Esplorazione".
+- [x] **Pannello Impostazioni Qualità e Volumi (`QualitySettingsUI`)**: Modale HUD (icona ⚙️) con selettore profili (Bassa, Media, Alta) per scalare al volo DPR (1.0x, 1.4x, 2.0x), ombre (disattivate, base, PCFSoft) e particelle (250, 500, 750), più slider per i 3 canali di volume.
+- [x] **Test Unitari e Integrazione**: 38/38 test verdi (aggiunti test per ciclo giorno/notte, audio system e particle system).
 
 ---
 
-## 🎯 Prossimi Obiettivi: Fase 3 (Atmosfera & Rifiniture)
-- [ ] Materiali Toon personalizzati con sfumature a gradini discrete e contorni (outline opzionale).
-- [ ] Ciclo Giorno / Notte dinamico (alba, mezzogiorno dorato, tramonto corallo, notte stellata).
-- [ ] Sistema particellare (lucciole notturne attorno ai funghi, polline, spuma delle onde).
-- [ ] Audio ed effetti sonori con Howler.js (onde del mare, passi, accensione lanterna, fanfara recupero frammento).
-- [ ] Valutazione integrazione modelli GLB gratuiti (Kenney Nature Kit / Town Kit) in sostituzione graduale delle forme procedurali.
+## 🎯 Prossimi Obiettivi: Fase 4 (Salvataggio, PWA e Seconda Isola)
+- [ ] **Sistema di Salvataggio Versionato (`SaveSystem`)**: Serializzazione su `localStorage` / `IndexedDB` dello stato di Pip (posizione, lanterna), quest completate, diario, frammenti e opzioni audio/video (formato versionato v1).
+- [ ] **PWA (Progressive Web App)**: Web App Manifest, Service Worker per caching offline, icone touch e supporto full-screen senza barre del browser.
+- [ ] **Seconda Isola dell'Arcipelago (Isola dei Fari / Funivia)**: Collegamento tramite barchetta a remi o piattaforma semovente, nuovi NPC e secondo frammento dell'Atlante Vivo.
+- [ ] **Valutazione Integrazione Modelli GLB Esterni**: Modelli a basso poligono con licenza CC0 (Kenney) o continuazione con forme procedurali ottimizzate.
 
 ---
 
@@ -47,6 +54,5 @@ Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima
 ---
 
 ## 💳 Debito Tecnico
-- **Peso Bundle Iniziale e Asset 3D (~600 KB JS)**: L'attuale output di build minificato è di ~600 KB (~157 KB gzip), dovuto quasi interamente al core di Three.js. Quando verranno introdotti modelli binari GLB e tracce audio, sarà necessario valutare il code-splitting con `dynamic import()` e compressione Draco/meshopt/KTX2 per rispettare il budget mobile-first (<15-20 MB di caricamento iniziale).
-- **Tooling e devDependencies (npm audit)**: Aggiornamento controllato del tooling di sviluppo (Vite, TypeScript, Vitest ed ESLint) per risolvere le segnalazioni di vulnerabilità relative a pacchetti di test e linting (`tinypool`, `@vitest/mocker`, `minimatch`), senza ricorrere a `--force`.
-- **Shader Nebbia**: La nebbia attuale utilizza `THREE.FogExp2` semplice; nella Fase 3 potrà essere integrato uno shader per dissolvenza volumetrica o sferica localizzata attorno alla lanterna di Pip.
+- **Peso Bundle (~618 KB JS)**: Il bundle JS di produzione include l'intero Three.js e il wrapper BVH. Valutare code-splitting con `dynamic import()` qualora vengano caricate ulteriori isole o librerie ausiliarie.
+- **Tooling e devDependencies (npm audit)**: Aggiornamento controllato del tooling di sviluppo (Vite, TypeScript, Vitest ed ESLint) per risolvere le vulnerabilità di librerie di supporto (`tinypool`, `@vitest/mocker`, `minimatch`), senza ricorrere a `--force`.

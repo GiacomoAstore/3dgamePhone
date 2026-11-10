@@ -2,6 +2,78 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.0] - 2026-11-10
+
+### Aggiunto
+- **Motore Web Audio Procedurale (`src/systems/AudioSystem.ts`)**:
+  - Sintesi sonora nativa in tempo reale tramite Web Audio API senza file audio esterni (0 KB di overhead download/bundle).
+  - Passi di Pip con modulazione casuale del pitch su erba e pontile.
+  - Salto cartoon con sweep di frequenza ascendente.
+  - Suono di accensione e spegnimento della Lanterna Magica.
+  - Chime arpeggiato a 2 toni per la raccolta di collezionabili (conchiglie, funghi, stelle).
+  - Fanfara magica trionfale a 4 toni per il recupero del frammento dell'Atlante Vivo.
+  - Risacca delle onde e brezza marina continua generata tramite rumore rosa filtrato da passa-basso con LFO a 0.25 Hz.
+  - Sblocco automatico e sicuro su mobile (`touchstart`/`click` sul pulsante "Inizia Esplorazione").
+- **Ciclo Giorno / Notte (`src/systems/DayNightCycle.ts`)**:
+  - Simulazione circadiana continua (giornata di 8 minuti configurabile).
+  - Tracciamento delle orbite tridimensionali opposte di Sole e Luna lungo l'arco celeste.
+  - Calcolo dell'altezza e modulazione automatica dell'intensità di luce solare, luce lunare e luce emisferica.
+  - Color grading dinamico con interpolazione continua tra 4 palette orarie: notte blu profondo, alba rosa antico/pesca, giorno turchese splendente, tramonto corallo caldo.
+- **Sistema Particellare a Singola Draw-Call (`src/world/ParticleSystem.ts`)**:
+  - Raggruppamento di 750 particelle in un unico `THREE.Points` (vertex colors, blending additivo, frustum culling globale).
+  - Lucciole magiche con moto armonico attorno alla vegetazione e ai funghi, più luminose al tramonto e di notte.
+  - Polline dorato del vento che attraversa l'isola con deriva continua e wrap automatico dei bordi.
+  - Spuma marina e spruzzi d'onda oscillanti alla battigia.
+  - Stelle notturne sulla calotta celeste con scintillio sinusoidale e dissolvenza diurna a luminosità zero.
+- **Pannello Impostazioni Qualità e Volumi (`src/ui/QualitySettingsUI.ts`)**:
+  - Finestra modale accessibile tramite pulsante ⚙️ nella barra superiore dell'HUD.
+  - Selettore preset di qualità: Bassa (1.0x DPR, ombre off, 250 particelle), Media (1.4x DPR, ombre base, 500 particelle), Alta (fino a 2.0x DPR, ombre PCFSoft, 750 particelle).
+  - 3 slider touch per la regolazione indipendente dei volumi (Master, Brezza/Onde, Effetti SFX) da 0 a 100%.
+  - Costruzione DOM sicura tramite `textContent` e integrazione con il sistema di sospensione input.
+- **Nuovi Test Automatizzati**:
+  - `tests/day_night_cycle.test.ts`: test ore, fasi, posizioni polari sole/luna, intensità luminose, interpolazione colori e serializzazione POJO.
+  - `tests/audio_system.test.ts`: test clamping volumi, fallback in assenza di hardware audio, gestione eventi EventBus e sblocco.
+  - `tests/particle_system.test.ts`: test conteggio massimo, scalabilità per qualità grafica, assenza di NaN nelle posizioni e spegnimento stelle diurne.
+  - Totale test: 38/38 passati con successo.
+- **Decisioni Architetturali**:
+  - Registrata ADR 006 in `DECISIONI.md`.
+
+### Modificato
+- `src/world/Environment.ts`: integrato ciclo circadiano, luce lunare, mesh visibili di sole e luna, sistema particellare e metodo `setQuality()`.
+- `src/entities/Player.ts`: integrata emissione eventi `player-jump` e `player-footstep` calcolati sulla falcata procedurale.
+- `src/core/Game.ts`: integrati `AudioSystem` e `QualitySettingsUI`, connessione del pulsante impostazioni e gestione sospensione comandi.
+- `src/main.ts`: sblocco Web Audio al click/tap su "Inizia Esplorazione".
+- `index.html`: aggiunto pulsante impostazioni ⚙️ nell'header HUD.
+- `src/style.css`: aggiunti stili per il pulsante impostazioni, card modale, bottoni qualità e slider touch.
+- `VERSION`, `package.json`: avanzamento versione a 0.3.0.
+- `TODO.md`, `README.md`, `ARCHITETTURA.md`, `ASSETS.md`: aggiornamento documentazione.
+
+### Corretto
+- Risolto errore in ambiente Node per `window is not defined` durante l'inizializzazione dei test di `AudioSystem`.
+- Rimossi campi non letti e variabili inutilizzate in `QualitySettingsUI` e `ParticleSystem` per soddisfare `tsc` con `noUnusedLocals: true`.
+
+### Rimosso
+- Nessuna funzionalità rimossa.
+
+### File toccati
+- `VERSION`, `package.json`: incremento versione a 0.3.0.
+- `src/systems/AudioSystem.ts`: motore audio sintetico Web Audio API.
+- `src/systems/DayNightCycle.ts`: simulazione circadiana e orbite celesti.
+- `src/world/ParticleSystem.ts`: sistema particelle unificato a 1 draw call.
+- `src/world/Environment.ts`: integrazione sole, luna, particelle e ciclo giorno/notte.
+- `src/ui/QualitySettingsUI.ts`: modale impostazioni qualità grafica e volumi.
+- `src/entities/Player.ts`: emissione eventi audio di passi e salto.
+- `src/core/Game.ts`: orchestrazione audio, impostazioni e profilo qualità.
+- `src/main.ts`: gestione sblocco audio policy al primo gesto.
+- `index.html`, `src/style.css`: pulsante HUD ⚙️ e fogli di stile impostazioni.
+- `tests/day_night_cycle.test.ts`, `tests/audio_system.test.ts`, `tests/particle_system.test.ts`: suite di test Fase 3.
+- `DECISIONI.md`, `TODO.md`, `README.md`, `ARCHITETTURA.md`, `ASSETS.md`, `CHANGELOG.md`: documentazione obbligatoria.
+
+### Motivo
+- Completamento della Fase 3 (Atmosfera, Ciclo Giorno/Notte, Audio Sintetico e Menu Qualità) come approvato e richiesto dall'utente.
+
+---
+
 ## [0.2.0] - 2026-11-10
 
 ### Aggiunto

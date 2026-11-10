@@ -1,7 +1,7 @@
 /**
  * Punto di ingresso principale (Entry point) di Brumavento.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.3.0
  */
 
 import { Game } from './core/Game';
@@ -19,6 +19,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const game = new Game(canvas);
 
   const startGame = () => {
+    // Sblocca Web Audio API al primo gesto utente (Mobile Autoplay policy)
+    game.audioSystem.unlockAudio();
+
     if (startScreen) {
       startScreen.style.opacity = '0';
       setTimeout(() => {

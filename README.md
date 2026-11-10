@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-10 - v0.2.0 - Documentazione Fase 2 (NPC, Dialoghi, Prima Missione, Diario, i18n)
+Ultima modifica: 2026-11-10 - v0.3.0 - Documentazione Fase 3 (Atmosfera, Audio Sintetico, Ciclo Giorno/Notte, Particelle e Impostazioni)
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  
@@ -56,6 +56,15 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
 | **Interazione / Parla con NPC** | Tasto `E` quando vicino a un target | Pulsante circolare **🏮** quando vicino a un target |
 | **Lanterna Magica (Accendi/Spegni)** | Tasto `E` | Pulsante circolare **🏮** |
 | **Diario del Cartografo** | Tasto `Tab`, `Esc` o `J` | Icona **📖 Diario** in alto a destra |
+| **Pannello Impostazioni (Qualità & Audio)** | Icona `⚙️` nell'HUD | Icona **⚙️** in alto a destra |
+
+---
+
+## 🌅 Atmosfera, Ciclo Giorno / Notte e Audio (Fase 3)
+- **Ciclo Circadiano Dinamico**: Il tempo scorre naturalmente (giorno completo in 8 minuti). Il Sole e la Luna solcano l'arco celeste, proiettando ombre dinamiche e variando l'illuminazione tra alba pesca, pieno giorno dorato, tramonto corallo e notte blu profondo con stelle scintillanti.
+- **Particelle d'Atmosfera (Single Draw-Call)**: Lucciole che fluttuano sui funghi illuminando la notte, polline trasportato dal vento, spuma alla battigia e stelle della volta celeste.
+- **Audio Procedurale Web Audio (Zero File Esterni)**: Effetti sonori e brezza marina generati in tempo reale (passi di Pip, salto cartoon, toggle lanterna, chime di raccolta e fanfara trionfale dell'Atlante).
+- **Menu Impostazioni e Profili Qualità**: Toccando l'icona ⚙️ puoi selezionare il preset grafico (Bassa: 1.0x DPR e ombre off; Media: 1.4x DPR; Alta: 2.0x DPR e ombre PCFSoft) e regolare i livelli di volume (Generale, Brezza/Onde, Effetti).
 
 ---
 
@@ -74,7 +83,7 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di 22 test unitari con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi e collezionabili).
+- `npm test`: esegue la suite completa di 38 test unitari con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, ciclo circadiano, audio procedurale e sistema particellare).
 - `npm run lint`: analisi statica del codice con **ESLint** per TypeScript.
 - `npm run format`: formattazione automatica del codice sorgente con **Prettier**.
 
@@ -84,6 +93,6 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
 - [GEMINI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/GEMINI.md): Regole vincolanti di sviluppo per l'IA.
 - [ARCHITETTURA.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ARCHITETTURA.md): Mappa dei moduli, diagrammi di flusso e cartelle.
 - [CHANGELOG.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/CHANGELOG.md): Registro cronologico delle modifiche e versioning semantico.
-- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 005).
+- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 006).
 - [TODO.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/TODO.md): Roadmap e backlog per le prossime fasi.
 - [ASSETS.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ASSETS.md): Registro degli asset 3D e licenze.

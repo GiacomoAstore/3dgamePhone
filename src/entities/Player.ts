@@ -1,13 +1,14 @@
 /**
  * Entità Giocatore (Pip) con fisica, controller di movimento e animazioni procedurali.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.3.0
  */
 
 import * as THREE from 'three';
 import { ProceduralPip, PipMeshComponents } from './ProceduralPip';
 import { InputManager } from '../systems/InputManager';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
+import { globalEventBus } from '../core/EventBus';
 
 export class Player {
   public meshComponents: PipMeshComponents;
@@ -83,6 +84,7 @@ export class Player {
       if (inputManager.consumeJump()) {
         this.velocity.y = this.jumpImpulse;
         this.isGrounded = false;
+        globalEventBus.emit('player-jump');
       } else {
         this.velocity.y = 0;
       }
@@ -127,7 +129,14 @@ export class Player {
     if (this.isGrounded) {
       if (speedRatio > 0.1) {
         // Corsa/camminata
+        const prevTimer = this.animTimer;
         this.animTimer += dt * 11.0;
+
+        // Emette l'evento del passo a ogni mezza oscillazione della falcata
+        if (Math.floor(this.animTimer / Math.PI) > Math.floor(prevTimer / Math.PI)) {
+          globalEventBus.emit('player-footstep');
+        }
+
         const swing = Math.sin(this.animTimer) * 0.45;
         this.meshComponents.leftLeg.rotation.x = swing;
         this.meshComponents.rightLeg.rotation.x = -swing;

@@ -523,3 +523,90 @@ html, body {
   height: 74px;
   background: rgba(42, 157, 143, 0.85);
 }
+
+/* Pulsante Impostazioni nel Top Bar */
+.btn-settings {
+  cursor: pointer;
+  background: rgba(38, 70, 83, 0.85);
+  color: white;
+  padding: 8px 12px;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-settings:active {
+  transform: scale(0.95);
+  background: rgba(231, 111, 81, 0.9);
+}
+
+/* Modale Impostazioni Qualità e Audio */
+.settings-card {
+  max-width: 480px;
+}
+
+.settings-desc {
+  font-size: 13px;
+  color: #a3b8cc;
+  margin-bottom: 12px;
+}
+
+.quality-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quality-btn {
+  flex: 1;
+  min-width: 110px;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #f7ede2;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quality-btn:active, .quality-btn.active {
+  background: #2a9d8f;
+  border-color: #f4a261;
+  box-shadow: 0 0 10px rgba(42, 157, 143, 0.5);
+  color: #ffffff;
+}
+
+.slider-row {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f7ede2;
+}
+
+.slider-val {
+  color: #f4a261;
+  font-weight: 600;
+}
+
+.settings-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  accent-color: #f4a261;
+  cursor: pointer;
+}
+

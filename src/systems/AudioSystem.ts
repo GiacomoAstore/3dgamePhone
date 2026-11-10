@@ -40,6 +40,7 @@ export class AudioSystem {
    * Inizializza l'AudioContext supportando fallback per ambienti non-browser (test runner).
    */
   private initContext(): void {
+    if (typeof window === 'undefined') return;
     const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioCtxClass) {
       try {
@@ -83,13 +84,15 @@ export class AudioSystem {
 
   private initEventListeners(): void {
     // Sblocca al primo tocco su mobile o click
-    const unlockHandler = () => {
-      this.unlockAudio();
-      window.removeEventListener('click', unlockHandler);
-      window.removeEventListener('touchstart', unlockHandler);
-    };
-    window.addEventListener('click', unlockHandler, { once: true });
-    window.addEventListener('touchstart', unlockHandler, { once: true });
+    if (typeof window !== 'undefined') {
+      const unlockHandler = () => {
+        this.unlockAudio();
+        window.removeEventListener('click', unlockHandler);
+        window.removeEventListener('touchstart', unlockHandler);
+      };
+      window.addEventListener('click', unlockHandler, { once: true });
+      window.addEventListener('touchstart', unlockHandler, { once: true });
+    }
 
     // Iscrizione agli eventi di gioco per il feedback sonoro
     globalEventBus.on('fragment-collected', () => {

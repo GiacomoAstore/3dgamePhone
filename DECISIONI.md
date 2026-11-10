@@ -89,3 +89,36 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
   5. **Sospensione Comandi Pulita**: Durante dialoghi o diario aperti, `InputManager.setBlocked(true)` azzera i vettori e chiama `TouchOverlay.resetInputs()`, evitando che il joystick virtuale mobile o i tasti rimangano incastrati.
 - **Conseguenze**:
   Codice sicuro, privo di numeri magici, scalabile per le future isole e facilmente localizzabile.
+
+---
+
+## ADR 006 - Atmosfera: Web Audio Sintetico, Ciclo Circadiano, Particelle a Singola Draw-Call e Menu Qualità (Fase 3)
+- **Data**: 2026-11-10
+- **Stato**: Approvata
+- **Contesto**:
+  Nella Fase 3 occorre dotare Brumavento di un'atmosfera immersiva: ciclo giorno/notte, effetti particellari (lucciole, polline del vento, spuma marina, stelle), onde dinamiche, musica/suoni ambientali e un pannello per il controllo prestazionale.
+  Vincoli stringenti: rispetto del budget mobile (<100 draw calls, <150k poligoni, zero lag touch, policy autoplay di Web Audio, e contenimento del peso del bundle per connessioni mobili senza scaricare decine di MB di campioni audio).
+- **Decisione**:
+  1. **Sintesi Procedurale Web Audio API (`AudioSystem`)**: Nessun file audio binario esterno (.mp3/.wav/.ogg). I suoni vengono sintetizzati in tempo reale via nodi nativi Web Audio (oscillatori sine/triangle, filtri biquad passa-basso modulati da LFO, curve di gain esponenziali):
+     - Passi cartoon di Pip con micro-pitching casuale.
+     - Salto cartoon con sweep di frequenza ascendente.
+     - Toggle della Lanterna Magica.
+     - Chime arpeggiato a due toni per la raccolta di conchiglie, funghi e stelle marine.
+     - Fanfara magica a quattro toni per il recupero del frammento dell'Atlante.
+     - Brezza marina e risacca delle onde generata con rumore rosa e filtro passa-basso oscillante a 0.25 Hz.
+     - Sblocco dell'AudioContext al primo gesto utente (click/touch su "Inizia Esplorazione" o tocco sullo schermo), con fallback sicuro per ambienti non-browser.
+  2. **Ciclo Giorno/Notte a Coordinate Celesti (`DayNightCycle`)**:
+     - Simulazione circadiana (giorno predefinito di 8 minuti, configurabile).
+     - Sole e Luna su orbite polari opposte a 180° lungo l'arco celeste.
+     - Calcolo in tempo reale dell'elevazione solare/lunare per modulare le intensità di `DirectionalLight` e `HemisphereLight`.
+     - Interpolazione continua dei colori di cielo e nebbia tra le 4 fasi (alba corallo/pesca, giorno turchese splendente, tramonto arancio caldo, notte blu scuro).
+  3. **Sistema Particellare a Singola Draw-Call (`ParticleSystem`)**:
+     - 4 tipologie atmosferiche (lucciole, polline dorato, spuma alla battigia, stelle della volta celeste) compattate in un unico oggetto `THREE.Points` con `BufferGeometry` e vertex colors.
+     - Budget fisso a 750 particelle totali, scalabile istantaneamente via `geometry.setDrawRange()` in base al profilo di qualità grafica.
+  4. **Pannello Impostazioni Qualità e Volumi (`QualitySettingsUI`)**:
+     - Accessibile tramite icona ⚙️ nella barra superiore dell'HUD.
+     - Selettore preset (Bassa: 1.0x DPR, ombre disattivate, 250 particelle; Media: 1.4x DPR, ombre basic, 500 particelle; Alta: fino a 2.0x DPR, ombre PCFSoft, 750 particelle).
+     - 3 slider touch per la regolazione indipendente dei volumi (Master, Brezza/Onde, Effetti SFX) da 0 a 100%.
+     - Costruzione DOM con `textContent` e sospensione degli input di gioco durante l'apertura.
+- **Conseguenze**:
+  Bundle di produzione estremamente leggero (~618 KB totali minificati con Three.js e BVH inclusi, zero asset audio esterni), 60 FPS stabili su desktop, 30+ FPS garantiti su mobile e totale immersività sensoriale.

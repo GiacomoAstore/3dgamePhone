@@ -1,8 +1,8 @@
 /**
- * Loop principale e coordinatore del motore di gioco di Brumavento (Fase 2).
- * Integra sistemi, dialoghi, missioni, collezionabili e gestione degli stati.
+ * Loop principale e coordinatore del motore di gioco di Brumavento (Fase 3).
+ * Integra sistemi, dialoghi, missioni, ciclo circadiano, audio procedurale e grafica.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.2.0
+ * Ultima modifica: 2026-11-10 - v0.3.0
  */
 
 import * as THREE from 'three';
@@ -15,6 +15,7 @@ import { CameraController } from '../systems/CameraController';
 import { DialogueSystem } from '../systems/DialogueSystem';
 import { QuestSystem } from '../systems/QuestSystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
+import { AudioSystem } from '../systems/AudioSystem';
 import { Environment } from '../world/Environment';
 import { Island } from '../world/Island';
 import { Player } from '../entities/Player';
@@ -22,6 +23,7 @@ import { NPC } from '../entities/NPC';
 import { CollectiblesManager } from '../entities/Collectibles';
 import { DialogueBox } from '../ui/DialogueBox';
 import { JournalUI } from '../ui/JournalUI';
+import { QualitySettingsUI } from '../ui/QualitySettingsUI';
 import { NotificationBanner } from '../ui/NotificationBanner';
 
 export type QualityPreset = 'low' | 'medium' | 'high';
@@ -37,10 +39,11 @@ export class Game {
   public physicsSystem: PhysicsSystem;
   public cameraController: CameraController;
 
-  // Nuovi sistemi Fase 2
+  // Sistemi di gioco
   public dialogueSystem: DialogueSystem;
   public questSystem: QuestSystem;
   public interactionSystem: InteractionSystem;
+  public audioSystem: AudioSystem;
 
   // Mondo ed entità
   public environment!: Environment;
@@ -52,6 +55,7 @@ export class Game {
   // UI
   public dialogueBox!: DialogueBox;
   public journalUI!: JournalUI;
+  public qualitySettingsUI!: QualitySettingsUI;
   public notificationBanner!: NotificationBanner;
 
   private clock: THREE.Clock;
@@ -82,10 +86,11 @@ export class Game {
     this.touchOverlay = new TouchOverlay();
     this.inputManager = new InputManager(this.touchOverlay);
 
-    // 4. Sistemi Fase 2 (Dialoghi, Quest, Interazioni)
+    // 4. Sistemi logici e audio (Fasi 2 & 3)
     this.dialogueSystem = new DialogueSystem();
     this.questSystem = new QuestSystem();
     this.interactionSystem = new InteractionSystem();
+    this.audioSystem = new AudioSystem();
 
     // 5. Creazione Mondo e Isola
     this.environment = new Environment(this.scene);
@@ -128,6 +133,18 @@ export class Game {
     this.dialogueBox = new DialogueBox(this.dialogueSystem);
     this.journalUI = new JournalUI(this.questSystem);
     this.notificationBanner = new NotificationBanner();
+    this.qualitySettingsUI = new QualitySettingsUI({
+      onQualityChange: (quality) => this.setQuality(quality),
+      audioSystem: this.audioSystem,
+    });
+
+    // Pulsante Impostazioni Top Bar
+    const btnSettings = document.getElementById('btn-hud-settings');
+    btnSettings?.addEventListener('click', () => this.qualitySettingsUI.toggle());
+    btnSettings?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.qualitySettingsUI.toggle();
+    });
 
     // 8. Eventi di sospensione comandi e resize
     this.initPauseAndBlockListeners();
@@ -138,7 +155,7 @@ export class Game {
   }
 
   private initPauseAndBlockListeners(): void {
-    // Sospende gli input durante i dialoghi o con il diario aperto (Regola utente 6)
+    // Sospende gli input durante i dialoghi o con il diario/impostazioni aperti (Regola utente 6)
     globalEventBus.on('dialogue-started', () => {
       this.inputManager.setBlocked(true);
       this.stateManager.setState(GameState.DIALOGUE);
@@ -146,7 +163,7 @@ export class Game {
 
     globalEventBus.on('dialogue-closed', () => {
       this.actionCooldown = 0.35; // Previene che l'ultimo tocco/tasto E per chiudere il dialogo accenda la lanterna
-      if (!this.journalUI.getIsOpen()) {
+      if (!this.journalUI.getIsOpen() && !this.qualitySettingsUI.getIsOpen()) {
         this.inputManager.setBlocked(false);
         this.stateManager.setState(GameState.PLAYING);
       }
@@ -158,7 +175,19 @@ export class Game {
     });
 
     globalEventBus.on('journal-closed', () => {
-      if (!this.dialogueSystem.getIsActive()) {
+      if (!this.dialogueSystem.getIsActive() && !this.qualitySettingsUI.getIsOpen()) {
+        this.inputManager.setBlocked(false);
+        this.stateManager.setState(GameState.PLAYING);
+      }
+    });
+
+    globalEventBus.on('settings-opened', () => {
+      this.inputManager.setBlocked(true);
+      this.stateManager.setState(GameState.PAUSED);
+    });
+
+    globalEventBus.on('settings-closed', () => {
+      if (!this.dialogueSystem.getIsActive() && !this.journalUI.getIsOpen()) {
         this.inputManager.setBlocked(false);
         this.stateManager.setState(GameState.PLAYING);
       }
@@ -305,12 +334,18 @@ export class Game {
       case 'medium':
         this.renderer.setPixelRatio(Math.min(dpr, 1.4));
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.BasicShadowMap;
         break;
       case 'high':
       default:
         this.renderer.setPixelRatio(Math.min(dpr, 2.0));
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         break;
+    }
+
+    if (this.environment) {
+      this.environment.setQuality(quality);
     }
   }
 
