@@ -1,10 +1,10 @@
 # Architettura del Progetto
 
 <!--
-Ultima modifica: 2026-11-10 - v0.1.0 - Implementazione moduli Fase 0 e 1
+Ultima modifica: 2026-11-10 - v0.2.0 - Implementazione Fase 2 (Interazione, Dialoghi, Missioni, Diario, i18n)
 -->
 
-Questo documento descrive la struttura delle cartelle, i moduli implementati, le loro interazioni e il diagramma del flusso di gioco.
+Questo documento descrive la struttura delle cartelle, i moduli implementati, le loro interazioni e il diagramma del flusso di gioco di *Brumavento*.
 
 ## 1. Struttura delle Cartelle
 ```text
@@ -18,79 +18,61 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
 ├── README.md                     # Guida al gioco, avvio e istruzioni smartphone
 ├── ARCHITETTURA.md               # Architettura, moduli e flussi del gioco
 ├── CHANGELOG.md                  # Registro cronologico delle modifiche (SemVer)
-├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001, ADR 002, ADR 003)
+├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 005)
 ├── TODO.md                       # Roadmap e backlog dei task per le prossime fasi
 ├── ASSETS.md                     # Censimento asset 3D, licenze e provenienza
-├── VERSION                       # Indicatore della versione corrente (0.1.0)
+├── VERSION                       # Indicatore della versione corrente (0.2.0)
 ├── package.json                  # Dipendenze con versioni bloccate (senza ^ o ~)
 ├── package-lock.json             # Lockfile deterministico delle dipendenze
 ├── tsconfig.json                 # Configurazione TypeScript strict
 ├── vite.config.ts                # Configurazione dev server Vite con host locale
-├── index.html                    # Layout mobile-first con canvas WebGL e HUD
+├── index.html                    # Layout mobile-first con canvas WebGL, HUD, dialoghi e diario
 ├── src/
 │   ├── main.ts                   # Entry point e bootstrap del gioco
-│   ├── style.css                 # Stili CSS responsive e overlay comandi touch
+│   ├── style.css                 # Stili CSS responsive, dialoghi cartoon, diario e toast
+│   ├── data/
+│   │   ├── locales/
+│   │   │   └── it.json           # Localizzazione italiana di tutti i testi di gioco
+│   │   ├── dialogues.json        # Struttura dei nodi e scelte di dialogo (chiavi i18n)
+│   │   ├── quests.json           # Definizione missioni e stadi (chiavi i18n)
+│   │   └── collectibles.json     # Punti di spawn e configurazione collezionabili
 │   ├── core/
-│   │   ├── Game.ts               # Game loop con delta time, update/render e monitor FPS
-│   │   ├── GameState.ts          # Macchina a stati (Loading, Menu, Playing, Paused)
+│   │   ├── Game.ts               # Game loop con delta time, update/render, coordinamento sistemi
+│   │   ├── GameState.ts          # Macchina a stati (Loading, Menu, Playing, Dialogue, Paused)
 │   │   └── EventBus.ts           # Bus di eventi tipizzato per comunicazione disaccoppiata
 │   ├── systems/
-│   │   ├── InputManager.ts       # Gestore universale input (WASD/Mouse + Touch Joystick)
+│   │   ├── LocalizationSystem.ts # Risoluzione dinamica chiavi i18n con interpolazione parametri
+│   │   ├── DialogueSystem.ts     # Macchina a stati dei dialoghi e serializzazione POJO
+│   │   ├── QuestSystem.ts        # Gestione missioni, inventario, progresso nebbia e POJO
+│   │   ├── InteractionSystem.ts  # Rilevamento vicinanza target (NPC, cerchio pietre) e prompt
+│   │   ├── InputManager.ts       # Gestore universale input con sospensione sicura dei comandi
 │   │   ├── CameraController.ts   # Telecamera 3a persona orbitale con smooth damping
 │   │   └── PhysicsSystem.ts      # Collisioni e ground detection con three-mesh-bvh
 │   ├── entities/
 │   │   ├── Player.ts             # Controller di Pip (movimento, salto, gravità, animazioni)
-│   │   └── ProceduralPip.ts      # Modello 3D procedurale di Pip con materiali toon
+│   │   ├── ProceduralPip.ts      # Modello 3D procedurale di Pip con materiali toon
+│   │   ├── NPC.ts                # Nonna Bussola all'osservatorio e telescopio astronomico
+│   │   └── Collectibles.ts       # 1° Frammento magico dell'Atlante, conchiglie, funghi, stelle
 │   ├── world/
-│   │   ├── Island.ts             # Terreno collinare low-poly, alberi toon, rocce e pontile
-│   │   └── Environment.ts        # Sole toon, luce emisferica, mare animato e nebbia
+│   │   ├── Island.ts             # Terreno collinare low-poly con viraggio colore al risveglio
+│   │   └── Environment.ts        # Sole toon, mare animato, nebbia dinamica con transizione animata
 │   └── ui/
-│       └── TouchOverlay.ts       # Joystick virtuale e pulsanti touch per smartphone
+│       ├── DialogueBox.ts        # Box dialogo responsive per smartphone (textContent sicuro)
+│       ├── JournalUI.ts          # Schermata Diario del Cartografo (missioni, frammenti, reperti)
+│       ├── NotificationBanner.ts # Toast animato a comparsa per oggetti raccolti
+│       └── TouchOverlay.ts       # Joystick virtuale e pulsanti touch per smartphone con resetInputs
 └── tests/
     ├── game_math.test.ts         # Test matematici di movimento e telecamera
     ├── player_physics.test.ts    # Test fisica di Pip (velocità, gravità, salto)
-    └── terrain_collision.test.ts # Test rilevamento terreno e scivolamento ostacoli
+    ├── terrain_collision.test.ts # Test rilevamento terreno e scivolamento ostacoli
+    ├── quest_system.test.ts      # Test stadi missioni, collezionabili, nebbia e POJO
+    ├── dialogue_system.test.ts   # Test nodi dialoghi, opzioni, azioni ed eventi
+    └── collectibles.test.ts      # Test rivelazione frammento con lanterna e raggio pickup
 ```
 
-## 2. Moduli Implementati e Responsabilità
-- **Core (`src/core/`)**:
-  - `Game.ts`: Gestisce il loop continuo a tempo variabile controllato (clamping a `dt <= 0.08s`), monitora il framerate calcolando gli FPS reali, coordina renderer, telecamera, fisica e mondo, e applica il budget mobile (DPR limitato a 2.0).
-  - `GameState.ts`: Macchina a stati esplicita (`LOADING`, `START_MENU`, `PLAYING`, `PAUSED`, `DIALOGUE`).
-  - `EventBus.ts`: Bus di eventi pub/sub fortemente tipizzato.
-- **Sistemi (`src/systems/`)**:
-  - `InputManager.ts`: Raccoglie gli input da tastiera/mouse su desktop e li unifica con i comandi del joystick e pulsanti virtuali touch su smartphone.
-  - `CameraController.ts`: Segue Pip mantenendo un orientamento sferico orbitale, con pitch limitato per non compenetrare il terreno.
-  - `PhysicsSystem.ts`: Costruisce la struttura BVH per il terreno e proietta raycast rapidi per identificare altezza del terreno, pendenze e scivolamento su pareti verticali.
-- **Entità (`src/entities/`)**:
-  - `Player.ts`: Logica di Pip. Applica gravità, velocità orizzontale in relazione alla camera, gestisce lo stato grounded e guida le animazioni procedurali (oscillazione braccia/gambe, respiro in idle, squash in salto).
-  - `ProceduralPip.ts`: Genera l'intera geometria di Pip usando materiali toon (cappotto turchese, cappello da cartografo, occhioni cartoon, stivaletti e lanterna con luce puntiforme).
-- **Mondo (`src/world/`)**:
-  - `Island.ts`: Genera l'isola di partenza (Isola della Bussola) con rilievi collinari, vegetazione cartoon, rocce litoranee e pontile per il Capitano Marea.
-  - `Environment.ts`: Gestisce sole direzionale dorato con ombre soft, luce ambientale emisferica, nebbia di Three.js e mare animato a onde morbide.
-- **Interfaccia (`src/ui/`)**:
-  - `TouchOverlay.ts`: Monitora gli eventi touch con multi-touch tracking, proietta il joystick virtuale e mappa la metà destra dello schermo alla rotazione della visuale.
-
-## 3. Diagramma del Flusso di Gioco
-```text
-               [Avvio index.html]
-                       │
-                       ▼
-             [Inizializzazione Game]
-       ┌───────────────┴───────────────┐
-       ▼                               ▼
-[Setup Three.js & BVH]      [Overlay UI & Start Screen]
-       │                               │
-       └───────────────┬───────────────┘
-                       │
-                       ▼ (Pressione "Inizia Esplorazione")
-             [GameState.PLAYING]
-                       │
-       ┌───────────────┴───────────────┐
-       ▼ (Ogni Frame - requestAnimationFrame)
-   [update(dt)]                   [render()]
-   ├── InputManager (WASD / Touch)├── Aggiorna scena WebGL
-   ├── Environment (Onde mare)    ├── Clamping PixelRatio <= 2.0
-   ├── Player (Fisica + BVH)      └── Tone Mapping Filmic
-   ├── Camera (Smooth Follow)
-   └── FPS Counter (Debug HUD)
-```
+## 2. Flusso dei Sistemi e Architettura Disaccoppiata
+I sistemi non comunicano mai tramite accoppiamento diretto stretto, ma interagiscono via `EventBus`:
+- `dialogue-action` $\rightarrow$ `QuestSystem`: avanza lo stadio della missione quando Nonna Bussola affida il compito a Pip.
+- `fragment-collected` $\rightarrow$ `Environment` e `Island`: fa scattare l'interpolazione animata che dirada la nebbia, scalda il colore del cielo e ravviva l'erba.
+- `dialogue-started` / `journal-opened` $\rightarrow$ `InputManager`: sospende istantaneamente il movimento di Pip e la rotazione della camera, azzerando i puntatori touch del joystick.
+- `dialogue-closed` / `journal-closed` $\rightarrow$ `InputManager`: ripristina i controlli di gioco.
