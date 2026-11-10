@@ -56,3 +56,20 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
   Limitare rigidamente il `devicePixelRatio` a un massimo di `2.0` (`Math.min(window.devicePixelRatio, 2.0)`), attivare un contatore FPS leggero nell'HUD per monitorare i frame e predisporre un sistema di profili di qualità grafica (Bassa, Media, Alta).
 - **Conseguenze**:
   Prestazioni stabili a 30+ FPS su smartphone e 60 FPS su desktop.
+
+---
+
+## ADR 004 - Analisi di Sicurezza delle Dipendenze (npm audit)
+- **Data**: 2026-11-10
+- **Stato**: Approvata
+- **Contesto**:
+  Il comando `npm audit` segnala 8 vulnerabilità (2 low, 4 moderate, 2 critical) relative a:
+  - `@eslint/plugin-kit` (ReDoS via parser commenti di configurazione)
+  - `tinypool` e `@vitest/mocker` (prototype pollution in worker runner locale di Vitest)
+  - `minimatch` (tramite `@typescript-eslint/parser`)
+- **Decisione**:
+  Tutti i pacchetti segnalati appartengono esclusivamente a **`devDependencies`** (strumenti locali di linting e unit testing).
+  Le dipendenze di produzione a runtime (`three` e `three-mesh-bvh`) hanno **0 vulnerabilità**.
+  Si decide di **non eseguire `npm audit fix --force`**, in quanto comporterebbe salti di versione breaking (es. Vitest 5.x o downgrade di `@typescript-eslint/parser` a v6) che romperebbero la suite di test attuale.
+- **Conseguenze**:
+  Nessun impatto o rischio di sicurezza per il bundle WebGL client-side eseguito nel browser dell'utente. L'allineamento del tooling di sviluppo viene formalmente registrato in `TODO.md` come debito tecnico da gestire in una fase di manutenzione dedicata.

@@ -41,4 +41,5 @@ Ultima modifica: 2026-11-10 - v0.1.0 - Completamento Fasi 0 e 1, pianificazione 
 ---
 
 ## 💳 Debito Tecnico
-- La nebbia attuale utilizza `THREE.FogExp2` semplice; nella Fase 3 potrà essere integrato uno shader per dissolvenza volumetrica o sferica localizzata attorno alla lanterna di Pip.
+- **Tooling e devDependencies (npm audit)**: Aggiornamento controllato e pianificato del tooling di sviluppo (Vite, TypeScript, Vitest ed ESLint) per risolvere le segnalazioni di vulnerabilità relative a pacchetti di test e linting (`tinypool`, `@vitest/mocker`, `minimatch`), senza ricorrere a `--force` che introdurrebbe breaking change.
+- **Shader Nebbia**: La nebbia attuale utilizza `THREE.FogExp2` semplice; nella Fase 3 potrà essere integrato uno shader per dissolvenza volumetrica o sferica localizzata attorno alla lanterna di Pip.
