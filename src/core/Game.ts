@@ -56,6 +56,7 @@ export class Game {
 
   private clock: THREE.Clock;
   private isRunning = false;
+  private actionCooldown = 0; // Debounce per prevenire accensione accidentale lanterna durante interazioni
 
   // Monitoraggio FPS e prestazioni
   private fpsCounterElement: HTMLElement | null;
@@ -144,6 +145,7 @@ export class Game {
     });
 
     globalEventBus.on('dialogue-closed', () => {
+      this.actionCooldown = 0.35; // Previene che l'ultimo tocco/tasto E per chiudere il dialogo accenda la lanterna
       if (!this.journalUI.getIsOpen()) {
         this.inputManager.setBlocked(false);
         this.stateManager.setState(GameState.PLAYING);
@@ -230,15 +232,22 @@ export class Game {
       this.player.isLanternActive
     );
 
-    // 4. Gestione pressione tasto azione (E / 🏮)
-    if (this.inputManager.consumeAction()) {
+    // 4. Gestione pressione tasto azione (E / 🏮) con protezione anti-sovrapposizione
+    if (this.actionCooldown > 0) {
+      this.actionCooldown -= dt;
+    }
+
+    if (!this.dialogueSystem.getIsActive() && this.actionCooldown <= 0 && this.inputManager.consumeAction()) {
       if (activeTarget && activeTarget.type === 'npc' && activeTarget.id === 'nonna_bussola') {
-        // Interazione con NPC
+        // Interazione con NPC: avvia dialogo e blocca temporaneamente toggle lanterna
+        this.actionCooldown = 0.35;
         this.nonnaBussola.interact(this.dialogueSystem, this.questSystem);
       } else {
-        // Tasto azione standard: toggle lanterna
+        // Tasto azione standard: toggle lanterna SOLO se non in interazione
+        this.actionCooldown = 0.2;
         this.player.isLanternActive = !this.player.isLanternActive;
         this.player.meshComponents.lanternLight.intensity = this.player.isLanternActive ? 1.5 : 0.0;
+        globalEventBus.emit('lantern-toggled', this.player.isLanternActive);
       }
     }
 

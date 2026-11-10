@@ -6,6 +6,7 @@
  */
 
 import * as THREE from 'three';
+import envConfig from '../data/environment.json';
 import { globalEventBus } from '../core/EventBus';
 
 export class Environment {
@@ -17,21 +18,23 @@ export class Environment {
 
   private waveTimer = 0;
 
-  // Gestione transizione nebbia e colori
-  private currentDensity = 0.018;
-  private targetDensity = 0.018;
+  // Configurazione riutilizzabile da environment.json per tutte le isole future
+  private readonly config = envConfig.atmosphere;
 
-  private restoredSkyColor = new THREE.Color(0x8ecae6); // Turchese dorato caldo e luminoso
-  private currentSkyColor = new THREE.Color(0xa3b8cc);
+  private currentDensity = envConfig.atmosphere.fog.initialDensity;
+  private targetDensity = envConfig.atmosphere.fog.initialDensity;
+
+  private restoredSkyColor = new THREE.Color(envConfig.atmosphere.fog.restoredColor);
+  private currentSkyColor = new THREE.Color(envConfig.atmosphere.fog.initialColor);
 
   private isTransitioning = false;
-  private transitionProgress = 0; // 0 (nebbioso) a 1 (risvegliato)
+  private transitionProgress = 0;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
     // 1. Nebbia semplice iniziale
-    this.fog = new THREE.FogExp2(0xa3b8cc, this.currentDensity);
+    this.fog = new THREE.FogExp2(this.config.fog.initialColor, this.currentDensity);
     this.scene.fog = this.fog;
     this.scene.background = this.currentSkyColor.clone();
 
@@ -40,7 +43,7 @@ export class Environment {
     this.scene.add(this.hemiLight);
 
     // 3. Sole Toon (luce direzionale dorata)
-    this.sunLight = new THREE.DirectionalLight(0xfff1cc, 1.4);
+    this.sunLight = new THREE.DirectionalLight(this.config.sun.color, this.config.sun.initialIntensity);
     this.sunLight.position.set(30, 45, 25);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 1024;
@@ -59,9 +62,9 @@ export class Environment {
     seaGeom.rotateX(-Math.PI / 2);
 
     const seaMaterial = new THREE.MeshToonMaterial({
-      color: 0x4895ef,
+      color: new THREE.Color(this.config.sea.color),
       transparent: true,
-      opacity: 0.88,
+      opacity: this.config.sea.opacity,
     });
 
     this.seaMesh = new THREE.Mesh(seaGeom, seaMaterial);
@@ -89,10 +92,10 @@ export class Environment {
     // Progresso globale (1/7 = ~0.1428)
     const progress = collected / total;
 
-    // Formula calibrazione: scende nettamente a 0.008 sull'isola iniziale per effetto marcato
+    // Formula calibrazione: scende a restoredDensity sull'isola iniziale per effetto marcato
     this.targetDensity = Math.max(
-      0.005,
-      0.018 * (1 - progress * 0.7) - (collected >= 1 ? 0.008 : 0)
+      this.config.fog.minDensity,
+      this.config.fog.initialDensity * (1 - progress * 0.7) - (collected >= 1 ? (this.config.fog.initialDensity - this.config.fog.restoredDensity) : 0)
     );
     this.isTransitioning = true;
   }

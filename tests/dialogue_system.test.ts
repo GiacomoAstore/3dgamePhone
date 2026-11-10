@@ -60,3 +60,4 @@ describe('DialogueSystem e Conversazioni NPC', () => {
     expect(restored.serializeState().currentNodeId).toBe('atlas_story');
   });
 });
+

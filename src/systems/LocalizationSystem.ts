@@ -45,3 +45,4 @@ export class LocalizationSystem {
 }
 
 export const localization = new LocalizationSystem();
+

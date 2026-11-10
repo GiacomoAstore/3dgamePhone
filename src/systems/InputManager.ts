@@ -141,6 +141,10 @@ export class InputManager {
    * Verifica se è stato premuto il tasto azione/lanterna e resetta il flag.
    */
   public consumeAction(): boolean {
+    if (this.isBlocked) {
+      this.actionRequested = false;
+      return false;
+    }
     const action = this.actionRequested || this.touchOverlay.getState().actionPressed;
     this.actionRequested = false;
     return action;

@@ -1,0 +1,22 @@
+{
+  "atmosphere": {
+    "fog": {
+      "initialDensity": 0.018,
+      "restoredDensity": 0.008,
+      "minDensity": 0.005,
+      "initialColor": "#a3b8cc",
+      "restoredColor": "#8ecae6"
+    },
+    "sun": {
+      "initialIntensity": 1.4,
+      "restoredIntensity": 1.85,
+      "color": "#fff1cc"
+    },
+    "sea": {
+      "color": "#4895ef",
+      "opacity": 0.88,
+      "waveSpeed": 1.5,
+      "waveHeight": 0.12
+    }
+  }
+}

@@ -44,6 +44,7 @@ export class DialogueBox {
         this.dialogueSystem.getIsActive() &&
         (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE')
       ) {
+        e.stopPropagation();
         const firstOption =
           this.optionsContainer.querySelector<HTMLButtonElement>('.dialogue-option-btn');
         if (firstOption) {

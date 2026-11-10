@@ -47,5 +47,6 @@ Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima
 ---
 
 ## 💳 Debito Tecnico
+- **Peso Bundle Iniziale e Asset 3D (~600 KB JS)**: L'attuale output di build minificato è di ~600 KB (~157 KB gzip), dovuto quasi interamente al core di Three.js. Quando verranno introdotti modelli binari GLB e tracce audio, sarà necessario valutare il code-splitting con `dynamic import()` e compressione Draco/meshopt/KTX2 per rispettare il budget mobile-first (<15-20 MB di caricamento iniziale).
 - **Tooling e devDependencies (npm audit)**: Aggiornamento controllato del tooling di sviluppo (Vite, TypeScript, Vitest ed ESLint) per risolvere le segnalazioni di vulnerabilità relative a pacchetti di test e linting (`tinypool`, `@vitest/mocker`, `minimatch`), senza ricorrere a `--force`.
 - **Shader Nebbia**: La nebbia attuale utilizza `THREE.FogExp2` semplice; nella Fase 3 potrà essere integrato uno shader per dissolvenza volumetrica o sferica localizzata attorno alla lanterna di Pip.
