@@ -65,10 +65,34 @@ describe('QualitySettingsUI Persistence & Auto-Degrade', () => {
     expect(step2).toBe('low');
     expect(ui.getCurrentQuality()).toBe('low');
 
-    // Terzo degrado: low è già il minimo, restituisce null
+    // Terzo degrado: low è già il minimo, restituisce null (mai risalita automatica)
     const step3 = ui.autoDegradeQuality();
     expect(step3).toBeNull();
     expect(ui.getCurrentQuality()).toBe('low');
+  });
+
+  it('permette di annullare la degradazione automatica tornando al profilo precedente', () => {
+    const ui = new QualitySettingsUI({
+      audioSystem,
+      dayNightCycle,
+      onQualityChange,
+    });
+
+    ui.selectQuality('high', false);
+    expect(ui.getCurrentQuality()).toBe('high');
+
+    // Auto-degrade a medium
+    const step = ui.autoDegradeQuality();
+    expect(step).toBe('medium');
+    expect(ui.getCurrentQuality()).toBe('medium');
+
+    // L'utente preme Annulla -> revertQualityDrop
+    const restored = ui.revertQualityDrop();
+    expect(restored).toBe('high');
+    expect(ui.getCurrentQuality()).toBe('high');
+
+    // Se non ci sono altre degradazioni recenti, revert restituisce null
+    expect(ui.revertQualityDrop()).toBeNull();
   });
 
   it('salva e ricarica le impostazioni da localStorage', () => {

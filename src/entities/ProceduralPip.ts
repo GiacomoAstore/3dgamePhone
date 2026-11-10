@@ -72,15 +72,21 @@ export class ProceduralPip {
     // 1. Corpo a forma di cilindro arrotondato (cappotto)
     const bodyGeom = new THREE.CylinderGeometry(0.24, 0.32, 0.5, 12);
     const body = new THREE.Mesh(bodyGeom, coatMaterial);
+    body.name = 'Pip_Body';
     body.position.y = 0.55;
     body.castShadow = true;
+    const bodyOutline = ToonShaderUtils.createInvertedHullOutline(body, 0.025, 0x162238);
+    body.add(bodyOutline);
     root.add(body);
 
     // 2. Testa sferica morbida
     const headGeom = new THREE.SphereGeometry(0.25, 16, 14);
     const head = new THREE.Mesh(headGeom, skinMaterial);
+    head.name = 'Pip_Head';
     head.position.y = 0.95;
     head.castShadow = true;
+    const headOutline = ToonShaderUtils.createInvertedHullOutline(head, 0.022, 0x162238);
+    head.add(headOutline);
     root.add(head);
 
     // Occhi cartoon
@@ -167,5 +173,15 @@ export class ProceduralPip {
       lantern,
       lanternLight,
     };
+  }
+
+  /**
+   * Mostra o nasconde i contorni toon inverted hull in base al profilo qualitativo.
+   */
+  public static setOutlineVisible(root: THREE.Object3D, visible: boolean): void {
+    const bodyOutline = root.getObjectByName('Pip_Body_outline');
+    if (bodyOutline) bodyOutline.visible = visible;
+    const headOutline = root.getObjectByName('Pip_Head_outline');
+    if (headOutline) headOutline.visible = visible;
   }
 }

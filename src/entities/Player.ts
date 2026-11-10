@@ -9,6 +9,7 @@ import { ProceduralPip, PipMeshComponents } from './ProceduralPip';
 import { InputManager } from '../systems/InputManager';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
+import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Player {
   public meshComponents: PipMeshComponents;
@@ -162,5 +163,12 @@ export class Player {
       this.meshComponents.leftArm.rotation.z = 0.35;
       this.meshComponents.rightArm.rotation.z = -0.35;
     }
+  }
+
+  /**
+   * Adatta la visibilità del contorno toon al profilo qualitativo (disattivato su 'low').
+   */
+  public setQuality(quality: QualityPreset): void {
+    ProceduralPip.setOutlineVisible(this.meshComponents.root, quality !== 'low');
   }
 }

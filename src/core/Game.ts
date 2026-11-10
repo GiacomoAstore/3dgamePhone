@@ -1,10 +1,10 @@
 /**
- * Loop principale e coordinatore del motore di gioco di Brumavento (Fase 3).
+ * Loop principale e coordinatore del motore di gioco di Brumavento.
  * Integra sistemi, dialoghi, missioni, ciclo circadiano, audio procedurale,
- * consumo dell'azione con priorità rigorosa e gestione dinamica della qualità grafica.
+ * consumo dell'azione con priorità unificata, overlay di debug/benchmark e profili grafici.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.0
+ * Ultima modifica: 2026-11-10 - v0.3.1
  */
 
 import * as THREE from 'three';
@@ -29,6 +29,7 @@ import { DialogueBox } from '../ui/DialogueBox';
 import { JournalUI } from '../ui/JournalUI';
 import { QualitySettingsUI } from '../ui/QualitySettingsUI';
 import { NotificationBanner } from '../ui/NotificationBanner';
+import { DebugOverlay } from '../ui/DebugOverlay';
 
 export type QualityPreset = 'low' | 'medium' | 'high';
 
@@ -61,9 +62,11 @@ export class Game {
   public journalUI!: JournalUI;
   public qualitySettingsUI!: QualitySettingsUI;
   public notificationBanner!: NotificationBanner;
+  public debugOverlay!: DebugOverlay;
 
   private clock: THREE.Clock;
   private isRunning = false;
+  private sessionElapsed = 0;
 
   // Monitoraggio FPS e degradazione automatica per hardware modesti
   private fpsCounterElement: HTMLElement | null;
@@ -143,6 +146,19 @@ export class Game {
       audioSystem: this.audioSystem,
       dayNightCycle: this.environment.dayNightCycle,
     });
+
+    // 8. Overlay di Debug e Benchmark
+    this.debugOverlay = new DebugOverlay({
+      renderer: this.renderer,
+      touchOverlay: this.touchOverlay,
+      getQualityPreset: () => this.qualitySettingsUI.getCurrentQuality(),
+    });
+
+    if (this.debugOverlay.getIsBenchmarkRunning()) {
+      this.environment.dayNightCycle.setHourLocked(true);
+      this.environment.dayNightCycle.setTime(12.0);
+      this.autoDegradeCooldown = 9999;
+    }
 
     // Pulsante Impostazioni Top Bar
     const btnSettings = document.getElementById('btn-hud-settings');
@@ -250,6 +266,8 @@ export class Game {
    * Logica di aggiornamento disaccoppiata dal render.
    */
   private update(dt: number): void {
+    this.sessionElapsed += dt;
+
     // 1. Aggiorna ambiente (sole, luna, onde, particelle) e isola
     this.environment.update(dt);
     this.island.update(dt);
@@ -294,8 +312,14 @@ export class Game {
     // 6. Aggiorna Pip con input, collisioni e orientamento camera
     this.player.update(dt, this.inputManager, this.physicsSystem, this.cameraController.yaw);
 
-    // 7. Aggiorna telecamera orbitale
-    this.cameraController.update(dt, this.player.position, this.inputManager);
+    // 7. Aggiorna telecamera: se il benchmark è in corso, segue il percorso automatico
+    const benchmarkCam = this.debugOverlay?.update(dt);
+    if (benchmarkCam) {
+      this.camera.position.copy(benchmarkCam.camPos);
+      this.camera.lookAt(benchmarkCam.targetPos);
+    } else {
+      this.cameraController.update(dt, this.player.position, this.inputManager);
+    }
   }
 
   /**
@@ -307,6 +331,8 @@ export class Game {
 
   /**
    * Calcola il framerate istantaneo e attiva l'auto-degrade se le prestazioni scendono troppo a lungo.
+   * Evita falsi positivi: ignora i primi 5 secondi di avvio, le schede in background (document.hidden)
+   * e la durata del benchmark. Cooldown rigoroso di 30s tra una degradazione e l'altra con pulsante Annulla.
    */
   private updateFps(dt: number): void {
     this.frameCount++;
@@ -326,18 +352,49 @@ export class Game {
       }
       globalEventBus.emit('fps-updated', this.currentFps);
 
-      // Rilevamento FPS bassi persistenti (< 26 FPS per oltre 5 secondi)
+      // 1. Ignora warm-up iniziale di 5 secondi
+      if (this.sessionElapsed < 5.0) return;
+
+      // 2. Ignora schede in background (rallentate nativamente dal browser)
+      if (typeof document !== 'undefined' && document.hidden) {
+        this.lowFpsDuration = 0;
+        return;
+      }
+
+      // 3. Ignora durante le sessioni di benchmark automatizzato
+      if (this.debugOverlay && this.debugOverlay.getIsBenchmarkRunning()) {
+        this.lowFpsDuration = 0;
+        return;
+      }
+
+      // 4. Rilevamento FPS bassi persistenti (< 26 FPS per oltre 5 secondi consecutivi)
       if (this.currentFps < 26 && this.autoDegradeCooldown <= 0) {
         this.lowFpsDuration += 0.5;
         if (this.lowFpsDuration >= 5.0) {
           this.lowFpsDuration = 0;
-          this.autoDegradeCooldown = 20.0; // Cooldown di sicurezza
+          this.autoDegradeCooldown = 30.0; // Cooldown di 30 secondi tra degradazioni successive
           const newPreset = this.qualitySettingsUI.autoDegradeQuality();
           if (newPreset) {
             const msg = LocalizationSystem.t('ui.notification_quality_degraded', {
               level: newPreset.toUpperCase(),
             });
-            this.notificationBanner.show(msg);
+            this.notificationBanner.show(
+              msg,
+              5000,
+              LocalizationSystem.t('ui.btn_undo'),
+              () => {
+                const restored = this.qualitySettingsUI.revertQualityDrop();
+                if (restored) {
+                  this.autoDegradeCooldown = 60.0; // Cooldown esteso se l'utente preferisce il profilo attuale
+                  this.notificationBanner.show(
+                    LocalizationSystem.t('ui.notification_quality_restored', {
+                      level: restored.toUpperCase(),
+                    }),
+                    3000
+                  );
+                }
+              }
+            );
           }
         }
       } else {
@@ -367,6 +424,10 @@ export class Game {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         break;
+    }
+
+    if (this.player) {
+      this.player.setQuality(quality);
     }
 
     if (this.environment) {

@@ -59,20 +59,19 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
 
 ---
 
-## ADR 004 - Analisi di Sicurezza delle Dipendenze (npm audit)
-- **Data**: 2026-11-10
+## ADR 004 - Analisi di Sicurezza delle Dipendenze (npm audit) e Aggiornamento ESLint
+- **Data**: 2026-11-10 (Revisione v0.3.1)
 - **Stato**: Approvata
 - **Contesto**:
-  Il comando `npm audit` segnala 8 vulnerabilità (2 low, 4 moderate, 2 critical) relative a:
-  - `@eslint/plugin-kit` (ReDoS via parser commenti di configurazione)
-  - `tinypool` e `@vitest/mocker` (prototype pollution in worker runner locale di Vitest)
-  - `minimatch` (tramite `@typescript-eslint/parser`)
+  Il comando `npm audit` segnalava inizialmente 8 vulnerabilità in `devDependencies`.
+  Tra queste, `@eslint/plugin-kit <0.3.4` (ReDoS via comment parser) impattava ESLint 9.20.1.
+  Le altre riguardavano `tinypool` e `@vitest/mocker` (prototype pollution nel test runner Vitest 3.x) e `minimatch` in `@typescript-eslint`.
 - **Decisione**:
-  Tutti i pacchetti segnalati appartengono esclusivamente a **`devDependencies`** (strumenti locali di linting e unit testing).
-  Le dipendenze di produzione a runtime (`three` e `three-mesh-bvh`) hanno **0 vulnerabilità**.
-  Si decide di **non eseguire `npm audit fix --force`**, in quanto comporterebbe salti di versione breaking (es. Vitest 5.x o downgrade di `@typescript-eslint/parser` a v6) che romperebbero la suite di test attuale.
+  1. È stato verificato con `npm view eslint versions` che `9.39.5` è l'ultima versione stabile pubblicata della linea 9.x contenente la patch per `@eslint/plugin-kit`. `eslint` è stato aggiornato esattamente a `"9.39.5"` in `package.json` e il lockfile riallineato. Con questo intervento, la vulnerabilità di ESLint è completamente risolta.
+  2. Per `tinypool` e `@vitest/mocker`, la risoluzione richiederebbe `vitest@5.1.0`, che è un major breaking change per l'intero stack di test Vitest 3.x e Vite 6.
+  3. **Condizione esplicita per l'aggiornamento di Vitest/Tinypool**: L'aggiornamento a Vitest 5.x verrà eseguito solo in una sessione di manutenzione dedicata al major upgrade del framework di test, verificando preliminarmente che la nuova major non rompa le API `vi.stubGlobal` per `AudioContext` e `localStorage` e che non introduca incompatibilità peer con `vite@6.4.6`. Fino ad allora rimane formalmente annotato in `TODO.md` come debito tecnico non bloccante (strumenti isolati alla build e assenti dal runtime browser).
 - **Conseguenze**:
-  Nessun impatto o rischio di sicurezza per il bundle WebGL client-side eseguito nel browser dell'utente. L'allineamento del tooling di sviluppo viene formalmente registrato in `TODO.md` come debito tecnico da gestire in una fase di manutenzione dedicata.
+  Zero vulnerabilità nel bundle WebGL client inviato agli smartphone. ESLint allineato all'ultima versione di manutenzione 9.x.
 
 ---
 
@@ -147,3 +146,27 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - *Scena Benchmark (30s)*: Spawn $\rightarrow$ Corsa verso l'Osservatorio $\rightarrow$ Discesa alla scogliera con lanterna e 750 particelle a vista. Obiettivo: $\ge 30$ FPS su smartphone di riferimento, $\ge 60$ FPS su desktop.
 - **Conseguenze**:
   Eliminazione definitiva dei conflitti tra tasto interazione e lanterna, gameplay visivamente chiaro e fruibile all'aperto su smartphone, tolleranza assoluta a file audio mancanti e framerate protetto.
+
+---
+
+## ADR 008 - Politica di Immutabilità dei Tag Git di Rilascio e Patch Release v0.3.1
+- **Data**: 2026-11-10
+- **Stato**: Approvata
+- **Contesto**:
+  Durante la chiusura della versione `0.3.0`, sono state implementate correzioni ai test e al cel-shading. Il tag `v0.3.0` era stato aggiornato localmente con `git tag -a -f`.
+  L'analisi dei remoti (`git remote -v`) ha confermato che il repository è attualmente solo locale e il tag non è mai stato distribuito all'esterno.
+  Tuttavia, per garantire la massima integrità cronologica e tracciabilità ingegneristica (Regola utente 5 e 9), è necessario formalizzare una politica rigorosa sull'immutabilità dei tag.
+- **Decisione**:
+  1. **Immutabilità Assoluta dei Tag Git**: D'ora in poi nessun tag Git già creato verrà mai cancellato o spostato con `-f`, né localmente né in remoto.
+  2. **Patch Release Semantica**: Qualsiasi modifica, correzione o rifinitura successiva a un rilascio richiederà un incremento semantico del numero di patch (`0.3.1`, `0.3.2`, ecc.) con commit dedicato e creazione di un nuovo tag univoco e immutabile.
+  3. **Ambito del Rilascio v0.3.1**:
+     - *Benchmark Deterministico (30s)*: percorso orbitale automatico della camera (`?benchmark=1`), tempo e ora bloccati a mezzogiorno (12:00), auto-degrade sospeso durante il benchmark.
+     - *Debug Overlay & 1% Low FPS*: calcolo analitico di FPS medio, minimo e 1% low tramite buffer circolare di frametime, draw calls WebGL, triangoli, geometrie e texture (`?debug=1`).
+     - *Tracciamento Multi-Touch Diretto*: esposizione nel debug degli stessi identificatori di tocco gestiti nativamente da `TouchOverlay` (joystick, camera, pulsanti), azzerando discrepanze.
+     - *Fallback di Copia Report*: gestione del blocco di `navigator.clipboard` su connessioni HTTP locali non protette tramite apertura automatica di un modal con `<textarea>` selezionabile.
+     - *Taratura Matematica del Contrasto Notturno (WCAG 2.1)*: dimostrazione analitica del contrasto silhouette (cielo/terreno $\ge 3.0:1$) e del ruolo dell'Inverted Hull Toon (`0x162238`) nello stacco di Pip dal terreno ($\ge 3.5:1$).
+     - *Contorno Toon Toggleabile*: disattivazione automatica del contorno Inverted Hull nel profilo qualitativo "Bassa" (`player.setQuality('low')`) per risparmiare draw calls e geometrie su hardware entry-level.
+     - *Auto-Degrade Protetto*: warm-up iniziale di 5s ignorato, schede in background (`document.hidden`) ignorate, cooldown rigoroso di 30s tra una degradazione e l'altra, e toast di notifica con pulsante "Annulla" per ripristinare il profilo precedente.
+     - *Ciclo di Vita Web Audio*: ascolto esteso degli eventi di sblocco (`touchstart`, `pointerdown`, `mousedown`, `click`) e ripresa automatica su evento `visibilitychange` (iOS Safari e Android Chrome).
+- **Conseguenze**:
+  Tracciabilità cronologica trasparente e ineccepibile, zero rischi di tag desincronizzati e suite completa di strumenti diagnostici oggettivi per la validazione su dispositivi reali.

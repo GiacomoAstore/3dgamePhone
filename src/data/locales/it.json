@@ -72,7 +72,9 @@
     "daynight_pause": "Blocca ora corrente",
     "daynight_readable_night": "Notti Chiare (più luminose)",
     "daynight_smooth": "Transizioni Morbide",
-    "notification_quality_degraded": "⚡ Qualità grafica ridotta a {level} per mantenere fluidi i 30 FPS."
+    "notification_quality_degraded": "⚡ Qualità grafica ridotta a {level} per mantenere fluidi i 30 FPS.",
+    "notification_quality_restored": "Qualità grafica ripristinata a {level}.",
+    "btn_undo": "Annulla"
   }
 }
 

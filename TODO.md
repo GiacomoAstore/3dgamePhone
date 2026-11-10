@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima Missione), pianificazione Fase 3
+Ultima modifica: 2026-11-10 - v0.3.1 - Completamento Fase 3 e Pre-Fase 4 (Atmosfera, Benchmark, Debug 1% low, Contrasto WCAG, Toon Outline, Immutabilità Tag)
 -->
 
 ## 🏁 Fasi Completate
@@ -28,16 +28,38 @@ Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima
 - [x] **Ritirata della Nebbia e Viraggio Cromatico**: Transizione animata fluida che dirada la nebbia a 0.008, scalda il cielo verso turchese dorato e ravviva l'erba dell'isola.
 - [x] **Sospensione Comandi**: Blocco pulito di movimento e camera durante dialoghi o diario, con reset istantaneo dei touch pointer del joystick.
 - [x] **Stato Serializzabile (POJO)**: `QuestSystem` e `DialogueSystem` gestiti come oggetti puri per i salvataggi della Fase 4.
-- [x] **Test Unitari**: 22/22 test verdi (compresi nuovi test per quest, dialoghi e collezionabili).
+
+### ✅ Fase 3 & Refinement (v0.3.0 - v0.3.1)
+- [x] **Ciclo Giorno / Notte (`DayNightCycle`)**: 24 ore dinamiche (8 minuti), posizionamento Sole e Luna su arco celeste, calibrazione palette cromatiche (alba, mezzogiorno, tramonto, notte).
+- [x] **Accessibilità Visiva e Oraria**: Opzione per bloccare l'ora, "Notti Chiare" con intensità minima sollevata a 0.65 e transizioni smorzate esponenzialmente per evitare cambi bruschi.
+- [x] **Sintesi Audio Procedurale e Fallback (`AudioSystem`)**: Generatore sonoro Web Audio in tempo reale (brezza marina modulata, passi di Pip, salto cartoon, accensione lanterna, fanfare collezionabili). Supporto trasparente per file audio esterni (`playMusicTrack`, `playSoundFile`) con ripiego automatico su sintesi procedurale in caso di risorsa mancante o offline.
+- [x] **Ciclo di Vita Web Audio Mobile**: Sblocco su eventi `touchstart`, `pointerdown`, `mousedown`, `click` (conforme autoplay policy) e ripresa automatica su `visibilitychange` da background/chiamata.
+- [x] **Cel-Shading a Gradini Discreti & Contorno Toon**: Generazione texture 1D a 3 gradini per shading cartoon; contorno Inverted Hull applicato al modello di Pip con stacco visivo rispetto al terreno.
+- [x] **Contorno Toon Adattivo**: Disattivazione automatica dell'outline su profilo "Bassa" (`setQuality('low')`) per azzerare il costo di render su dispositivi modesti.
+- [x] **Particelle d'Atmosfera (`ParticleSystem`)**: Lucciole fluttuanti, polline del vento, spuma alla battigia e stelle notturne in singola draw-call instanziata.
+- [x] **Priorità Unica dell'Azione (`ActionPriorityDispatcher`)**: Consumo gerarchico dell'azione (Dialogo -> Interazione NPC -> Lanterna) senza debounce a timer.
+- [x] **Pannello Impostazioni & Auto-Degrade (`QualitySettingsUI`)**: Rilevamento automatico profilo (Mobile $\rightarrow$ Media, Desktop $\rightarrow$ Alta), persistenza su `localStorage`, declassamento automatico su frame drop persistenti con protezione anti-falsi positivi (warm-up 5s, tab nascosta, cooldown 30s) e toast con pulsante "Annulla".
+- [x] **Strumenti Diagnostici e Benchmark**:
+  - `?debug=1`: Overlay con FPS medio, minimo, 1% low, draw calls, triangoli, geometrie, texture e monitor multi-touch da `TouchOverlay`.
+  - `?benchmark=1`: Benchmark di 30s deterministico con traiettoria orbitale automatica, ora bloccata a mezzogiorno e auto-degrade disattivato.
+  - Copia report negli appunti con fallback automatico su modal con `<textarea>` selezionabile per connessioni HTTP locali.
+- [x] **Verifica Contrasto Notturno WCAG 2.1**: Test matematico relativo alle luminanze ITU-R BT.709 che prova contrasto silhouette $\ge 3.0:1$ e contorno $\ge 3.5:1$.
+- [x] **Suite di Test Completa**: 69 test in 18 file, tutti verdi (`npm test`).
+- [x] **Checklist di Verifica Manuale**: File `tests/MANUAL_CHECKLIST.md` creato per la validazione fisica su smartphone e desktop.
 
 ---
 
-## 🎯 Prossimi Obiettivi: Fase 3 (Atmosfera & Rifiniture)
-- [ ] Materiali Toon personalizzati con sfumature a gradini discrete e contorni (outline opzionale).
-- [ ] Ciclo Giorno / Notte dinamico (alba, mezzogiorno dorato, tramonto corallo, notte stellata).
-- [ ] Sistema particellare (lucciole notturne attorno ai funghi, polline, spuma delle onde).
-- [ ] Audio ed effetti sonori con Howler.js (onde del mare, passi, accensione lanterna, fanfara recupero frammento).
-- [ ] Valutazione integrazione modelli GLB gratuiti (Kenney Nature Kit / Town Kit) in sostituzione graduale delle forme procedurali.
+## 🎯 Prossimi Obiettivi: Fase 4 (Salvataggi, Viaggio e Seconda Isola)
+- [ ] **Sistema di Salvataggio Persistente (v0.4.0)**:
+  - Salvataggio automatico versionato in `localStorage` o `IndexedDB` (posizione di Pip, stato quest, inventario frammenti e reperti, impostazioni audio/grafica).
+  - Slot di salvataggio e opzione per ricominciare l'esplorazione.
+- [ ] **Il Capitano Marea e il Veliero**:
+  - Nuovo NPC (Capitano Marea) al pontile dell'Isola della Bussola.
+  - Sequenza di transizione nautica per raggiungere la seconda isola.
+- [ ] **Seconda Isola dell'Arcipelago**:
+  - Nuova isola con topografia differente (es. scogliere a picco, grotte con funghi luminescenti o piccolo faro).
+  - Nuova missione per il 2° Frammento dell'Atlante Vivo.
+- [ ] **Asset 3D Modulari**: Valutazione integrazione modelli GLB gratuiti (Kenney Nature Kit / Town Kit) con licenze verificate.
 
 ---
 
@@ -47,6 +69,6 @@ Ultima modifica: 2026-11-10 - v0.2.0 - Completamento Fase 2 (Interazione e Prima
 ---
 
 ## 💳 Debito Tecnico
-- **Peso Bundle Iniziale e Asset 3D (~600 KB JS)**: L'attuale output di build minificato è di ~600 KB (~157 KB gzip), dovuto quasi interamente al core di Three.js. Quando verranno introdotti modelli binari GLB e tracce audio, sarà necessario valutare il code-splitting con `dynamic import()` e compressione Draco/meshopt/KTX2 per rispettare il budget mobile-first (<15-20 MB di caricamento iniziale).
-- **Tooling e devDependencies (npm audit)**: Aggiornamento controllato del tooling di sviluppo (Vite, TypeScript, Vitest ed ESLint) per risolvere le segnalazioni di vulnerabilità relative a pacchetti di test e linting (`tinypool`, `@vitest/mocker`, `minimatch`), senza ricorrere a `--force`.
-- **Shader Nebbia**: La nebbia attuale utilizza `THREE.FogExp2` semplice; nella Fase 3 potrà essere integrato uno shader per dissolvenza volumetrica o sferica localizzata attorno alla lanterna di Pip.
+- **Peso Bundle JS (~640 KB minificato, ~167 KB gzip)**: Dovuto essenzialmente al core di Three.js e BVH. Nella Fase 4, all'introduzione di modelli binari GLB e tracce audio, implementare il code-splitting con `dynamic import()` per mantenere il download iniziale sotto la soglia critica mobile.
+- **Aggiornamento Vitest / Tinypool**: ESLint è stato aggiornato a `9.39.5` (vulnerabilità `@eslint/plugin-kit` risolta). La migrazione di Vitest e Tinypool a Vitest 5.x è programmata come major upgrade dedicato, previa verifica della compatibilità con le API di mocking e con Vite 6 (ADR 004).
+- **Shader Nebbia Avanzato**: La nebbia utilizza `THREE.FogExp2` configurata in `environment.json`; valutabile l'aggiunta di un raggio di dissolvenza volumetrico attorno alla lanterna di Pip.

@@ -70,13 +70,16 @@ export class AudioSystem {
   /**
    * Sblocca l'AudioContext in risposta al primo tocco o click (Mobile autoplay policy).
    */
-  public unlockAudio(): void {
+  public async unlockAudio(): Promise<void> {
     if (!this.ctx) return;
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume().then(() => {
+    if (this.ctx.state === 'suspended' || (this.ctx.state as string) === 'interrupted') {
+      try {
+        await this.ctx.resume();
         this.isUnlocked = true;
         this.startSeaBreezeAmbient();
-      }).catch((e) => console.warn('[AudioSystem] Errore nello sblocco audio:', e));
+      } catch (e) {
+        console.warn('[AudioSystem] Errore nello sblocco audio:', e);
+      }
     } else {
       this.isUnlocked = true;
       this.startSeaBreezeAmbient();
@@ -84,15 +87,23 @@ export class AudioSystem {
   }
 
   private initEventListeners(): void {
-    // Sblocca al primo tocco su mobile o click
+    // Sblocca al primo tocco o interazione su mobile e desktop
     if (typeof window !== 'undefined') {
+      const unlockEvents = ['touchstart', 'pointerdown', 'mousedown', 'click'];
       const unlockHandler = () => {
         this.unlockAudio();
-        window.removeEventListener('click', unlockHandler);
-        window.removeEventListener('touchstart', unlockHandler);
+        unlockEvents.forEach((evt) => window.removeEventListener(evt, unlockHandler));
       };
-      window.addEventListener('click', unlockHandler, { once: true });
-      window.addEventListener('touchstart', unlockHandler, { once: true });
+      unlockEvents.forEach((evt) =>
+        window.addEventListener(evt, unlockHandler, { once: true, passive: true })
+      );
+
+      // Ripristino automatico dell AudioContext quando la scheda torna visibile (iOS/Android)
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+          this.handleVisibilityChange(document.visibilityState === 'visible');
+        });
+      }
     }
 
     // Iscrizione agli eventi di gioco per il feedback sonoro
@@ -423,6 +434,22 @@ export class AudioSystem {
       }
       this.currentMusicAudio = null;
     }
+  }
+
+  public async handleVisibilityChange(isVisible: boolean): Promise<void> {
+    if (isVisible && this.isUnlocked && this.ctx) {
+      if (this.ctx.state === 'suspended' || (this.ctx.state as string) === 'interrupted') {
+        try {
+          await this.ctx.resume();
+        } catch (err) {
+          console.warn('[AudioSystem] Ripresa AudioContext fallita:', err);
+        }
+      }
+    }
+  }
+
+  public getContextState(): AudioContextState | null {
+    return this.ctx ? this.ctx.state : null;
   }
 
   public getIsUnlocked(): boolean {

@@ -217,6 +217,12 @@ export class DayNightCycle {
     this.timeScale = Math.max(0.05, Math.min(10.0, scale));
   }
 
+  public setTime(hour: number): void {
+    this.currentHour = ((hour % 24) + 24) % 24;
+    this.dampedSunIntensity = this.calculateRawSunIntensity();
+    this.dampedAmbientIntensity = this.calculateRawAmbientIntensity();
+  }
+
   public getTimeScale(): number {
     return this.timeScale;
   }

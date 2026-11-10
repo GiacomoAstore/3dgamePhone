@@ -1,0 +1,19 @@
+{
+  "islands": [
+    {
+      "id": "compass_island",
+      "nameKey": "islands.compass_island.name",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "dockPosition": { "x": 22.0, "y": 0.4, "z": 1.5 },
+      "hasLighthouse": false
+    },
+    {
+      "id": "lighthouse_island",
+      "nameKey": "islands.lighthouse_island.name",
+      "position": { "x": 95.0, "y": 0.0, "z": -75.0 },
+      "dockPosition": { "x": 78.0, "y": 0.4, "z": -60.0 },
+      "hasLighthouse": true
+    }
+  ]
+}
+

@@ -1,14 +1,23 @@
 /**
  * Gestione interfaccia touch e joystick virtuale per smartphone.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.3.1
  */
+
+import { controlsConfig } from '../data/controlsConfig';
 
 export interface TouchInputState {
   joystickVector: { x: number; y: number };
   cameraDelta: { x: number; y: number };
   jumpPressed: boolean;
   actionPressed: boolean;
+}
+
+export interface TouchPointDebug {
+  identifier: number;
+  clientX: number;
+  clientY: number;
+  role: 'joystick' | 'camera' | 'jump' | 'action' | 'other';
 }
 
 export class TouchOverlay {
@@ -27,8 +36,10 @@ export class TouchOverlay {
 
   private joystickTouchId: number | null = null;
   private cameraTouchId: number | null = null;
+  private jumpTouchId: number | null = null;
+  private actionTouchId: number | null = null;
+
   private joystickCenter = { x: 0, y: 0 };
-  private maxJoystickRadius = 45; // Pixel massimi di escursione
   private lastCameraTouch = { x: 0, y: 0 };
 
   constructor() {
@@ -46,7 +57,7 @@ export class TouchOverlay {
    * Mostra i comandi touch se il dispositivo supporta il tocco o la finestra è ridotta.
    */
   private checkVisibility(): void {
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isTouch = 'ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0);
     const isMobileWidth = window.innerWidth <= 840;
     if (isTouch || isMobileWidth) {
       this.container.classList.remove('hidden');
@@ -82,8 +93,8 @@ export class TouchOverlay {
           } else if (touch.identifier === this.cameraTouchId) {
             const dx = touch.clientX - this.lastCameraTouch.x;
             const dy = touch.clientY - this.lastCameraTouch.y;
-            this.state.cameraDelta.x += dx * 0.005;
-            this.state.cameraDelta.y += dy * 0.005;
+            this.state.cameraDelta.x += dx * controlsConfig.cameraTouchSensitivity;
+            this.state.cameraDelta.y += dy * controlsConfig.cameraTouchSensitivity;
             this.lastCameraTouch = { x: touch.clientX, y: touch.clientY };
           }
         }
@@ -100,6 +111,14 @@ export class TouchOverlay {
           this.joystickThumb.style.transform = 'translate(0px, 0px)';
         } else if (touch.identifier === this.cameraTouchId) {
           this.cameraTouchId = null;
+        } else if (touch.identifier === this.jumpTouchId) {
+          this.jumpTouchId = null;
+          this.state.jumpPressed = false;
+          this.btnJump.classList.remove('active');
+        } else if (touch.identifier === this.actionTouchId) {
+          this.actionTouchId = null;
+          this.state.actionPressed = false;
+          this.btnAction.classList.remove('active');
         }
       }
     };
@@ -114,7 +133,7 @@ export class TouchOverlay {
         // Se tocco sulla metà destra e non dentro l'action zone
         const isRightHalf = touch.clientX > window.innerWidth * 0.45;
         const target = touch.target as HTMLElement;
-        const isButton = target.closest('#action-zone') !== null;
+        const isButton = target && target.closest && target.closest('#action-zone') !== null;
         if (isRightHalf && !isButton && this.cameraTouchId === null) {
           this.cameraTouchId = touch.identifier;
           this.lastCameraTouch = { x: touch.clientX, y: touch.clientY };
@@ -127,6 +146,8 @@ export class TouchOverlay {
       'touchstart',
       (e) => {
         e.preventDefault();
+        const touch = e.changedTouches[0];
+        if (touch) this.jumpTouchId = touch.identifier;
         this.state.jumpPressed = true;
         this.btnJump.classList.add('active');
       },
@@ -135,6 +156,7 @@ export class TouchOverlay {
 
     this.btnJump.addEventListener('touchend', (e) => {
       e.preventDefault();
+      this.jumpTouchId = null;
       this.state.jumpPressed = false;
       this.btnJump.classList.remove('active');
     });
@@ -144,6 +166,8 @@ export class TouchOverlay {
       'touchstart',
       (e) => {
         e.preventDefault();
+        const touch = e.changedTouches[0];
+        if (touch) this.actionTouchId = touch.identifier;
         this.state.actionPressed = true;
         this.btnAction.classList.add('active');
       },
@@ -152,6 +176,7 @@ export class TouchOverlay {
 
     this.btnAction.addEventListener('touchend', (e) => {
       e.preventDefault();
+      this.actionTouchId = null;
       this.state.actionPressed = false;
       this.btnAction.classList.remove('active');
     });
@@ -161,19 +186,70 @@ export class TouchOverlay {
     const dx = clientX - this.joystickCenter.x;
     const dy = clientY - this.joystickCenter.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
 
-    const clampedDist = Math.min(distance, this.maxJoystickRadius);
+    // Zona morta per prevenire derive microscopiche
+    if (distance < controlsConfig.joystickDeadzone) {
+      this.joystickThumb.style.transform = 'translate(0px, 0px)';
+      this.state.joystickVector = { x: 0, y: 0 };
+      return;
+    }
+
+    const angle = Math.atan2(dy, dx);
+    const clampedDist = Math.min(distance, controlsConfig.joystickRadius);
     const thumbX = Math.cos(angle) * clampedDist;
     const thumbY = Math.sin(angle) * clampedDist;
 
     this.joystickThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
 
-    // Vettore normalizzato (-1 a 1)
+    // Vettore normalizzato (-1 a 1) scalato dal raggio effettivo
+    const effectiveSpan = controlsConfig.joystickRadius - controlsConfig.joystickDeadzone;
+    const normalizedMag = (clampedDist - controlsConfig.joystickDeadzone) / effectiveSpan;
+
     this.state.joystickVector = {
-      x: thumbX / this.maxJoystickRadius,
-      y: thumbY / this.maxJoystickRadius,
+      x: Math.cos(angle) * normalizedMag,
+      y: Math.sin(angle) * normalizedMag,
     };
+  }
+
+  /**
+   * Restituisce i touch identifiers attivi tracciati dai comandi di gioco
+   * (usato da DebugOverlay per evitare discrepanze tra debug e controlli reali).
+   */
+  public getActiveTouchesDebug(): TouchPointDebug[] {
+    const result: TouchPointDebug[] = [];
+    if (this.joystickTouchId !== null) {
+      result.push({
+        identifier: this.joystickTouchId,
+        clientX: this.joystickCenter.x + this.state.joystickVector.x * controlsConfig.joystickRadius,
+        clientY: this.joystickCenter.y + this.state.joystickVector.y * controlsConfig.joystickRadius,
+        role: 'joystick',
+      });
+    }
+    if (this.cameraTouchId !== null) {
+      result.push({
+        identifier: this.cameraTouchId,
+        clientX: this.lastCameraTouch.x,
+        clientY: this.lastCameraTouch.y,
+        role: 'camera',
+      });
+    }
+    if (this.jumpTouchId !== null) {
+      result.push({
+        identifier: this.jumpTouchId,
+        clientX: 0,
+        clientY: 0,
+        role: 'jump',
+      });
+    }
+    if (this.actionTouchId !== null) {
+      result.push({
+        identifier: this.actionTouchId,
+        clientX: 0,
+        clientY: 0,
+        role: 'action',
+      });
+    }
+    return result;
   }
 
   /**
@@ -183,6 +259,8 @@ export class TouchOverlay {
   public resetInputs(): void {
     this.joystickTouchId = null;
     this.cameraTouchId = null;
+    this.jumpTouchId = null;
+    this.actionTouchId = null;
     this.state.joystickVector = { x: 0, y: 0 };
     this.state.cameraDelta = { x: 0, y: 0 };
     this.state.jumpPressed = false;

@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-10 - v0.3.0 - Documentazione Fase 3 (Atmosfera, Audio Sintetico, Ciclo Giorno/Notte, Particelle e Impostazioni)
+Ultima modifica: 2026-11-10 - v0.3.1 - Refinement Pre-Fase 4 (Benchmark 30s deterministico, Debug Overlay 1% low, Contrasto WCAG, Toon Outline toggleabile e Guida Wi-Fi)
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  
@@ -43,6 +43,45 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
      ```
 3. **Apri dal telefono**: apri Safari (iOS) o Chrome (Android) e digita l'indirizzo mostrato (es. `http://192.168.1.45:5173`).
 4. **Gioca**: premi **"Inizia Esplorazione"**. Lo schermo si adatta a tutto schermo con controlli touch reattivi, blocco del pinch-to-zoom indesiderato e dialoghi touch leggibili.
+
+#### ⚠️ Se lo smartphone non si collega sulla rete Wi-Fi:
+Se il browser del telefono segnala "Impossibile raggiungere il sito" o resta in caricamento infinito, controlla questi tre punti tipici dei sistemi Windows e router domestici:
+1. **Firewall di Windows Defender**:
+   - Windows spesso blocca il traffico in entrata su porte non standard come `5173`.
+   - Per consentire l'accesso temporaneo, esegui in PowerShell (come Amministratore):
+     ```powershell
+     New-NetFirewallRule -DisplayName "Brumavento Dev Server 5173" -Direction Inbound -LocalPort 5173 -Protocol TCP -Action Allow
+     ```
+   - In alternativa, quando Windows mostra il pop-up "Avviso di sicurezza Windows Defender", spunta sia le reti private che quelle pubbliche e consenti l'accesso a `node.exe`.
+2. **Isolamento AP (Client Isolation) sul Router Wi-Fi**:
+   - Alcuni router (specialmente reti aziendali, hotspot di hotel o router con "Rete Ospiti") hanno attiva la funzione *Client Isolation* (o *AP Isolation*), che impedisce ai dispositivi connessi al Wi-Fi di comunicare tra loro.
+   - Collega entrambi i dispositivi alla rete Wi-Fi principale (non ospite) o crea un hotspot Wi-Fi temporaneo dal telefono connettendo il PC.
+3. **Avvio con Vite Preview su bundle di produzione**:
+   - Per testare le massime prestazioni reali senza il sovraccarico di Vite HMR:
+     ```bash
+     npm run build
+     npx vite preview --host 0.0.0.0 --port 5173
+     ```
+
+---
+
+## ⏱️ Modalità Debug e Benchmark Automatico (30s)
+
+Per eseguire analisi oggettive e ripetibili senza variazioni manuali:
+- **Modalità Debug (`?debug=1`)**:
+  - Apri `http://localhost:5173/?debug=1` (o l'IP locale).
+  - Mostra a schermo in tempo reale: FPS medio, FPS minimo, **1% Low FPS**, draw calls WebGL, triangoli renderizzati, memorie (geometrie e texture), profilo grafico attivo e i touch identifier tracciati da `TouchOverlay`.
+  - Cliccando su **"Copia Report"** genera un report formattato negli appunti (o apre un modal con `<textarea>` selezionabile se la clipboard di sistema è bloccata su HTTP non protetto).
+- **Modalità Benchmark Automatico (`?benchmark=1`)**:
+  - Apri `http://localhost:5173/?benchmark=1`.
+  - Blocca l'ora del giorno a mezzogiorno (12:00 solare), disattiva l'auto-degrade e pilota automaticamente la telecamera lungo una traiettoria orbitale deterministica attorno all'isola per 30 secondi.
+  - Al termine mostra il report finale congelato con il riepilogo metrico completo.
+
+---
+
+## 📋 Checklist di Verifica Manuale
+La lista delle prove fisiche su smartphone e desktop (audio lifecycle, multi-touch, contrasto visivo notturno, toggle outline e benchmark) è documentata in:
+👉 **[tests/MANUAL_CHECKLIST.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/tests/MANUAL_CHECKLIST.md)**
 
 ---
 
@@ -107,7 +146,7 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di 54 test unitari con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback, cel-shading, ciclo circadiano e persistenza impostazioni).
+- `npm test`: esegue la suite completa di 69 test unitari e di integrazione con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
 - `npm run lint`: analisi statica del codice con **ESLint** per TypeScript.
 - `npm run format`: formattazione automatica del codice sorgente con **Prettier**.
 

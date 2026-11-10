@@ -13,9 +13,11 @@
 
 import { AudioSystem } from '../systems/AudioSystem';
 import { DayNightCycle } from '../systems/DayNightCycle';
-import { QualityPreset } from '../core/Game';
+import type { QualityPreset } from '../core/Game';
 import { globalEventBus } from '../core/EventBus';
 import { LocalizationSystem } from '../systems/LocalizationSystem';
+
+export type { QualityPreset };
 
 export interface QualitySettingsOptions {
   onQualityChange: (quality: QualityPreset) => void;
@@ -41,6 +43,7 @@ export class QualitySettingsUI {
   private isOpen = false;
 
   private currentQuality: QualityPreset = 'high';
+  private previousQuality: QualityPreset | null = null;
   private audioSystem: AudioSystem;
   private dayNightCycle?: DayNightCycle;
   private onQualityChange: (quality: QualityPreset) => void;
@@ -397,12 +400,27 @@ export class QualitySettingsUI {
    */
   public autoDegradeQuality(): QualityPreset | null {
     if (this.currentQuality === 'high') {
+      this.previousQuality = 'high';
       this.selectQuality('medium', true);
       return 'medium';
     }
     if (this.currentQuality === 'medium') {
+      this.previousQuality = 'medium';
       this.selectQuality('low', true);
       return 'low';
+    }
+    return null;
+  }
+
+  /**
+   * Ripristina il profilo precedente se l'utente annulla la degradazione automatica.
+   */
+  public revertQualityDrop(): QualityPreset | null {
+    if (this.previousQuality) {
+      const restored = this.previousQuality;
+      this.previousQuality = null;
+      this.selectQuality(restored, true);
+      return restored;
     }
     return null;
   }

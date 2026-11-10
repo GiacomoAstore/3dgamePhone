@@ -115,3 +115,4 @@ export class ToonShaderUtils {
     return outlineMesh;
   }
 }
+
