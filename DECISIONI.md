@@ -23,24 +23,27 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
 
 ---
 
-## ADR 002 - Scelta delle Versioni del Tooling (Vite 6.4.6, TypeScript 5.7.3, Three.js 0.180.0)
+## ADR 002 - Scelta e Blocco delle Versioni del Tooling (Vite 6.4.6, TypeScript 5.7.3, Three.js 0.180.0)
 - **Data**: 2026-11-10
 - **Stato**: Approvata
 - **Contesto**:
-  In data 2026-11-10, npm presenta release maggiori recenti (es. Vite 8.x e TypeScript 7.x). Per lo sviluppo di *Brumavento*, è fondamentale la massima stabilità e la piena compatibilità con l'ecosistema `@types/three` e `three-mesh-bvh`.
+  La verifica del registro npm (`npm view <pkg> dist-tags`) mostra che il tag `latest` per Vite è `8.3.7` (con tag `previous` su `6.4.6`) e per TypeScript è `7.0.2`.
+  Né Vite né TypeScript adottano una denominazione ufficiale di supporto a lungo termine ("LTS").
+  La dicitura iniziale che qualificava Vite 6.4.6 come "LTS" era errata e non verificata.
 - **Decisione**:
-  Bloccare le versioni esatte (senza `^` o `~`) su:
+  Bloccare le versioni esatte (senza `^` o `~`) nel `package.json` su:
   - `three`: `0.180.0`
   - `three-mesh-bvh`: `0.9.18`
   - `@types/three`: `0.180.0`
-  - `vite`: `6.4.6` (LTS ampiamente consolidata per server e bundler web)
-  - `typescript`: `5.7.3` (stabilità garantita dei tipi Three.js senza breaking changes)
+  - `vite`: `6.4.6` (versione risolta all'installazione iniziale, corrispondente al tag `previous` di Vite)
+  - `typescript`: `5.7.3` (versione iniziale della linea 5.x, pienamente compatibile con `@types/three`)
   - `vitest`: `3.2.7`
-  - `eslint`: `9.20.1` e `prettier`: `3.5.1`
-- **Alternative considerate**:
-  - Utilizzare le versioni cutting-edge (Vite 8 e TS 7): scartate per evitare potenziali incompatibilità nei plugin di bundler e nelle definizioni dei tipi Three.js.
+  - `eslint`: `9.20.1` e `@typescript-eslint/parser`: `8.24.1`
+  - `prettier`: `3.5.1`
+- **Motivazione della scelta**:
+  Garantire stabilità e riproducibilità immediata della pipeline di build e test, evitando breaking change introdotte nelle major release successive di Vite (v7/v8) e TypeScript (v7) per non rallentare lo sviluppo del prototipo.
 - **Conseguenze**:
-  Build deterministica, riproducibile e protetta da discrepanze impreviste.
+  Build deterministica e isolata da aggiornamenti impliciti di pacchetti terzi.
 
 ---
 
