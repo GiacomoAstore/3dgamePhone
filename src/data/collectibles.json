@@ -1,0 +1,67 @@
+{
+  "collectibles": [
+    {
+      "id": "atlas_fragment_1",
+      "type": "fragment",
+      "nameKey": "collectibles.fragment.name",
+      "position": { "x": 18.0, "y": 1.8, "z": -15.0 },
+      "requiresLantern": true
+    },
+    {
+      "id": "seashell_0",
+      "type": "seashell",
+      "nameKey": "collectibles.seashell.name",
+      "position": { "x": -5.0, "y": 0.1, "z": 22.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "seashell_1",
+      "type": "seashell",
+      "nameKey": "collectibles.seashell.name",
+      "position": { "x": 8.0, "y": 0.15, "z": 20.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "seashell_2",
+      "type": "seashell",
+      "nameKey": "collectibles.seashell.name",
+      "position": { "x": -16.0, "y": 0.2, "z": 14.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "mushroom_0",
+      "type": "mushroom",
+      "nameKey": "collectibles.mushroom.name",
+      "position": { "x": -7.0, "y": 2.1, "z": -5.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "mushroom_1",
+      "type": "mushroom",
+      "nameKey": "collectibles.mushroom.name",
+      "position": { "x": 11.0, "y": 1.5, "z": -8.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "mushroom_2",
+      "type": "mushroom",
+      "nameKey": "collectibles.mushroom.name",
+      "position": { "x": -11.0, "y": 1.8, "z": 5.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "starfish_0",
+      "type": "starfish",
+      "nameKey": "collectibles.starfish.name",
+      "position": { "x": -2.5, "y": 0.1, "z": 25.0 },
+      "requiresLantern": false
+    },
+    {
+      "id": "starfish_1",
+      "type": "starfish",
+      "nameKey": "collectibles.starfish.name",
+      "position": { "x": 3.5, "y": 0.1, "z": 23.0 },
+      "requiresLantern": false
+    }
+  ]
+}

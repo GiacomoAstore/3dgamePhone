@@ -1,0 +1,25 @@
+{
+  "quests": [
+    {
+      "id": "quest_1",
+      "titleKey": "quests.quest_1.title",
+      "descriptionKey": "quests.quest_1.description",
+      "giver": "nonna_bussola",
+      "requiredFragments": 1,
+      "stages": [
+        {
+          "stageId": 0,
+          "objectiveKey": "quests.quest_1.stage_0"
+        },
+        {
+          "stageId": 1,
+          "objectiveKey": "quests.quest_1.stage_1"
+        },
+        {
+          "stageId": 2,
+          "objectiveKey": "quests.quest_1.stage_2"
+        }
+      ]
+    }
+  ]
+}

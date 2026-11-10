@@ -1,0 +1,41 @@
+{
+  "nonna_bussola": {
+    "characterKey": "nonna_bussola",
+    "avatar": "👵",
+    "initialNode": "start",
+    "nodes": {
+      "start": {
+        "textKey": "dialogues.nonna_bussola.node_start_text",
+        "options": [
+          { "textKey": "dialogues.nonna_bussola.opt_help", "nextNode": "lantern_quest" },
+          { "textKey": "dialogues.nonna_bussola.opt_atlas", "nextNode": "atlas_story" }
+        ]
+      },
+      "atlas_story": {
+        "textKey": "dialogues.nonna_bussola.node_atlas_text",
+        "options": [
+          { "textKey": "dialogues.nonna_bussola.opt_how_to_find", "nextNode": "lantern_quest" }
+        ]
+      },
+      "lantern_quest": {
+        "textKey": "dialogues.nonna_bussola.node_lantern_quest_text",
+        "action": "start_quest_1",
+        "options": [
+          { "textKey": "dialogues.nonna_bussola.opt_accept_quest", "nextNode": null }
+        ]
+      },
+      "quest_1_active": {
+        "textKey": "dialogues.nonna_bussola.node_quest_1_active_text",
+        "options": [
+          { "textKey": "dialogues.nonna_bussola.opt_continue_searching", "nextNode": null }
+        ]
+      },
+      "quest_1_completed": {
+        "textKey": "dialogues.nonna_bussola.node_quest_1_completed_text",
+        "options": [
+          { "textKey": "dialogues.nonna_bussola.opt_complete_dialogue", "nextNode": null }
+        ]
+      }
+    }
+  }
+}

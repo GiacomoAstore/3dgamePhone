@@ -15,6 +15,7 @@ export interface MovementInput {
 export class InputManager {
   private keysDown: Set<string> = new Set();
   private touchOverlay: TouchOverlay;
+  private isBlocked = false;
 
   // Rotazione camera da mouse
   private mouseDelta = { x: 0, y: 0 };
@@ -28,6 +29,23 @@ export class InputManager {
     this.touchOverlay = touchOverlay;
     this.initKeyboardEvents();
     this.initMouseEvents();
+  }
+
+  /**
+   * Sospende o riattiva gli input di movimento e camera (dialogo o diario aperto).
+   * Resetta contestualmente tutti i puntatori touch e i tasti premuti.
+   */
+  public setBlocked(blocked: boolean): void {
+    this.isBlocked = blocked;
+    this.keysDown.clear();
+    this.mouseDelta = { x: 0, y: 0 };
+    this.jumpRequested = false;
+    this.actionRequested = false;
+    this.touchOverlay.resetInputs();
+  }
+
+  public getIsBlocked(): boolean {
+    return this.isBlocked;
   }
 
   private initKeyboardEvents(): void {
@@ -70,6 +88,10 @@ export class InputManager {
    * Restituisce la direzione di movimento normalizzata combinando desktop e mobile.
    */
   public getMovement(): MovementInput {
+    if (this.isBlocked) {
+      return { x: 0, z: 0, length: 0 };
+    }
+
     let x = 0;
     let z = 0;
 
@@ -106,6 +128,10 @@ export class InputManager {
    * Verifica se è stato richiesto il salto e resetta il flag.
    */
   public consumeJump(): boolean {
+    if (this.isBlocked) {
+      this.jumpRequested = false;
+      return false;
+    }
     const jump = this.jumpRequested || this.touchOverlay.getState().jumpPressed;
     this.jumpRequested = false;
     return jump;
@@ -125,6 +151,10 @@ export class InputManager {
    */
   public consumeCameraDelta(): { x: number; y: number } {
     const touchCameraDelta = this.touchOverlay.consumeCameraDelta();
+    if (this.isBlocked) {
+      this.mouseDelta = { x: 0, y: 0 };
+      return { x: 0, y: 0 };
+    }
     const totalDelta = {
       x: this.mouseDelta.x + touchCameraDelta.x,
       y: this.mouseDelta.y + touchCameraDelta.y,

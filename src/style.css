@@ -1,7 +1,7 @@
 /**
  * Stili di Brumavento - Mobile First & Responsive Overlay
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.2.0
  */
 
 * {
@@ -19,7 +19,7 @@ html, body {
   overflow: hidden;
   background-color: #1a2332;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  touch-action: none; /* Disattiva pinch-zoom e scroll browser per esperienza nativa */
+  touch-action: none;
 }
 
 #game-container {
@@ -43,7 +43,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* Permette al touch/click di passare al 3D salvo sugli elementi attivi */
+  pointer-events: none;
   z-index: 10;
 }
 
@@ -59,8 +59,14 @@ html, body {
   pointer-events: auto;
 }
 
+.top-bar-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .hud-pill {
-  background: rgba(26, 35, 50, 0.75);
+  background: rgba(26, 35, 50, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #f7ede2;
@@ -70,6 +76,21 @@ html, body {
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-journal {
+  cursor: pointer;
+  background: rgba(42, 157, 143, 0.9);
+  color: white;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-journal:active {
+  transform: scale(0.95);
+  background: rgba(231, 111, 81, 0.9);
 }
 
 .badge-fps {
@@ -78,7 +99,279 @@ html, body {
   color: #84a98c;
 }
 
-/* Schermate e dialoghi */
+/* Toast Notifica a comparsa */
+.toast-banner {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 16px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #2a9d8f, #264653);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 25;
+  text-align: center;
+  max-width: 90%;
+}
+
+.toast-banner.hidden {
+  opacity: 0;
+  transform: translate(-50%, -15px);
+  pointer-events: none;
+}
+
+/* Prompt Interazione a schermo */
+.interaction-pill {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 24px) + 160px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(231, 111, 81, 0.92);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  border: 2px solid #fff;
+  animation: bouncePill 1.6s infinite ease-in-out;
+}
+
+.interaction-pill.hidden {
+  display: none;
+}
+
+@keyframes bouncePill {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+}
+
+/* Modal Dialogo NPC */
+.dialogue-modal-layer {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 24px);
+  pointer-events: auto;
+  z-index: 20;
+}
+
+.dialogue-modal-layer.hidden {
+  display: none;
+}
+
+.dialogue-card {
+  background: #253342;
+  color: #fdf0d5;
+  padding: 22px;
+  border-radius: 22px;
+  width: 92%;
+  max-width: 580px;
+  border: 2px solid #52796f;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.dialogue-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 8px;
+}
+
+.speaker-avatar {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.speaker-name {
+  font-size: 18px;
+  color: #f4a261;
+}
+
+.speaker-role {
+  font-size: 12px;
+  color: #84a98c;
+}
+
+.speech-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #fdf0d5;
+  margin-bottom: 16px;
+  min-height: 48px;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialogue-option-btn {
+  background: rgba(42, 157, 143, 0.85);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.dialogue-option-btn:active {
+  transform: scale(0.98);
+  background: #e76f51;
+}
+
+/* Modal Diario del Cartografo */
+.journal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.journal-overlay.hidden {
+  display: none;
+}
+
+.journal-card {
+  background: #2a3439;
+  color: #fdf0d5;
+  width: 90%;
+  max-width: 520px;
+  border-radius: 24px;
+  border: 2px solid #e9c46a;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 24px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.journal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(233, 196, 106, 0.3);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.journal-header h2 {
+  font-size: 20px;
+  color: #f4a261;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #e0e1dd;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.journal-section {
+  margin-bottom: 18px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: #84a98c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.quest-title {
+  font-size: 17px;
+  color: #fdf0d5;
+  margin-bottom: 4px;
+}
+
+.quest-objective {
+  font-size: 14px;
+  color: #e9c46a;
+  line-height: 1.4;
+}
+
+.quest-hint {
+  font-size: 13px;
+  color: #f4a261;
+  font-style: italic;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(244, 162, 97, 0.15);
+  border-radius: 8px;
+}
+
+.quest-hint.hidden {
+  display: none;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.fragment-counter {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 2px;
+}
+
+.collectibles-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.collectible-pill {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 8px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.collectible-pill .val {
+  font-weight: 700;
+  color: #f4a261;
+  margin-left: 4px;
+}
+
+/* Schermate e dialoghi start */
 .screen-overlay {
   position: absolute;
   inset: 0;

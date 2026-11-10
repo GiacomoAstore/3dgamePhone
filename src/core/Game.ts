@@ -1,7 +1,8 @@
 /**
- * Loop principale e coordinatore del motore di gioco di Brumavento.
+ * Loop principale e coordinatore del motore di gioco di Brumavento (Fase 2).
+ * Integra sistemi, dialoghi, missioni, collezionabili e gestione degli stati.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.2.0
  */
 
 import * as THREE from 'three';
@@ -11,9 +12,17 @@ import { TouchOverlay } from '../ui/TouchOverlay';
 import { InputManager } from '../systems/InputManager';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { CameraController } from '../systems/CameraController';
+import { DialogueSystem } from '../systems/DialogueSystem';
+import { QuestSystem } from '../systems/QuestSystem';
+import { InteractionSystem } from '../systems/InteractionSystem';
 import { Environment } from '../world/Environment';
 import { Island } from '../world/Island';
 import { Player } from '../entities/Player';
+import { NPC } from '../entities/NPC';
+import { CollectiblesManager } from '../entities/Collectibles';
+import { DialogueBox } from '../ui/DialogueBox';
+import { JournalUI } from '../ui/JournalUI';
+import { NotificationBanner } from '../ui/NotificationBanner';
 
 export type QualityPreset = 'low' | 'medium' | 'high';
 
@@ -28,9 +37,22 @@ export class Game {
   public physicsSystem: PhysicsSystem;
   public cameraController: CameraController;
 
+  // Nuovi sistemi Fase 2
+  public dialogueSystem: DialogueSystem;
+  public questSystem: QuestSystem;
+  public interactionSystem: InteractionSystem;
+
+  // Mondo ed entità
   public environment!: Environment;
   public island!: Island;
   public player!: Player;
+  public nonnaBussola!: NPC;
+  public collectiblesManager!: CollectiblesManager;
+
+  // UI
+  public dialogueBox!: DialogueBox;
+  public journalUI!: JournalUI;
+  public notificationBanner!: NotificationBanner;
 
   private clock: THREE.Clock;
   private isRunning = false;
@@ -54,27 +76,91 @@ export class Game {
     this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 400);
     this.cameraController = new CameraController(this.camera);
 
-    // 3. Sistemi core
+    // 3. Sistemi core e input
     this.physicsSystem = new PhysicsSystem();
     this.touchOverlay = new TouchOverlay();
     this.inputManager = new InputManager(this.touchOverlay);
 
-    // 4. Creazione Mondo e Personaggio
+    // 4. Sistemi Fase 2 (Dialoghi, Quest, Interazioni)
+    this.dialogueSystem = new DialogueSystem();
+    this.questSystem = new QuestSystem();
+    this.interactionSystem = new InteractionSystem();
+
+    // 5. Creazione Mondo e Isola
     this.environment = new Environment(this.scene);
     this.island = new Island(this.physicsSystem);
     this.scene.add(this.island.group);
 
+    // 6. Entità
     this.player = new Player();
     this.scene.add(this.player.meshComponents.root);
-
-    // Posiziona Pip sul centro della collina
     this.player.position.set(0, 5, 0);
 
-    // 5. Eventi di ridimensionamento finestra/orientamento
+    // Nonna Bussola all'osservatorio
+    this.nonnaBussola = new NPC('nonna_bussola', 'Nonna Bussola', new THREE.Vector3(0, 3.8, -2));
+    this.scene.add(this.nonnaBussola.group);
+
+    this.interactionSystem.registerTarget({
+      id: 'nonna_bussola',
+      name: 'Nonna Bussola',
+      position: this.nonnaBussola.position,
+      radius: this.nonnaBussola.interactionRadius,
+      type: 'npc',
+      hintText: 'Parla con Nonna Bussola (E / 🏮)',
+    });
+
+    // Indizio cerchio di pietre per il frammento
+    this.interactionSystem.registerTarget({
+      id: 'stone_circle_hint',
+      name: 'Cerchio di Pietre',
+      position: new THREE.Vector3(18.0, 1.8, -15.0),
+      radius: 3.5,
+      type: 'hint',
+      hintText: 'Un bagliore pulsa qui... Accendi la Lanterna (E / 🏮) per rivelarlo!',
+    });
+
+    // Collezionabili e frammento magico
+    this.collectiblesManager = new CollectiblesManager();
+    this.scene.add(this.collectiblesManager.group);
+
+    // 7. Componenti UI
+    this.dialogueBox = new DialogueBox(this.dialogueSystem);
+    this.journalUI = new JournalUI(this.questSystem);
+    this.notificationBanner = new NotificationBanner();
+
+    // 8. Eventi di sospensione comandi e resize
+    this.initPauseAndBlockListeners();
     window.addEventListener('resize', () => this.onWindowResize());
 
-    // 6. Configurazione iniziale qualità (predisposizione)
+    // 9. Configurazione qualità
     this.setQuality('high');
+  }
+
+  private initPauseAndBlockListeners(): void {
+    // Sospende gli input durante i dialoghi o con il diario aperto (Regola utente 6)
+    globalEventBus.on('dialogue-started', () => {
+      this.inputManager.setBlocked(true);
+      this.stateManager.setState(GameState.DIALOGUE);
+    });
+
+    globalEventBus.on('dialogue-closed', () => {
+      if (!this.journalUI.getIsOpen()) {
+        this.inputManager.setBlocked(false);
+        this.stateManager.setState(GameState.PLAYING);
+      }
+    });
+
+    globalEventBus.on('journal-opened', () => {
+      this.inputManager.setBlocked(true);
+      this.stateManager.setState(GameState.PAUSED);
+    });
+
+    globalEventBus.on('journal-closed', () => {
+      if (!this.dialogueSystem.getIsActive()) {
+        this.inputManager.setBlocked(false);
+        this.stateManager.setState(GameState.PLAYING);
+      }
+    });
   }
 
   /**
@@ -88,7 +174,6 @@ export class Game {
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // Mobile Budget: Clamping rigido del Device Pixel Ratio a 2.0 (ADR 003)
     const clampedDPR = Math.min(window.devicePixelRatio || 1, 2.0);
     this.renderer.setPixelRatio(clampedDPR);
 
@@ -119,9 +204,7 @@ export class Game {
     const dt = this.clock.getDelta();
 
     // Aggiornamento logica di gioco (update)
-    if (this.stateManager.getState() === GameState.PLAYING) {
-      this.update(dt);
-    }
+    this.update(dt);
 
     // Rendering a schermo (render)
     this.render();
@@ -134,13 +217,43 @@ export class Game {
    * Logica di aggiornamento disaccoppiata dal render.
    */
   private update(dt: number): void {
-    // 1. Aggiorna animazioni dell'ambiente (onde)
+    // 1. Aggiorna animazioni dell'ambiente e transizione nebbia
     this.environment.update(dt);
+    this.island.update(dt);
 
-    // 2. Aggiorna Pip con input, collisioni e orientamento camera
+    // 2. Aggiorna quest system (timer suggerimenti)
+    this.questSystem.update(dt);
+
+    // 3. Aggiorna interazioni con target
+    const activeTarget = this.interactionSystem.update(
+      this.player.position,
+      this.player.isLanternActive
+    );
+
+    // 4. Gestione pressione tasto azione (E / 🏮)
+    if (this.inputManager.consumeAction()) {
+      if (activeTarget && activeTarget.type === 'npc' && activeTarget.id === 'nonna_bussola') {
+        // Interazione con NPC
+        this.nonnaBussola.interact(this.dialogueSystem, this.questSystem);
+      } else {
+        // Tasto azione standard: toggle lanterna
+        this.player.isLanternActive = !this.player.isLanternActive;
+        this.player.meshComponents.lanternLight.intensity = this.player.isLanternActive ? 1.5 : 0.0;
+      }
+    }
+
+    // 5. Aggiorna collezionabili e pickup
+    this.collectiblesManager.update(
+      dt,
+      this.player.position,
+      this.player.isLanternActive,
+      this.questSystem
+    );
+
+    // 6. Aggiorna Pip con input, collisioni e orientamento camera
     this.player.update(dt, this.inputManager, this.physicsSystem, this.cameraController.yaw);
 
-    // 3. Aggiorna telecamera orbitale
+    // 7. Aggiorna telecamera orbitale
     this.cameraController.update(dt, this.player.position, this.inputManager);
   }
 

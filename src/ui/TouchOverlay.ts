@@ -177,6 +177,22 @@ export class TouchOverlay {
   }
 
   /**
+   * Resetta completamente il joystick virtuale e i pointer touch.
+   * Chiamato alla sospensione dei comandi (dialogo o diario aperto) per evitare joystick bloccati.
+   */
+  public resetInputs(): void {
+    this.joystickTouchId = null;
+    this.cameraTouchId = null;
+    this.state.joystickVector = { x: 0, y: 0 };
+    this.state.cameraDelta = { x: 0, y: 0 };
+    this.state.jumpPressed = false;
+    this.state.actionPressed = false;
+    this.joystickThumb.style.transform = 'translate(0px, 0px)';
+    this.btnJump.classList.remove('active');
+    this.btnAction.classList.remove('active');
+  }
+
+  /**
    * Consuma il delta della camera touch.
    */
   public consumeCameraDelta(): { x: number; y: number } {

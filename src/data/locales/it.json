@@ -1,0 +1,61 @@
+{
+  "characters": {
+    "nonna_bussola": {
+      "name": "Nonna Bussola",
+      "role": "Cartografa Anziana"
+    }
+  },
+  "dialogues": {
+    "nonna_bussola": {
+      "node_start_text": "Pip, piccolo mio! Meno male che stai bene. Il Grande Soffio ha strappato l'Atlante Vivo... l'arcipelago sta perdendo i suoi colori nella nebbia!",
+      "opt_help": "Cosa posso fare per aiutarti, Nonna?",
+      "opt_atlas": "Dov'è finito l'Atlante?",
+      "node_atlas_text": "I sette frammenti sono stati spazzati via dal vento sulle isole. Senza la mappa viva, la nebbia grigia addormenta ogni cosa...",
+      "opt_how_to_find": "Come facciamo a ritrovarli?",
+      "node_lantern_quest_text": "Prendi la Lanterna Magica che ti ho donato. La sua luce dissolve il velo della nebbia e rivela ciò che è nascosto. C'è un frammento vicino all'antico cerchio di pietre della scogliera: trovalo e riportalo alla luce!",
+      "opt_accept_quest": "Contaci, Nonna! Vado subito.",
+      "node_quest_1_active_text": "Hai acceso la lanterna? Cerca vicino alla scogliera, dove le antiche pietre guardano verso il mare.",
+      "opt_continue_searching": "Continuo a cercare!",
+      "node_quest_1_completed_text": "Straordinario, Pip! Il primo frammento è di nuovo con noi! Guarda come il cielo e il mare si rischiarano... Presto il Capitano Marea potrà portarci alla prossima isola!",
+      "opt_complete_dialogue": "Brumavento sta tornando a splendere!"
+    }
+  },
+  "quests": {
+    "quest_1": {
+      "title": "Il Risveglio della Lanterna",
+      "description": "Nonna Bussola ti ha chiesto di trovare il primo frammento dell'Atlante Vivo nascosto tra le antiche pietre della scogliera.",
+      "stage_0": "Parla con Nonna Bussola all'Osservatorio sulla collina.",
+      "stage_1": "Trova il 1° Frammento dell'Atlante presso il cerchio di pietre (usa la Lanterna).",
+      "stage_2": "Torna da Nonna Bussola per completare la prima sezione dell'Atlante."
+    }
+  },
+  "collectibles": {
+    "fragment": {
+      "name": "Frammento dell'Atlante Vivo",
+      "description": "Una pagina dorata e magica che pulsa con il respiro del vento."
+    },
+    "seashell": {
+      "name": "Conchiglia Marina",
+      "description": "Una conchiglia levigata dalle onde del mare di Brumavento."
+    },
+    "mushroom": {
+      "name": "Fungo Luminoso",
+      "description": "Emette un chiarore verde menta nelle zone d'ombra dell'isola."
+    },
+    "starfish": {
+      "name": "Stella Marina",
+      "description": "Una stella marina dai riflessi corallo che riposa sulla riva."
+    }
+  },
+  "ui": {
+    "journal_title": "Diario del Cartografo",
+    "active_quest_header": "Missione Attiva",
+    "fragments_header": "Frammenti dell'Atlante Vivo",
+    "collectibles_header": "Reperti dell'Arcipelago",
+    "prompt_talk": "Parla con {name}",
+    "prompt_inspect": "Esamina {name}",
+    "btn_close": "Chiudi",
+    "notification_item_collected": "Raccolto: {name}!",
+    "notification_fragment_collected": "✨ Frammento dell'Atlante recuperato! La nebbia si ritira..."
+  }
+}

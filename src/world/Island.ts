@@ -7,10 +7,14 @@
 
 import * as THREE from 'three';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
+import { globalEventBus } from '../core/EventBus';
 
 export class Island {
   public group: THREE.Group;
   public terrainMesh!: THREE.Mesh;
+  private terrainMaterial!: THREE.MeshToonMaterial;
+  private targetGrassColor = new THREE.Color(0x38b000); // Verde brillante e vivido
+  private isColorShifting = false;
 
   constructor(physicsSystem: PhysicsSystem) {
     this.group = new THREE.Group();
@@ -20,6 +24,10 @@ export class Island {
     this.createVegetation();
     this.createRocks();
     this.createDock();
+
+    globalEventBus.on('fragment-collected', () => {
+      this.isColorShifting = true;
+    });
   }
 
   /**
@@ -56,12 +64,12 @@ export class Island {
 
     geom.computeVertexNormals();
 
-    const terrainMaterial = new THREE.MeshToonMaterial({
+    this.terrainMaterial = new THREE.MeshToonMaterial({
       color: 0x588157, // Verde collina cartoon
       bumpScale: 0.05,
     });
 
-    this.terrainMesh = new THREE.Mesh(geom, terrainMaterial);
+    this.terrainMesh = new THREE.Mesh(geom, this.terrainMaterial);
     this.terrainMesh.name = 'Terrain_Mesh';
     this.terrainMesh.receiveShadow = true;
     this.terrainMesh.castShadow = true;
@@ -171,5 +179,11 @@ export class Island {
 
     dockGroup.position.set(0, 0, 24);
     this.group.add(dockGroup);
+  }
+
+  public update(dt: number): void {
+    if (this.isColorShifting) {
+      this.terrainMaterial.color.lerp(this.targetGrassColor, dt * 1.2);
+    }
   }
 }

@@ -17,14 +17,31 @@
 
     <!-- UI / HUD Overlay -->
     <div id="ui-layer">
-      <!-- Barra superiore con info e bussola -->
+      <!-- Barra superiore con info, diario e bussola -->
       <header id="top-bar">
         <div class="hud-pill badge-title">
           <span class="icon">🧭</span>
           <span class="text">Brumavento</span>
         </div>
-        <div class="hud-pill badge-fps" id="fps-counter">60 FPS</div>
+        <div class="top-bar-right">
+          <button id="btn-hud-journal" class="hud-pill btn-journal" aria-label="Diario del Cartografo">
+            <span class="icon">📖</span>
+            <span class="text">Diario</span>
+          </button>
+          <div class="hud-pill badge-fps" id="fps-counter">60 FPS</div>
+        </div>
       </header>
+
+      <!-- Banner toast a comparsa per notifiche -->
+      <div id="notification-toast" class="toast-banner hidden">
+        <span id="toast-text">Notifica</span>
+      </div>
+
+      <!-- Badge di interazione a schermo quando vicino a un target -->
+      <div id="interaction-prompt" class="interaction-pill hidden">
+        <span class="prompt-icon">💬</span>
+        <span id="prompt-text">Interagisci</span>
+      </div>
 
       <!-- Schermata di caricamento / inizio -->
       <div id="start-screen" class="screen-overlay">
@@ -32,10 +49,76 @@
           <h1>Brumavento</h1>
           <p class="subtitle">L'Arcipelago della Nebbia</p>
           <div class="instructions">
-            <p><strong>Desktop:</strong> WASD o Frecce per muoverti, Spazio per saltare, Mouse per ruotare la visuale.</p>
-            <p><strong>Smartphone:</strong> Joystick virtuale a sinistra, pulsante salto a destra, trascina lo schermo a destra per la visuale.</p>
+            <p><strong>Desktop:</strong> WASD o Frecce per muoverti, Spazio per saltare, Mouse per ruotare la visuale, E per interagire/lanterna, Tab per il Diario.</p>
+            <p><strong>Smartphone:</strong> Joystick virtuale a sinistra, pulsanti azione/salto a destra, trascina lo schermo a destra per la visuale, icona 📖 per il Diario.</p>
           </div>
           <button id="btn-start" class="primary-button">Inizia Esplorazione</button>
+        </div>
+      </div>
+
+      <!-- Box di Dialogo con NPC (Fase 2) -->
+      <div id="dialogue-box" class="dialogue-modal-layer hidden">
+        <div class="dialogue-card">
+          <div class="dialogue-header">
+            <div id="dialogue-avatar" class="speaker-avatar">👵</div>
+            <div class="speaker-info">
+              <h3 id="dialogue-name" class="speaker-name">Nonna Bussola</h3>
+              <span id="dialogue-role" class="speaker-role">Cartografa Anziana</span>
+            </div>
+          </div>
+          <p id="dialogue-text" class="speech-text">...</p>
+          <div id="dialogue-options" class="options-container">
+            <!-- Bottoni creati dinamicamente con textContent -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Diario del Cartografo (Fase 2) -->
+      <div id="journal-modal" class="journal-overlay hidden">
+        <div class="journal-card">
+          <div class="journal-header">
+            <h2>📖 Diario del Cartografo</h2>
+            <button id="journal-btn-close" class="close-btn" aria-label="Chiudi">✕</button>
+          </div>
+          <div class="journal-content">
+            <!-- Missione Attiva -->
+            <section class="journal-section">
+              <h4 class="section-title">🧭 Missione Attiva</h4>
+              <h3 id="journal-quest-title" class="quest-title">Il Risveglio della Lanterna</h3>
+              <p id="journal-quest-objective" class="quest-objective">Caricamento obiettivo...</p>
+              <div id="journal-quest-hint" class="quest-hint hidden">Indizio...</div>
+            </section>
+
+            <!-- Frammenti dell'Atlante -->
+            <section class="journal-section">
+              <h4 class="section-title">🗺️ Frammenti dell'Atlante Vivo</h4>
+              <div class="progress-bar-container">
+                <span id="journal-fragments-count" class="fragment-counter">0 / 7</span>
+              </div>
+            </section>
+
+            <!-- Reperti / Collezionabili -->
+            <section class="journal-section">
+              <h4 class="section-title">🎒 Reperti Raccolti</h4>
+              <div class="collectibles-grid">
+                <div class="collectible-pill">
+                  <span class="icon">🐚</span>
+                  <span class="label">Conchiglie:</span>
+                  <span id="journal-shells-count" class="val">0</span>
+                </div>
+                <div class="collectible-pill">
+                  <span class="icon">🍄</span>
+                  <span class="label">Funghi:</span>
+                  <span id="journal-mushrooms-count" class="val">0</span>
+                </div>
+                <div class="collectible-pill">
+                  <span class="icon">⭐</span>
+                  <span class="label">Stelle:</span>
+                  <span id="journal-starfish-count" class="val">0</span>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 

@@ -48,13 +48,7 @@ export class Player {
     // Clamping del delta per prevenire salti fisici in caso di lag o freeze
     const clampedDt = Math.min(delta, 0.08);
 
-    // 1. Gestione Lanterna
-    if (inputManager.consumeAction()) {
-      this.isLanternActive = !this.isLanternActive;
-      this.meshComponents.lanternLight.intensity = this.isLanternActive ? 1.5 : 0.0;
-    }
-
-    // 2. Calcolo direzione di movimento relativa alla telecamera
+    // 1. Calcolo direzione di movimento relativa alla telecamera
     const inputMove = inputManager.getMovement();
     const moveVector = new THREE.Vector3(0, 0, 0);
 
