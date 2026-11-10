@@ -18,12 +18,12 @@ L'IA collabora alla creazione di un videogioco producendo codice leggibile, manu
 
 ## 2. Contesto del progetto (da compilare)
 L'utente compila questa sezione una volta; l'IA la considera sempre valida.
-- **Nome del gioco**: *(da definire)*
-- **Genere e descrizione breve**: *(da definire)*
-- **Linguaggio / motore (es. Python+Pygame, Unity C#, Godot GDScript, JavaScript/Three.js, WebGL)**: *(da definire)*
-- **Piattaforme target**: *(es. Mobile / Phone, Web, Desktop)*
+- **Nome del gioco**: Brumavento
+- **Genere e descrizione breve**: Gioco 3D di esplorazione dal tono cartoon per smartphone e desktop (nel browser, senza installazione). Il giocatore è Pip, un piccolo apprendista cartografo guidato da Nonna Bussola che esplora un arcipelago avvolto dalla nebbia, ritrova i frammenti dell'Atlante Vivo e restituisce colore e vita al mondo. Tono caldo, curioso, nessuna violenza.
+- **Linguaggio / motore**: TypeScript + Three.js + Vite (rendering WebGL toon, collisioni e raycasting/BVH, audio con Howler.js, HUD minimale in HTML/CSS sopra canvas).
+- **Piattaforme target**: Mobile (Smartphone touch portrait/landscape) e Desktop (WASD/Frecce, Mouse/Gamepad), distribuibile come Web App / PWA.
 - **Versione corrente**: 0.1.0
-- **Convenzioni già esistenti (se presenti)**: *(da definire)*
+- **Convenzioni già esistenti (se presenti)**: Mobile-first performance budget (target 30+ FPS mobile, 60 FPS desktop, <100 draw calls, <150k poligoni), separazione netta tra logica (update con dt) e grafica (render), entità a componenti, bus eventi disaccoppiato, contenuti caricati da file JSON (data-driven).
 
 ---
 
