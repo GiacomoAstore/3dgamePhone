@@ -56,7 +56,23 @@
     "prompt_inspect": "Esamina {name}",
     "btn_close": "Chiudi",
     "notification_item_collected": "Raccolto: {name}!",
-    "notification_fragment_collected": "✨ Frammento dell'Atlante recuperato! La nebbia si ritira..."
+    "notification_fragment_collected": "✨ Frammento dell'Atlante recuperato! La nebbia si ritira...",
+    "settings_title": "Impostazioni",
+    "quality_header": "Qualità Grafica",
+    "quality_desc": "Seleziona il profilo ideale per il tuo dispositivo (FPS stabili):",
+    "quality_low": "Bassa (1.0x, ombre off)",
+    "quality_medium": "Media (1.4x)",
+    "quality_high": "Alta (2.0x, PCF Soft)",
+    "quality_auto": "Auto (Adattiva)",
+    "audio_header": "Volumi Audio",
+    "vol_master": "Volume Generale",
+    "vol_ambient": "Brezza & Onde",
+    "vol_sfx": "Effetti & Passi",
+    "daynight_header": "Ciclo Giorno / Notte",
+    "daynight_pause": "Blocca ora corrente",
+    "daynight_readable_night": "Notti Chiare (più luminose)",
+    "daynight_smooth": "Transizioni Morbide",
+    "notification_quality_degraded": "⚡ Qualità grafica ridotta a {level} per mantenere fluidi i 30 FPS."
   }
 }
 

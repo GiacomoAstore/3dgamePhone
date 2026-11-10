@@ -42,6 +42,13 @@ export class LocalizationSystem {
 
     return result;
   }
+
+  /**
+   * Metodo helper statico per accedere rapidamente alla localizzazione globale.
+   */
+  public static t(key: string, params?: Record<string, string | number>): string {
+    return localization.t(key, params);
+  }
 }
 
 export const localization = new LocalizationSystem();

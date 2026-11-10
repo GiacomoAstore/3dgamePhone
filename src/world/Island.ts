@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
+import { ToonShaderUtils } from './ToonShaderUtils';
 
 export class Island {
   public group: THREE.Group;
@@ -67,6 +68,7 @@ export class Island {
     this.terrainMaterial = new THREE.MeshToonMaterial({
       color: 0x588157, // Verde collina cartoon
       bumpScale: 0.05,
+      gradientMap: ToonShaderUtils.getStepGradientMap(3),
     });
 
     this.terrainMesh = new THREE.Mesh(geom, this.terrainMaterial);

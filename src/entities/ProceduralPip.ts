@@ -6,6 +6,7 @@
  */
 
 import * as THREE from 'three';
+import { ToonShaderUtils } from '../world/ToonShaderUtils';
 
 export interface PipMeshComponents {
   root: THREE.Group;
@@ -28,25 +29,32 @@ export class ProceduralPip {
     const root = new THREE.Group();
     root.name = 'Pip';
 
-    // Palette cartoon di Pip
+    // Palette cartoon di Pip con gradiente a gradini (cel-shading a bande nette)
+    const stepGradMap = ToonShaderUtils.getStepGradientMap(3);
+
     const coatMaterial = new THREE.MeshToonMaterial({
       color: 0x2a9d8f, // Turchese ottanio
+      gradientMap: stepGradMap,
     });
 
     const skinMaterial = new THREE.MeshToonMaterial({
       color: 0xf4a261, // Tonalità pesca calda
+      gradientMap: stepGradMap,
     });
 
     const hatMaterial = new THREE.MeshToonMaterial({
       color: 0x264653, // Blu scuro cartografo
+      gradientMap: stepGradMap,
     });
 
     const hatBandMaterial = new THREE.MeshToonMaterial({
       color: 0xe76f51, // Fascia corallo
+      gradientMap: stepGradMap,
     });
 
     const bootsMaterial = new THREE.MeshToonMaterial({
       color: 0x6b4226, // Cuoio marrone
+      gradientMap: stepGradMap,
     });
 
     const eyeMaterial = new THREE.MeshBasicMaterial({

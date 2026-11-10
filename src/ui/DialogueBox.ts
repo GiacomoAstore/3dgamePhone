@@ -45,13 +45,20 @@ export class DialogueBox {
         (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE')
       ) {
         e.stopPropagation();
-        const firstOption =
-          this.optionsContainer.querySelector<HTMLButtonElement>('.dialogue-option-btn');
-        if (firstOption) {
-          firstOption.click();
-        }
+        this.advance();
       }
     });
+  }
+
+  /**
+   * Seleziona la prima opzione disponibile per avanzare o chiudere il dialogo.
+   */
+  public advance(): void {
+    const firstOption =
+      this.optionsContainer.querySelector<HTMLButtonElement>('.dialogue-option-btn');
+    if (firstOption) {
+      firstOption.click();
+    }
   }
 
   /**

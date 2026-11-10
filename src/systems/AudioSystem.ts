@@ -26,6 +26,7 @@ export class AudioSystem {
   private ambientVol = 0.5;
 
   private isAmbientPlaying = false;
+  private currentMusicAudio: HTMLAudioElement | null = null;
 
   constructor(options?: AudioSystemOptions) {
     if (options?.masterVolume !== undefined) this.masterVol = Math.max(0, Math.min(1, options.masterVolume));
@@ -318,6 +319,109 @@ export class AudioSystem {
     this.ambientVol = Math.max(0, Math.min(1, val));
     if (this.ambientGain && this.ctx) {
       this.ambientGain.gain.setValueAtTime(this.ambientVol, this.ctx.currentTime);
+    }
+  }
+
+  /**
+   * Riproduce una traccia musicale da file (mp3/ogg, es. musica CC0) con fallback su suono procedurale.
+   * Se il file non esiste, fallisce il download o il codec non è supportato, attiva immediatamente
+   * il generatore procedurale (es. brezza marina procedurale o melodia sintetica) senza bloccare il gioco.
+   * @param url Percorso o URL del file audio (es. '/assets/music/theme.ogg')
+   * @param fallbackProcedural Callback procedurale da eseguire in caso di errore (default: startSeaBreezeAmbient)
+   * @returns true se il file audio è stato caricato e avviato con successo, false se è scattato il ripiego.
+   */
+  public async playMusicTrack(
+    url: string,
+    fallbackProcedural?: () => void
+  ): Promise<boolean> {
+    if (typeof window === 'undefined' || typeof Audio === 'undefined') {
+      if (fallbackProcedural) fallbackProcedural();
+      else this.startSeaBreezeAmbient();
+      return false;
+    }
+
+    try {
+      this.stopMusicTrack();
+
+      const audio = new Audio();
+      audio.src = url;
+      audio.loop = true;
+      audio.volume = this.masterVol * this.ambientVol;
+
+      // Attesa evento canplaythrough con timeout di sicurezza
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error(`Timeout caricamento traccia audio da: ${url}`));
+        }, 3000);
+
+        const onCanPlay = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onError = (e: Event) => {
+          cleanup();
+          reject(new Error(`Errore caricamento audio ${url}: ${(e as ErrorEvent).message || 'File non trovato o formato non supportato'}`));
+        };
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          audio.removeEventListener('canplaythrough', onCanPlay);
+          audio.removeEventListener('error', onError);
+        };
+
+        audio.addEventListener('canplaythrough', onCanPlay);
+        audio.addEventListener('error', onError);
+      });
+
+      await audio.play();
+      this.currentMusicAudio = audio;
+      return true;
+    } catch (err) {
+      console.warn(`[AudioSystem] Impossibile riprodurre file audio '${url}'. Attivazione ripiego procedurale:`, err);
+      if (fallbackProcedural) {
+        fallbackProcedural();
+      } else {
+        this.startSeaBreezeAmbient();
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Riproduce un effetto sonoro (SFX) da file (mp3/ogg) con fallback su suono procedurale.
+   */
+  public async playSoundFile(
+    url: string,
+    fallbackProcedural?: () => void
+  ): Promise<boolean> {
+    if (typeof window === 'undefined' || typeof Audio === 'undefined') {
+      if (fallbackProcedural) fallbackProcedural();
+      return false;
+    }
+
+    try {
+      const audio = new Audio(url);
+      audio.volume = this.masterVol * this.sfxVol;
+      await audio.play();
+      return true;
+    } catch (err) {
+      console.warn(`[AudioSystem] File SFX '${url}' non disponibile. Esecuzione fallback procedurale:`, err);
+      if (fallbackProcedural) fallbackProcedural();
+      return false;
+    }
+  }
+
+  public stopMusicTrack(): void {
+    if (this.currentMusicAudio) {
+      try {
+        this.currentMusicAudio.pause();
+        this.currentMusicAudio.currentTime = 0;
+      } catch {
+        // Ignora errori di stop
+      }
+      this.currentMusicAudio = null;
     }
   }
 

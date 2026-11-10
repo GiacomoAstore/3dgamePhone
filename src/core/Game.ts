@@ -1,6 +1,8 @@
 /**
  * Loop principale e coordinatore del motore di gioco di Brumavento (Fase 3).
- * Integra sistemi, dialoghi, missioni, ciclo circadiano, audio procedurale e grafica.
+ * Integra sistemi, dialoghi, missioni, ciclo circadiano, audio procedurale,
+ * consumo dell'azione con priorità rigorosa e gestione dinamica della qualità grafica.
+ *
  * Autore: Pip & Nonna Bussola dev team
  * Ultima modifica: 2026-11-10 - v0.3.0
  */
@@ -15,7 +17,9 @@ import { CameraController } from '../systems/CameraController';
 import { DialogueSystem } from '../systems/DialogueSystem';
 import { QuestSystem } from '../systems/QuestSystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
+import { ActionPriorityDispatcher } from '../systems/ActionPriorityDispatcher';
 import { AudioSystem } from '../systems/AudioSystem';
+import { LocalizationSystem } from '../systems/LocalizationSystem';
 import { Environment } from '../world/Environment';
 import { Island } from '../world/Island';
 import { Player } from '../entities/Player';
@@ -39,7 +43,7 @@ export class Game {
   public physicsSystem: PhysicsSystem;
   public cameraController: CameraController;
 
-  // Sistemi di gioco
+  // Sistemi logici e audio
   public dialogueSystem: DialogueSystem;
   public questSystem: QuestSystem;
   public interactionSystem: InteractionSystem;
@@ -60,13 +64,14 @@ export class Game {
 
   private clock: THREE.Clock;
   private isRunning = false;
-  private actionCooldown = 0; // Debounce per prevenire accensione accidentale lanterna durante interazioni
 
-  // Monitoraggio FPS e prestazioni
+  // Monitoraggio FPS e degradazione automatica per hardware modesti
   private fpsCounterElement: HTMLElement | null;
   private frameCount = 0;
   private fpsTimeAccumulator = 0;
   private currentFps = 60;
+  private lowFpsDuration = 0;
+  private autoDegradeCooldown = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.stateManager = new StateManager();
@@ -86,7 +91,7 @@ export class Game {
     this.touchOverlay = new TouchOverlay();
     this.inputManager = new InputManager(this.touchOverlay);
 
-    // 4. Sistemi logici e audio (Fasi 2 & 3)
+    // 4. Sistemi logici e audio
     this.dialogueSystem = new DialogueSystem();
     this.questSystem = new QuestSystem();
     this.interactionSystem = new InteractionSystem();
@@ -112,7 +117,7 @@ export class Game {
       position: this.nonnaBussola.position,
       radius: this.nonnaBussola.interactionRadius,
       type: 'npc',
-      hintText: 'Parla con Nonna Bussola (E / 🏮)',
+      hintText: LocalizationSystem.t('ui.prompt_talk', { name: 'Nonna Bussola' }),
     });
 
     // Indizio cerchio di pietre per il frammento
@@ -136,6 +141,7 @@ export class Game {
     this.qualitySettingsUI = new QualitySettingsUI({
       onQualityChange: (quality) => this.setQuality(quality),
       audioSystem: this.audioSystem,
+      dayNightCycle: this.environment.dayNightCycle,
     });
 
     // Pulsante Impostazioni Top Bar
@@ -149,20 +155,16 @@ export class Game {
     // 8. Eventi di sospensione comandi e resize
     this.initPauseAndBlockListeners();
     window.addEventListener('resize', () => this.onWindowResize());
-
-    // 9. Configurazione qualità
-    this.setQuality('high');
   }
 
   private initPauseAndBlockListeners(): void {
-    // Sospende gli input durante i dialoghi o con il diario/impostazioni aperti (Regola utente 6)
+    // Sospende gli input durante i dialoghi o con il diario/impostazioni aperti
     globalEventBus.on('dialogue-started', () => {
       this.inputManager.setBlocked(true);
       this.stateManager.setState(GameState.DIALOGUE);
     });
 
     globalEventBus.on('dialogue-closed', () => {
-      this.actionCooldown = 0.35; // Previene che l'ultimo tocco/tasto E per chiudere il dialogo accenda la lanterna
       if (!this.journalUI.getIsOpen() && !this.qualitySettingsUI.getIsOpen()) {
         this.inputManager.setBlocked(false);
         this.stateManager.setState(GameState.PLAYING);
@@ -195,7 +197,7 @@ export class Game {
   }
 
   /**
-   * Configura il renderer con vincoli mobile-first (pixel ratio clampato a 2).
+   * Configura il renderer con vincoli mobile-first.
    */
   private initRenderer(canvas: HTMLCanvasElement): void {
     this.renderer = new THREE.WebGLRenderer({
@@ -240,7 +242,7 @@ export class Game {
     // Rendering a schermo (render)
     this.render();
 
-    // Calcolo FPS
+    // Calcolo FPS e monitoraggio prestazioni
     this.updateFps(dt);
   };
 
@@ -248,7 +250,7 @@ export class Game {
    * Logica di aggiornamento disaccoppiata dal render.
    */
   private update(dt: number): void {
-    // 1. Aggiorna animazioni dell'ambiente e transizione nebbia
+    // 1. Aggiorna ambiente (sole, luna, onde, particelle) e isola
     this.environment.update(dt);
     this.island.update(dt);
 
@@ -261,24 +263,25 @@ export class Game {
       this.player.isLanternActive
     );
 
-    // 4. Gestione pressione tasto azione (E / 🏮) con protezione anti-sovrapposizione
-    if (this.actionCooldown > 0) {
-      this.actionCooldown -= dt;
-    }
-
-    if (!this.dialogueSystem.getIsActive() && this.actionCooldown <= 0 && this.inputManager.consumeAction()) {
-      if (activeTarget && activeTarget.type === 'npc' && activeTarget.id === 'nonna_bussola') {
-        // Interazione con NPC: avvia dialogo e blocca temporaneamente toggle lanterna
-        this.actionCooldown = 0.35;
-        this.nonnaBussola.interact(this.dialogueSystem, this.questSystem);
-      } else {
-        // Tasto azione standard: toggle lanterna SOLO se non in interazione
-        this.actionCooldown = 0.2;
+    // 4. Consumo dell'azione a priorità unificata (Dialogo -> Interazione -> Lanterna)
+    const hasAction = this.inputManager.consumeAction();
+    ActionPriorityDispatcher.dispatch(hasAction, {
+      isDialogueActive: this.dialogueSystem.getIsActive(),
+      activeTarget,
+      onAdvanceDialogue: () => {
+        this.dialogueBox.advance();
+      },
+      onInteract: (target) => {
+        if (target.type === 'npc' && target.id === 'nonna_bussola') {
+          this.nonnaBussola.interact(this.dialogueSystem, this.questSystem);
+        }
+      },
+      onToggleLantern: () => {
         this.player.isLanternActive = !this.player.isLanternActive;
         this.player.meshComponents.lanternLight.intensity = this.player.isLanternActive ? 1.5 : 0.0;
         globalEventBus.emit('lantern-toggled', this.player.isLanternActive);
-      }
-    }
+      },
+    });
 
     // 5. Aggiorna collezionabili e pickup
     this.collectiblesManager.update(
@@ -303,11 +306,15 @@ export class Game {
   }
 
   /**
-   * Calcola il framerate istantaneo e aggiorna il badge di debug.
+   * Calcola il framerate istantaneo e attiva l'auto-degrade se le prestazioni scendono troppo a lungo.
    */
   private updateFps(dt: number): void {
     this.frameCount++;
     this.fpsTimeAccumulator += dt;
+
+    if (this.autoDegradeCooldown > 0) {
+      this.autoDegradeCooldown -= dt;
+    }
 
     if (this.fpsTimeAccumulator >= 0.5) {
       this.currentFps = Math.round(this.frameCount / this.fpsTimeAccumulator);
@@ -318,11 +325,29 @@ export class Game {
         this.fpsCounterElement.textContent = `${this.currentFps} FPS`;
       }
       globalEventBus.emit('fps-updated', this.currentFps);
+
+      // Rilevamento FPS bassi persistenti (< 26 FPS per oltre 5 secondi)
+      if (this.currentFps < 26 && this.autoDegradeCooldown <= 0) {
+        this.lowFpsDuration += 0.5;
+        if (this.lowFpsDuration >= 5.0) {
+          this.lowFpsDuration = 0;
+          this.autoDegradeCooldown = 20.0; // Cooldown di sicurezza
+          const newPreset = this.qualitySettingsUI.autoDegradeQuality();
+          if (newPreset) {
+            const msg = LocalizationSystem.t('ui.notification_quality_degraded', {
+              level: newPreset.toUpperCase(),
+            });
+            this.notificationBanner.show(msg);
+          }
+        }
+      } else {
+        this.lowFpsDuration = Math.max(0, this.lowFpsDuration - 0.25);
+      }
     }
   }
 
   /**
-   * Predisposizione profili di qualità grafica (Bassa, Media, Alta).
+   * Applicazione del profilo di qualità grafica (Bassa, Media, Alta).
    */
   public setQuality(quality: QualityPreset): void {
     const dpr = window.devicePixelRatio || 1;
@@ -347,6 +372,10 @@ export class Game {
     if (this.environment) {
       this.environment.setQuality(quality);
     }
+  }
+
+  public getCurrentFps(): number {
+    return this.currentFps;
   }
 
   private onWindowResize(): void {

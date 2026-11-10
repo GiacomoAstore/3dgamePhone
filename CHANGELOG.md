@@ -5,44 +5,47 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 ## [0.3.0] - 2026-11-10
 
 ### Aggiunto
-- **Motore Web Audio Procedurale (`src/systems/AudioSystem.ts`)**:
-  - Sintesi sonora nativa in tempo reale tramite Web Audio API senza file audio esterni (0 KB di overhead download/bundle).
-  - Passi di Pip con modulazione casuale del pitch su erba e pontile.
-  - Salto cartoon con sweep di frequenza ascendente.
-  - Suono di accensione e spegnimento della Lanterna Magica.
-  - Chime arpeggiato a 2 toni per la raccolta di collezionabili (conchiglie, funghi, stelle).
-  - Fanfara magica trionfale a 4 toni per il recupero del frammento dell'Atlante Vivo.
-  - Risacca delle onde e brezza marina continua generata tramite rumore rosa filtrato da passa-basso con LFO a 0.25 Hz.
-  - Sblocco automatico e sicuro su mobile (`touchstart`/`click` sul pulsante "Inizia Esplorazione").
-- **Ciclo Giorno / Notte (`src/systems/DayNightCycle.ts`)**:
-  - Simulazione circadiana continua (giornata di 8 minuti configurabile).
-  - Tracciamento delle orbite tridimensionali opposte di Sole e Luna lungo l'arco celeste.
-  - Calcolo dell'altezza e modulazione automatica dell'intensità di luce solare, luce lunare e luce emisferica.
-  - Color grading dinamico con interpolazione continua tra 4 palette orarie: notte blu profondo, alba rosa antico/pesca, giorno turchese splendente, tramonto corallo caldo.
-- **Sistema Particellare a Singola Draw-Call (`src/world/ParticleSystem.ts`)**:
-  - Raggruppamento di 750 particelle in un unico `THREE.Points` (vertex colors, blending additivo, frustum culling globale).
-  - Lucciole magiche con moto armonico attorno alla vegetazione e ai funghi, più luminose al tramonto e di notte.
-  - Polline dorato del vento che attraversa l'isola con deriva continua e wrap automatico dei bordi.
-  - Spuma marina e spruzzi d'onda oscillanti alla battigia.
-  - Stelle notturne sulla calotta celeste con scintillio sinusoidale e dissolvenza diurna a luminosità zero.
-- **Pannello Impostazioni Qualità e Volumi (`src/ui/QualitySettingsUI.ts`)**:
-  - Finestra modale accessibile tramite pulsante ⚙️ nella barra superiore dell'HUD.
-  - Selettore preset di qualità: Bassa (1.0x DPR, ombre off, 250 particelle), Media (1.4x DPR, ombre base, 500 particelle), Alta (fino a 2.0x DPR, ombre PCFSoft, 750 particelle).
-  - 3 slider touch per la regolazione indipendente dei volumi (Master, Brezza/Onde, Effetti SFX) da 0 a 100%.
-  - Costruzione DOM sicura tramite `textContent` e integrazione con il sistema di sospensione input.
-- **Nuovi Test Automatizzati**:
-  - `tests/day_night_cycle.test.ts`: test ore, fasi, posizioni polari sole/luna, intensità luminose, interpolazione colori e serializzazione POJO.
-  - `tests/audio_system.test.ts`: test clamping volumi, fallback in assenza di hardware audio, gestione eventi EventBus e sblocco.
-  - `tests/particle_system.test.ts`: test conteggio massimo, scalabilità per qualità grafica, assenza di NaN nelle posizioni e spegnimento stelle diurne.
-  - Totale test: 38/38 passati con successo.
-- **Decisioni Architetturali**:
-  - Registrata ADR 006 in `DECISIONI.md`.
+- **Consumatore dell'Azione a Priorità Rigorosa (`src/systems/ActionPriorityDispatcher.ts`)**:
+  - Sostituito integralmente il vecchio debounce temporale con un unico dispatcher dell'azione a 3 livelli di priorità:
+    1. Se un dialogo è attivo -> avanza/chiude il dialogo.
+    2. Se un bersaglio interattivo è nel raggio (es. Nonna Bussola) -> interagisce con il bersaglio.
+    3. Solo se non c'è nulla con cui interagire -> accende o spegne la Lanterna Magica.
+  - Aggiunta suite di test dedicata in `tests/action_priority.test.ts`.
+- **Supporto File Audio Esterni con Ripiego Procedurale (`src/systems/AudioSystem.ts`)**:
+  - Aggiunti i metodi asincroni `playMusicTrack(url, fallback)` e `playSoundFile(url, fallback)` per consentire l'integrazione di tracce musicali CC0 (mp3/ogg).
+  - In caso di assenza del file (404), codec non supportato o modalità offline, si attiva automaticamente e senza crash il motore sonoro procedurale (brezza marina o chime).
+  - Aggiunti test dedicati in `tests/audio_file_fallback.test.ts`.
+- **Stile Cel-Shading a Gradini Discreti e Contorni (`src/world/ToonShaderUtils.ts`)**:
+  - Generazione a codice di una `DataTexture` 1D a 3 gradini (`[100, 190, 255]`) con `NearestFilter` applicata a `MeshToonMaterial.gradientMap` su Pip (`ProceduralPip.ts`) e sul terreno (`Island.ts`), producendo stacchi netti di luce cartoon senza gradienti realistici sfumati.
+  - Implementata la tecnica di contorno Inverted Hull (silhouette esterna estrusa lungo le normali con `THREE.BackSide`).
+- **Accessibilità Circadiana e Ciclo Giorno / Notte Avanzato (`src/systems/DayNightCycle.ts`)**:
+  - Possibilità di bloccare l'ora del giorno (`setHourLocked()`) e modulare la velocità (`setTimeScale()`).
+  - Modalità **Notti Chiare** (`readableNight: true`), con pavimento di luce ambientale elevato a 0.65 e luna potenziata per rendere il gioco perfettamente visibile e contrastato su schermi di smartphone all'aperto.
+  - Modalità **Transizioni Morbide** con smorzamento esponenziale stabile anti-overshoot per prevenire sbalzi improvvisi di luce.
+  - Aggiunti test dedicati in `tests/day_night_options.test.ts`.
+- **Pannello Impostazioni Qualità con Auto-Degrade e Persistenza (`src/ui/QualitySettingsUI.ts`)**:
+  - Rilevamento automatico del profilo iniziale in base al dispositivo (Mobile/Touch -> Media, Desktop -> Alta).
+  - Persistenza automatica della scelta utente su `localStorage` (`brumavento_settings`).
+  - Sistema di **Auto-Degrade**: monitora il framerate e, qualora gli FPS restino inferiori a 26 per oltre 5 secondi consecutivi, riduce automaticamente di un gradino il preset grafico (High -> Medium -> Low) visualizzando un toast di notifica.
+  - Tutti i nuovi testi localizzati rigorosamente in `src/data/locales/it.json` e iniettati con `textContent`.
+  - Aggiunti test dedicati in `tests/quality_persistence.test.ts`.
+- **Standard di Benchmark e Dispositivo di Riferimento**:
+  - Definito lo smartphone Android medio di riferimento (GPU Mali-G52 / Adreno 618, 1080p, $\ge 30$ FPS) e desktop con GPU integrata ($\ge 60$ FPS).
+  - Formalizzato il percorso benchmark di 30 secondi (spawn, osservatorio, scogliera con particelle attive).
+- **Nuove Decisioni Architetturali**:
+  - Registrate ADR 006 (Atmosfera, Web Audio e Ciclo Circadiano) e ADR 007 (Priorità Azione, Fallback Audio, Cel-Shading, Auto-Degrade e Benchmark) in `DECISIONI.md`.
+- **Aggiornamento Licenze Asset**:
+  - In `ASSETS.md` i pacchetti Kenney e Quaternius sono stati esplicitamente contrassegnati come *"Licenza da verificare dall'utente"*, in attesa di controllo diretto da parte dell'utente prima di qualsiasi import.
+- **Suite di Test Completa**:
+  - 14 file di test e 54/54 test automatici superati con successo con Vitest.
 
 ### Modificato
-- `src/world/Environment.ts`: integrato ciclo circadiano, luce lunare, mesh visibili di sole e luna, sistema particellare e metodo `setQuality()`.
-- `src/entities/Player.ts`: integrata emissione eventi `player-jump` e `player-footstep` calcolati sulla falcata procedurale.
-- `src/core/Game.ts`: integrati `AudioSystem` e `QualitySettingsUI`, connessione del pulsante impostazioni e gestione sospensione comandi.
-- `src/main.ts`: sblocco Web Audio al click/tap su "Inizia Esplorazione".
+- `src/core/Game.ts`: integrato `ActionPriorityDispatcher`, eliminati tutti i debounce temporali (`actionCooldown`), integrato auto-degrade per FPS bassi e persistenza.
+- `src/systems/LocalizationSystem.ts`: aggiunto helper statico `LocalizationSystem.t()` accessibile globalmente.
+- `src/ui/DialogueBox.ts`: aggiunto metodo pubblico `advance()` per consumare l'azione durante i dialoghi.
+- `src/entities/ProceduralPip.ts`, `src/world/Island.ts`: integrato `gradientMap` a 3 gradini discreti.
+- `ASSETS.md`: aggiornata la tabella e le note di avviso per la verifica manuale delle licenze.
+- `README.md`, `ARCHITETTURA.md`, `TODO.md`: documentazione completamente allineata ai nuovi standard.
 - `index.html`: aggiunto pulsante impostazioni ⚙️ nell'header HUD.
 - `src/style.css`: aggiunti stili per il pulsante impostazioni, card modale, bottoni qualità e slider touch.
 - `VERSION`, `package.json`: avanzamento versione a 0.3.0.

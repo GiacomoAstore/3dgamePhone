@@ -122,3 +122,28 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - Costruzione DOM con `textContent` e sospensione degli input di gioco durante l'apertura.
 - **Conseguenze**:
   Bundle di produzione estremamente leggero (~618 KB totali minificati con Three.js e BVH inclusi, zero asset audio esterni), 60 FPS stabili su desktop, 30+ FPS garantiti su mobile e totale immersività sensoriale.
+
+---
+
+## ADR 007 - Raffinamenti Architetturali Fase 3: Priorità dell'Azione, Fallback Audio, Cel-Shading a Gradini, Auto-Degrade e Benchmark Standard
+- **Data**: 2026-11-10
+- **Stato**: Approvata
+- **Contesto**:
+  In seguito alla revisione della Fase 3, sono emersi requisiti specifici di robustezza e accessibilità:
+  1. Evitare accensioni accidentali della lanterna durante i dialoghi o le interazioni eliminando i debounce temporali a favore di una logica a consumatore singolo gerarchico.
+  2. Permettere l'integrazione di file audio esterni (mp3/ogg, es. tracce musicali CC0) con fallback automatico e trasparente sulla sintesi procedurale qualora la rete o il file falliscano.
+  3. Definire tecnicamente lo stile cartoon (gradient map a gradini discreti e contorni inverted-hull).
+  4. Introdurre opzioni per bloccare l'ora del giorno, notti chiare e leggibili su display AMOLED/smartphone, e transizioni morbide per evitare cambi bruschi di luce.
+  5. Rendere il profilo grafico auto-adattivo, persistente su `localStorage` e capace di degradare automaticamente di preset se il framerate scende sotto i 26 FPS per 5 secondi continui.
+  6. Definire un dispositivo di riferimento e una scena di test ripetibile per validare gli FPS.
+- **Decisione**:
+  1. **Dispatchee dell'Azione a Priorità Unica (`ActionPriorityDispatcher`)**: L'input azione (tasto `E` o pulsante touch 🏮) viene consumato con gerarchia stretta: se un dialogo è aperto avanza il testo; altrimenti se un target è in raggio interagisce con esso; solo in assenza di interazioni attiva/disattiva la lanterna.
+  2. **Supporto File Audio con Ripiego Procedurale (`AudioSystem.playMusicTrack / playSoundFile`)**: Metodi asincroni che tentano la riproduzione di file audio esterni; in caso di errore 404, codec non supportato o offline, attivano immediatamente la brezza o i chime procedurali senza errori a schermo.
+  3. **Cel-Shading a Gradini Discreti (`ToonShaderUtils`)**: Generazione a codice di una `DataTexture` 1D a 3 o 4 bande con `NearestFilter` collegata a `MeshToonMaterial.gradientMap` per Pip, Nonna Bussola e il terreno collinare, garantendo stacchi di luce e ombra tipici dell'animazione cartoon.
+  4. **Accessibilità Visiva e Circadiana (`DayNightCycle`)**: Implementazione di `setHourLocked()`, `setTimeScale()`, `setReadableNight()` (luce d'ambiente minima sollevata a 0.65) e smorzamento esponenziale con costante di tempo per cambi di luce progressivi e privi di overshoot.
+  5. **Auto-Degrade e Persistenza Grafica (`QualitySettingsUI`)**: Rilevamento automatico del profilo alla prima esecuzione (Mobile/Touch $\rightarrow$ 'medium', Desktop $\rightarrow$ 'high'), persistenza su `localStorage`, e declassamento a scalare (high $\rightarrow$ medium $\rightarrow$ low) se la GPU mobile va in sofferenza persistente.
+  6. **Dispositivo di Riferimento e Benchmark**:
+     - *Riferimento Mobile*: smartphone di fascia media con GPU Mali-G52 / Adreno 618, schermo 1080p, Chrome/Safari.
+     - *Scena Benchmark (30s)*: Spawn $\rightarrow$ Corsa verso l'Osservatorio $\rightarrow$ Discesa alla scogliera con lanterna e 750 particelle a vista. Obiettivo: $\ge 30$ FPS su smartphone di riferimento, $\ge 60$ FPS su desktop.
+- **Conseguenze**:
+  Eliminazione definitiva dei conflitti tra tasto interazione e lanterna, gameplay visivamente chiaro e fruibile all'aperto su smartphone, tolleranza assoluta a file audio mancanti e framerate protetto.

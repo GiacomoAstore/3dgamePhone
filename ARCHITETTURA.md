@@ -46,24 +46,26 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
 │   │   ├── DialogueSystem.ts     # Macchina a stati dei dialoghi e serializzazione POJO
 │   │   ├── QuestSystem.ts        # Gestione missioni, inventario, progresso nebbia e POJO
 │   │   ├── InteractionSystem.ts  # Rilevamento vicinanza target (NPC, cerchio pietre) e prompt
+│   │   ├── ActionPriorityDispatcher.ts # Consumatore azione a priorità unica (Dialogo -> Target -> Lanterna)
 │   │   ├── InputManager.ts       # Gestore universale input con sospensione sicura dei comandi
 │   │   ├── CameraController.ts   # Telecamera 3a persona orbitale con smooth damping
 │   │   ├── PhysicsSystem.ts      # Collisioni e ground detection con three-mesh-bvh
-│   │   ├── AudioSystem.ts        # Web Audio API procedurale (passi, salti, lanterna, brezza, fanfare)
-│   │   └── DayNightCycle.ts      # Simulazione circadiana (orbite Sole/Luna, luce ed elevazione)
+│   │   ├── AudioSystem.ts        # Web Audio API procedurale e riproduzione file con fallback
+│   │   └── DayNightCycle.ts      # Simulazione circadiana (orbite Sole/Luna, luce, ore bloccabili, notti chiare)
 │   ├── entities/
 │   │   ├── Player.ts             # Controller di Pip (movimento, salto, gravità, animazioni, eventi audio)
-│   │   ├── ProceduralPip.ts      # Modello 3D procedurale di Pip con materiali toon
+│   │   ├── ProceduralPip.ts      # Modello 3D procedurale di Pip con materiali toon e cel-shading
 │   │   ├── NPC.ts                # Nonna Bussola all'osservatorio e telescopio astronomico
 │   │   └── Collectibles.ts       # 1° Frammento magico dell'Atlante, conchiglie, funghi, stelle
 │   ├── world/
-│   │   ├── Island.ts             # Terreno collinare low-poly con viraggio colore al risveglio
+│   │   ├── Island.ts             # Terreno collinare low-poly con gradientMap cel-shading a 3 livelli
+│   │   ├── ToonShaderUtils.ts    # Generazione gradient map a gradini e contorni inverted-hull
 │   │   ├── ParticleSystem.ts     # Particelle unificate a 1 draw call (lucciole, polline, spuma, stelle)
 │   │   └── Environment.ts        # Sole/luna toon, mare animato, nebbia progressiva, particelle e qualità
 │   └── ui/
 │       ├── DialogueBox.ts        # Box dialogo responsive per smartphone (textContent sicuro)
 │       ├── JournalUI.ts          # Schermata Diario del Cartografo (missioni, frammenti, reperti)
-│       ├── QualitySettingsUI.ts  # Modale impostazioni (profili qualità grafica e volumi audio)
+│       ├── QualitySettingsUI.ts  # Modale impostazioni (profili qualità grafica, persistenza e volumi)
 │       ├── NotificationBanner.ts # Toast animato a comparsa per oggetti raccolti
 │       └── TouchOverlay.ts       # Joystick virtuale e pulsanti touch per smartphone con resetInputs
 └── tests/
@@ -74,7 +76,11 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
     ├── dialogue_system.test.ts       # Test nodi dialoghi, opzioni, azioni ed eventi
     ├── collectibles.test.ts          # Test rivelazione frammento con lanterna e raggio pickup
     ├── first_quest_integration.test.ts # Test di integrazione dell'intera prima missione
+    ├── action_priority.test.ts       # Test gerarchia priorità azione (dialogo > npc > lanterna)
+    ├── audio_file_fallback.test.ts   # Test supporto file audio e ripiego procedurale trasparente
     ├── day_night_cycle.test.ts       # Test simulazione circadiana, orbite polari e colori cielo
+    ├── day_night_options.test.ts     # Test blocco ore, scala tempo, notti leggibili e smorzamento
+    ├── quality_persistence.test.ts   # Test auto-rilevamento profilo, persistenza e auto-degrade
     ├── audio_system.test.ts          # Test sicurezza Web Audio, clamping volumi e gestione eventi
     └── particle_system.test.ts       # Test sistema particellare, scalabilità e visibilità stelle
 ```

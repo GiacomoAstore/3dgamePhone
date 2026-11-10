@@ -79,11 +79,35 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
 
 ---
 
+## 🎯 Dispositivo di Riferimento e Benchmark degli FPS (Fase 3)
+Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardware target e il percorso di prova:
+
+### Dispositivi di Riferimento
+- **Smartphone Mobile di Riferimento**:
+  - Fascia: Smartphone Android medio (es. SoC Snapdragon 720G / Helio G85 o equivalente, GPU Adreno 618 / Mali-G52, 4-6 GB RAM, display 1080x2400 a 60 Hz).
+  - Browser: Chrome Mobile 120+ / Safari iOS 17+.
+  - Profilo target predefinito: **Media** (1.4x DPR, ombre basiche, 500 particelle).
+  - **Budget Prestazionale**: $\ge 30$ FPS stabili senza cali percepibili.
+- **Desktop di Riferimento**:
+  - Laptop standard con GPU integrata (es. Intel Iris Xe / AMD Radeon Vega / Apple Silicon M1 base).
+  - Browser: Chrome / Edge / Firefox desktop a 1080p.
+  - Profilo target predefinito: **Alta** (2.0x DPR, ombre PCFSoft, 750 particelle).
+  - **Budget Prestazionale**: $\ge 60$ FPS continui.
+
+### Scena di Prova Ripetibile (Percorso Benchmark 30s)
+1. **Spawn**: Pip compare al centro dell'isola (0, 5, 0).
+2. **Corsa collina**: Avanza lungo il sentiero verso l'osservatorio di Nonna Bussola (inquadrando sia il terreno che l'orizzonte marino con onde animate).
+3. **Discesa scogliera**: Scende verso il cerchio di pietre della scogliera orientale con la Lanterna Magica accesa.
+4. **Sosta particelle**: Attesa di 5 secondi nel cerchio di pietre mentre lucciole, polline del vento e spuma marina sono contemporaneamente nel cono visivo.
+- Se il framerate su dispositivi modesti scende sotto i 26 FPS per oltre 5 secondi, il sistema **Auto-Degrade** riduce automaticamente il profilo grafico di un gradino e mostra un avviso a schermo.
+
+---
+
 ## 🛠️ Comandi di Sviluppo e Test
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di 38 test unitari con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, ciclo circadiano, audio procedurale e sistema particellare).
+- `npm test`: esegue la suite completa di 54 test unitari con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback, cel-shading, ciclo circadiano e persistenza impostazioni).
 - `npm run lint`: analisi statica del codice con **ESLint** per TypeScript.
 - `npm run format`: formattazione automatica del codice sorgente con **Prettier**.
 
@@ -93,6 +117,6 @@ Vite è preconfigurato in `vite.config.ts` con `server.host = true` per accettar
 - [GEMINI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/GEMINI.md): Regole vincolanti di sviluppo per l'IA.
 - [ARCHITETTURA.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ARCHITETTURA.md): Mappa dei moduli, diagrammi di flusso e cartelle.
 - [CHANGELOG.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/CHANGELOG.md): Registro cronologico delle modifiche e versioning semantico.
-- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 006).
+- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 007).
 - [TODO.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/TODO.md): Roadmap e backlog per le prossime fasi.
 - [ASSETS.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ASSETS.md): Registro degli asset 3D e licenze.
