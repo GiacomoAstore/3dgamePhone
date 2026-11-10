@@ -7,6 +7,7 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 ### Aggiunto
 - Regole vincolanti di sviluppo del gioco per l'IA (`GEMINI.md` e `AGENTS.md`).
 - Struttura base dei documenti del progetto: `README.md`, `ARCHITETTURA.md`, `DECISIONI.md`, `TODO.md`, `VERSION`.
+- Configurato repository Git locale con branch `main` e file `.gitignore` per escludere dipendenze, file di build, log e credenziali.
 
 ### Modificato
 - Nessuna funzionalità preesistente (inizializzazione repository).
@@ -18,6 +19,7 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 - Nessun elemento rimosso.
 
 ### File toccati
+- `.gitignore`: configurazione file e cartelle ignorati dal versionamento.
 - `GEMINI.md`: regole di sviluppo, stile, gestione errori, documentazione e workflow.
 - `AGENTS.md`: indicizzazione delle regole per agenti IA.
 - `VERSION`: file contenente la versione corrente (0.1.0).

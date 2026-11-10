@@ -10,6 +10,7 @@ Questo documento descrive la struttura delle cartelle, i moduli principali, le l
 *(Struttura iniziale di documentazione e configurazione; verrà espansa con i sorgenti del codice)*
 ```text
 3dgamePhone/
+├── .gitignore         # File esclusi dal controllo versione
 ├── GEMINI.md          # Regole vincolanti di sviluppo per l'IA
 ├── AGENTS.md          # Riferimento regole agenti
 ├── README.md          # Panoramica del gioco e avvio
