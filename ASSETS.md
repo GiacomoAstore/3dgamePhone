@@ -26,24 +26,18 @@ Durante il download automatizzato degli asset eseguito dall'ambiente Node.js:
 
 ---
 
-## 2. Registro Completo Modelli 3D e Texture (`public/models/`)
+## 2. Registro Modelli 3D e Texture Attivi (`public/models/`)
 
 | File Asset | Pacchetto / Autore | SHA-256 (Checksum) | Licenza Dichiarata & Pagina Ufficiale | URL Esatto di Download Diretto | Dimensione | Ruolo nel Gioco |
 | :--- | :--- | :---: | :--- | :--- | :---: | :--- |
 | **`barrel.glb`** | Kenney Pirate Kit | `7616DEDF7C1023AFA6ECD3C52A4609460AAE0E582DEE14E60EC5E47C1174793B` | CC0 ([Pagina Kenney Pirate Kit](https://kenney.nl/assets/pirate-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Pirate%20Kit/barrel.glb` | 13.8 KB | Barili d'ormeggio e accampamento osservatorio |
-| **`boat-sail-a.glb`** | Kenney Pirate Kit | `35C8E2ADAE1D3F0FE9D0E37C65422F1C6C6F1F10D818F9BDE273A9DA264EEF4C` | CC0 ([Pagina Kenney Pirate Kit](https://kenney.nl/assets/pirate-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Pirate%20Kit/boat-sail-a.glb` | 34.4 KB | *Inutilizzato nel codice* (vedi sez. 2.2) |
 | **`BoatWSail.glb`** | Quaternius Ships | `DD0D959F66C058E2AFCFC01227F80B83347B5105D324690596A0C0EB6E65FB95` | CC0 ([Pagina Quaternius Ships](https://quaternius.com/packs/modularships.html)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/quaternius/ModularShips/master/glTF/BoatWSail.glb` | 56.8 KB | Barca a vela ormeggiata al pontile di legno |
 | **`campfire_logs.glb`** | Kenney Nature Kit | `98D87CDCF9095B94FD348D0946E911DD4CA6C0956BAC3318CFD2B0030B86055A` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/campfire_logs.glb` | 9.1 KB | Fuoco da campo con ceppi per l'accampamento |
-| **`character.glb`** | Kenney Animated | `7112F6A08400914F9DA546F3E6029E947CC9EAB2B4A6DA5EB99776111289EFB1` | CC0 ([Pagina Kenney Animated](https://kenney.nl/assets/animated-characters-1)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Animated%20Characters/character.glb` | 85.6 KB | *Inutilizzato nel codice* (sostituito da Rogue_Hooded) |
 | **`chest.glb`** | Kenney Pirate Kit | `26D26C4C032A12320FE05B5005A72EBA96DB7167DB0D35873639A4B7DCC06BCB` | CC0 ([Pagina Kenney Pirate Kit](https://kenney.nl/assets/pirate-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Pirate%20Kit/chest.glb` | 24.6 KB | Antico forziere al cerchio di pietre (custode 1° frammento) |
-| **`flower_purpleA.glb`** | Kenney Nature Kit | `F6FC34C96A03420A74FE36D4C2D0EC88F15204FCAD99CD1416C3C4ECB22E48C4` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/flower_purpleA.glb` | 6.9 KB | *Inutilizzato nel codice* (sostituito da InstancedMesh) |
 | **`Fox.glb`** | Quaternius Animals | `1785E9CE836107276853A8A8183D7C6FA14E5BEFBD105D79BE1FB7E38DE9F446` | CC0 ([Pagina Quaternius Animals](https://quaternius.com/packs/modularanimals.html)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/quaternius/ModularAnimals/master/glTF/Fox.glb` | 576.3 KB | Fauna selvatica (volpe animata con idle e camminata) |
 | **`Mage.glb`** | KayKit Adventurers | `1F7D891BDE50B879C70965F155B7B765B166DC3F8518E5ABB86C0002F191A26E` | CC0 ([Pagina KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KayLousberg/KayKit-Adventurers/main/Characters/gltf/Mage.glb` | 344.2 KB | Modello 3D di Nonna Bussola all'osservatorio |
-| **`mushroom_redGroup.glb`** | Kenney Nature Kit | `29F02DF0589DD2B09E8D2AFF6A4662394DAC5CFCF1FEC701640DCBD6127E0802` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/mushroom_redGroup.glb` | 14.6 KB | *Inutilizzato nel codice* (funghi gestiti in Collectibles) |
-| **`plant_bushDetailed.glb`** | Kenney Nature Kit | `2E0487020D68CCF664435DB9D829C78AE00E6D2785EE3EC10B9F89CC70A10406` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/plant_bushDetailed.glb` | 9.9 KB | *Inutilizzato nel codice* (sostituito da InstancedMesh) |
 | **`Rig_Medium_General.glb`** | KayKit Animations | `5F725C0F745F36078C7238968CD5C04843CBC6260689EB6E7F5E2BBD7FFDD7AD` | CC0 ([Pagina KayKit Animations](https://kaylousberg.itch.io/kaykit-animations)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KayLousberg/KayKit-Animations/main/Rig_Medium_General.glb` | 808.8 KB | Clip animazioni generali Pip e NPC (`Idle_A`, `Interact`) |
 | **`Rig_Medium_MovementBasic.glb`** | KayKit Animations | `11422AFD50ABF7E8C92EA107E2E0BC94ABD38023D6D15F55AD580347EFBFA29E` | CC0 ([Pagina KayKit Animations](https://kaylousberg.itch.io/kaykit-animations)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KayLousberg/KayKit-Animations/main/Rig_Medium_MovementBasic.glb` | 673.5 KB | Clip animazioni movimento Pip (`Running_A`, `Walking_A`) |
-| **`rock_largeA.glb`** | Kenney Nature Kit | `6DD15390FD96501DCD1454765A17BA61DBBD8D47705DFE5149C8DD92B353CE25` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/rock_largeA.glb` | 7.4 KB | *Inutilizzato nel codice* (rocce procedurali nel terreno) |
 | **`Rogue_Hooded.glb`** | KayKit Adventurers | `E8F3233C6DB190506FBEF3AD855683E6CB8BD7350DE637D923E14A08AEF088DC` | CC0 ([Pagina KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KayLousberg/KayKit-Adventurers/main/Characters/gltf/Rogue_Hooded.glb` | 372.5 KB | Modello 3D di Pip (cappuccio verde, mantello, stivali) |
 | **`sign.glb`** | Kenney Nature Kit | `C658C21672ECD63C5D3E53F06F875D68E6509EDB1AB7E3B75374DF7C61E7DD0C` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/sign.glb` | 4.9 KB | Cartello indicatore in legno sul sentiero della collina |
 | **`tree_detailed.glb`** | Kenney Nature Kit | `C041DAF2F0FB1D49E4325227CBCD58667ADBE51E9B55E8C1F0A94B74CC521B3B` | CC0 ([Pagina Kenney Nature Kit](https://kenney.nl/assets/nature-kit)) - [Licenza CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `https://raw.githubusercontent.com/KenneyNL/Starter-Kits/master/3D/Nature%20Kit/tree_detailed.glb` | 30.7 KB | Alberi dettagliati a chioma sfaccettata |
@@ -52,20 +46,16 @@ Durante il download automatizzato degli asset eseguito dall'ambiente Node.js:
 
 ---
 
-## 2.2 File Non Usati dal Codice e Proposta di Eliminazione
+## 2.1 File Eliminati su Conferma Utente (Risparmio 158.8 KB)
 
-L'ispezione statica dell'intero albero sorgente (`src/`) evidenzia che i seguenti **6 file `.glb`** presenti in `public/models/` non sono importati né referenziati in alcun punto del gioco:
+In data 2026-11-11, previa autorizzazione esplicita dell'utente, i seguenti 6 file non utilizzati dal codice sono stati eliminati definitivamente dalla cartella `public/models/`:
 
-1. **`character.glb`** (85.6 KB) - Modello umanoide Kenney di test, soppiantato dal modello dedicato `Rogue_Hooded.glb`.
-2. **`boat-sail-a.glb`** (34.4 KB) - Barca a vela Kenney di test, soppiantata da `BoatWSail.glb` (Quaternius).
-3. **`plant_bushDetailed.glb`** (9.9 KB) - Cespuglio singolo Kenney, soppiantato dalle istanze ottimizzate `InstancedMesh` di `Island.ts`.
-4. **`flower_purpleA.glb`** (6.9 KB) - Fiore singolo Kenney, soppiantato dalle istanze ottimizzate `InstancedMesh` di `Island.ts`.
-5. **`mushroom_redGroup.glb`** (14.6 KB) - Funghi Kenney, attualmente gestiti proceduralmente dal manager collezionabili (`Collectibles.ts`).
-6. **`rock_largeA.glb`** (7.4 KB) - Roccia singola Kenney, non istanziata (l'isola adotta rocce toon procedurali con collider BVH).
-
-### Proposta di Rimozione
-- **Peso totale risparmiabile**: **158.8 KB** (pari a ~4% del peso totale di `dist/`).
-- **Azione proposta**: L'eliminazione fisica di questi 6 file da `public/models/` ridurrà il bundle senza alcuna regressione logica o grafica. In ossequio alla regola 8 di `GEMINI.md` ("Non cancellare né riscrivere grandi parti di codice senza chiedere conferma"), la rimozione verrà eseguita solo previa conferma esplicita dell'utente.
+1. **`character.glb`** (85.6 KB, SHA-256 `7112F6A08400914F9DA546F3E6029E947CC9EAB2B4A6DA5EB99776111289EFB1`) - Sostituito dal modello dedicato `Rogue_Hooded.glb`.
+2. **`boat-sail-a.glb`** (34.4 KB, SHA-256 `35C8E2ADAE1D3F0FE9D0E37C65422F1C6C6F1F10D818F9BDE273A9DA264EEF4C`) - Sostituito da `BoatWSail.glb`.
+3. **`plant_bushDetailed.glb`** (9.9 KB, SHA-256 `2E0487020D68CCF664435DB9D829C78AE00E6D2785EE3EC10B9F89CC70A10406`) - Sostituito da `InstancedMesh` in `Island.ts`.
+4. **`flower_purpleA.glb`** (6.9 KB, SHA-256 `F6FC34C96A03420A74FE36D4C2D0EC88F15204FCAD99CD1416C3C4ECB22E48C4`) - Sostituito da `InstancedMesh` in `Island.ts`.
+5. **`mushroom_redGroup.glb`** (14.6 KB, SHA-256 `29F02DF0589DD2B09E8D2AFF6A4662394DAC5CFCF1FEC701640DCBD6127E0802`) - Gestito proceduralmente in `Collectibles.ts`.
+6. **`rock_largeA.glb`** (7.4 KB, SHA-256 `6DD15390FD96501DCD1454765A17BA61DBBD8D47705DFE5149C8DD92B353CE25`) - Rocce gestite con collider BVH in `Island.ts`.
 
 ---
 
