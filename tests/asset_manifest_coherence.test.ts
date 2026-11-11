@@ -52,4 +52,13 @@ describe('Coerenza Asset Manifest vs ASSETS.md', () => {
       expect(foundInManifest, `Il file "${docFile}" documentato in ASSETS.md non esiste nel manifest fisico!`).toBe(true);
     }
   });
+
+  it('dovrebbe garantire che la versione del gioco sia allineata tra package.json e VERSION senza discrepanze', () => {
+    const pkgPath = path.resolve('package.json');
+    const versionPath = path.resolve('VERSION');
+    const pkgContent = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    const versionContent = fs.readFileSync(versionPath, 'utf-8').trim();
+
+    expect(pkgContent.version).toBe(versionContent);
+  });
 });

@@ -10,12 +10,13 @@ import { InputManager } from '../systems/InputManager';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
 import { AssetManager } from '../core/AssetManager';
+import gameConfig from '../data/config.json';
 import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Player {
   public meshComponents: PipMeshComponents;
-  public position: THREE.Vector3 = new THREE.Vector3(0, 4.8, 1.5);
-  public spawnPoint: THREE.Vector3 = new THREE.Vector3(0, 4.8, 1.5);
+  public position: THREE.Vector3 = new THREE.Vector3(gameConfig.safeSpawn.x, 4.8, gameConfig.safeSpawn.z);
+  public spawnPoint: THREE.Vector3 = new THREE.Vector3(gameConfig.safeSpawn.x, 4.8, gameConfig.safeSpawn.z);
   public velocity: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
   // Parametri di movimento (senza numeri magici, configurati qui)

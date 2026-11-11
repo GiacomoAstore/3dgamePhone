@@ -52,25 +52,25 @@ Ultima modifica: 2026-11-11 - v0.3.9 - Riduzione draw calls (<100) completata, t
 
 ---
 
-## 🎯 Prossimi Obiettivi: Fase 4 (Salvataggi, Menu di Sistema, PWA e Crediti)
+## 🎯 Prossimi Obiettivi: Fase 4 (Salvataggi, Menu di Sistema, PWA e Crediti - v0.5.0)
 
 > [!IMPORTANT]
-> **Perimetro Chiarito della Fase 4**: La Fase 4 include esclusivamente le funzionalità di persistenza, schermate di menu complete, Progressive Web App e rifinitura audio. Il viaggio in barca e la seconda isola appartengono alla Fase 5.
+> **Perimetro Chiarito della Fase 4 (v0.5.0)**: La Fase 4 include esclusivamente le funzionalità di persistenza, schermate di menu complete, Progressive Web App e rifinitura audio. Il viaggio in barca e la seconda isola appartengono alla Fase 5.
 
-- [ ] **Sistema di Salvataggio Persistente (v0.4.0)**:
-  - Schema dati versionato (`SaveStateV1`) salvato in `localStorage` o `IndexedDB`.
-  - Salvataggio automatico: posizione e orientamento di Pip, stato quest (`QuestSystem`), inventario (frammenti e collezionabili), ora del giorno (`DayNightCycle`), impostazioni audio e grafiche.
-  - Slot di salvataggio (Nuova Partita / Continua / Ripristina).
+- [ ] **Sistema di Salvataggio Persistente (v0.5.0)**:
+  - Schema dati versionato (`schemaVersion: 1`, `gameVersion: "0.5.0"`) salvato in `localStorage`.
+  - Salvataggio automatico: posizione $x, z$ e yaw di Pip (con $y$ dinamico da `getTerrainHeight`), stato quest (`QuestSystem`), inventario (frammenti e collezionabili), ora del giorno (`DayNightCycle`), impostazioni audio e grafiche.
+  - Slot di backup per corruzione FIFO (max 3) e slot dedicato isolato `brumavento_save_future_schema_backup` per schemi più recenti.
+  - Rilevamento conflitti multi-scheda via evento `storage`.
 - [ ] **Schermate di Menu Complete**:
-  - Menu Principale iniziale arricchito con opzioni "Nuova Avventura" e "Continua".
-  - Menu di Pausa in-game (apribile con `Escape` o pulsante HUD) con opzioni "Riprendi", "Impostazioni", "Guida Controlli" e "Torna al Menu".
-  - Schermata dei Crediti di gioco (riconoscimenti autori asset CC0 Kenney, KayKit, Quaternius e team di sviluppo).
+  - Menu Principale con opzioni "Continua", "Nuova Partita", "Opzioni", "Crediti".
+  - Menu di Pausa in-game ("Riprendi", "Salva Partita", "Opzioni", "Torna al Menu").
+  - Schermata dei Crediti di gioco (asset della build: Kenney, KayKit, Quaternius; autore configurabile).
 - [ ] **Supporto Progressive Web App (PWA)**:
-  - Web App Manifest (`manifest.webmanifest`) con icone responsive per schermata home smartphone.
-  - Service Worker per caching offline di HTML, bundle JS/CSS e modelli 3D GLB.
-  - Supporto per esecuzione standalone senza barra degli indirizzi del browser.
+  - Web App Manifest (`manifest.webmanifest`) con icone responsive per smartphone.
+  - Service Worker nativo versionato (`brumavento-cache-v0.5.0`) per caching offline.
 - [ ] **Persistenza Audio e Impostazioni**:
-  - Salvataggio automatico di preferenze volume master, musica, effetti e modalità "Notti Chiare".
+  - Salvataggio e caricamento automatico delle preferenze volume, qualità e contrasto.
 
 ---
 
@@ -90,6 +90,9 @@ Ultima modifica: 2026-11-11 - v0.3.9 - Riduzione draw calls (<100) completata, t
 
 ## 🐛 Bug Noti & Difetti Aperti (Identificati da Screenshot)
 
+- [ ] **[Priorità Alta] D11 - Decal e ombre galleggianti sull'acqua al cerchio di pietre (da Screenshot 4 utente)**:
+  - *Descrizione*: In prossimità della riva presso il cerchio megalitico, le proiezioni d'ombra o i decal/fiori galleggiano visivamente sulla superficie dell'acqua o nel vuoto invece di ancorarsi al terreno solido sommerso.
+  - *Mitigazione pianificata*: Vincolare il raycasting di ancoraggio delle decorazioni e decal al solo terreno emerso ($y > 0.05$) o applicare clipping planare all'altezza dell'acqua.
 - [ ] **[Priorità Media] D5 - Orientamento InstancedMesh (fiori e cespugli) su pendenze scoscese**:
   - *Descrizione*: Le matrici di trasformazione delle istanze usano traslazione pura posizionando la base a $y = \text{getTerrainHeight}(x, z)$, senza allineare il vettore `up` alla normale della superficie triangolare.
   - *Mitigazione pianificata*: Calcolare il vettore normale del triangolo BVH locale e orientare il quaternione d'istanza.
@@ -106,5 +109,7 @@ Ultima modifica: 2026-11-11 - v0.3.9 - Riduzione draw calls (<100) completata, t
 ---
 
 ## 💳 Debito Tecnico e Manutenzione
+- [ ] **Contorni Toon Inverted Hull su Modelli GLB (Stato: NON ATTIVA)**:
+  - I contorni invertiti sono stati implementati esclusivamente sui componenti procedurali primitivi di Pip (`ProceduralPip`). Con il caricamento dei modelli GLB KayKit (`Rogue_Hooded.glb`, `Mage.glb`), tali primitive vengono rimosse dal grafo e i contorni visibili a runtime sono 0. TODO: implementare eventuale post-processing outline (Sobel/Normal-Depth) o inverted hull esteso ai nodi SkinnedMesh nella Fase 5.
 - [x] ~~Riduzione draw call sotto il budget <100~~ (Risolto in v0.3.8: 90-93 draw calls).
 - [x] ~~Rimozione dei 6 modelli GLB inutilizzati in `public/models/`~~ (Risolto in v0.3.9 - commit `b38876b`, risparmiati 158.8 KB).

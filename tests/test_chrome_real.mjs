@@ -155,6 +155,7 @@ async function runChromeTest() {
           currentAction: g.player.currentAction,
           initialFogDensity: Number(g.environment.fog.density.toFixed(4)),
           initialTargetFog: Number(g.environment.targetDensity.toFixed(4)),
+          initialFogColor: '#' + g.environment.fog.color.getHexString(),
           activeQuest: g.questSystem.getActiveQuestInfo(),
           hasGlbModel: !!g.player.glbModel,
           triangles: g.renderer.info.render.triangles,
@@ -250,10 +251,11 @@ async function runChromeTest() {
 
         const low = measure('low');
         const medium = measure('medium');
+        const high = measure('high');
         // Ripristina profilo high per i test successivi
         g.setQuality('high');
 
-        return { low, medium };
+        return { low, medium, high };
       })()
     `,
     returnByValue: true
@@ -262,8 +264,8 @@ async function runChromeTest() {
   const budgetData = drawCallsBudgetEval.result?.result?.value;
   console.log('   Misure draw call effettive:', JSON.stringify(budgetData, null, 2));
 
-  if (!budgetData || !budgetData.low || !budgetData.medium) {
-    throw new Error('Impossibile misurare il budget draw call per Bassa e Media!');
+  if (!budgetData || !budgetData.low || !budgetData.medium || !budgetData.high) {
+    throw new Error('Impossibile misurare il budget draw call per Bassa, Media e Alta!');
   }
   if (budgetData.low.total >= 100) {
     throw new Error(`Budget draw call superato per profilo BASSA: ${budgetData.low.total} >= 100`);
@@ -273,6 +275,7 @@ async function runChromeTest() {
   }
   console.log(`   ✅ Profilo BASSA: ${budgetData.low.total} draw call totali (${budgetData.low.forward} forward + ${budgetData.low.shadow} shadow) < 100 OK!`);
   console.log(`   ✅ Profilo MEDIA: ${budgetData.medium.total} draw call totali (${budgetData.medium.forward} forward + ${budgetData.medium.shadow} shadow) < 100 OK!`);
+  console.log(`   ℹ️ Profilo ALTA:  ${budgetData.high.total} draw call totali (${budgetData.high.forward} forward + ${budgetData.high.shadow} shadow) [telemetria senza soglia vincolante]`);
 
   // 2. TEST WASD RIGOROSO: VALUTAZIONE DURANTE IL MOVIMENTO
   console.log('\n🏃‍♂️ 2. TEST MOVIMENTO WASD CON VERIFICA MID-MOTION:');
@@ -583,8 +586,10 @@ async function runChromeTest() {
         }
         return {
           initialTargetFog: ${initState.initialTargetFog},
+          initialFogColor: '${initState.initialFogColor}',
           finalTargetDensity: Number(g.environment.targetDensity.toFixed(4)),
           finalFogDensity: Number(g.environment.getFogDensity().toFixed(4)),
+          finalFogColor: '#' + g.environment.fog.color.getHexString(),
           isRestored: g.environment.isRestored()
         };
       })()
@@ -593,16 +598,18 @@ async function runChromeTest() {
   });
 
   const fogFinal = fogFinalEval.result?.result?.value;
-  console.log('\n🌫️ 4. VERIFICA DELLA NEBBIA PRIMA E DOPO LA MISSIONE:');
+  console.log('\n🌫️ 4. VERIFICA DELLA NEBBIA PRIMA E DOPO LA MISSIONE (DENSITÀ E COLORE):');
   console.log(JSON.stringify(fogFinal, null, 2));
 
   if (fogFinal.finalTargetDensity >= fogFinal.initialTargetFog) {
     throw new Error(`La nebbia non è diminuita! Iniziale: ${fogFinal.initialTargetFog}, Finale: ${fogFinal.finalTargetDensity}`);
   }
+  if (!fogFinal.finalFogColor || fogFinal.finalFogColor === fogFinal.initialFogColor) {
+    throw new Error(`Il colore della nebbia non è variato! Iniziale: ${fogFinal.initialFogColor}, Finale: ${fogFinal.finalFogColor}`);
+  }
   const deltaPercent = (((fogFinal.initialTargetFog - fogFinal.finalTargetDensity) / fogFinal.initialTargetFog) * 100).toFixed(1);
-  console.log(`   - Densità target nebbia iniziale: ${fogFinal.initialTargetFog}`);
-  console.log(`   - Densità target nebbia finale:   ${fogFinal.finalTargetDensity}`);
-  console.log(`   - Riduzione nebbia ottenuta:      -${deltaPercent}% 🎉`);
+  console.log(`   - Densità target nebbia: ${fogFinal.initialTargetFog} -> ${fogFinal.finalTargetDensity} (-${deltaPercent}%) 🎉`);
+  console.log(`   - Viraggio cromatico:    ${fogFinal.initialFogColor} -> ${fogFinal.finalFogColor} (verso #8ecae6) 🎉`);
 
   // Screenshot finale
   console.log('\n📸 Cattura screenshot di conferma missione...');
