@@ -268,5 +268,40 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
   2. **Animazione Idle e Rigging degli NPC (`NPC.ts`)**:
      - Condivisione delle tracce di animazione `Rig_Medium_General.glb` tra Pip e Nonna Bussola (che condividono il medesimo rig scheletrico KayKit).
      - Aggiunta di `AnimationMixer` e clip `Idle_A` in loop infinito per Nonna Bussola, con chiamata `this.nonnaBussola.update(dt)` nel loop principale.
+---
+
+## ADR 013 - Correzioni e Validazioni Pre-Fase 4: Draw Calls, Test E2E Rigorosi, SHA-256 Asset e Regressioni Altimetriche (v0.3.7)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  Prima di avviare la Fase 4 (Salvataggi, Viaggio e Seconda Isola), l'utente ha richiesto una revisione meticolosa su 8 aree chiave del lavoro 0.3.6:
+  1. Analisi quantitativa draw calls (239 vs budget <100) e piano di riduzione (senza applicarlo prematuramente).
+  2. Correzione del test WASD di Chrome per valutare l'animazione `Running_A` *durante* la corsa e misurare lo spostamento effettivo ($\Delta d \ge 1.5\,\text{m}$).
+  3. Estensione del test Chrome al completamento dell'intera prima missione (dialogo, lanterna, frammento, ritorno) e delta nebbia, chiarendo i limiti del rendering software di Headless Chrome.
+  4. Suite di regressione unitaria per `spawnAt`, ground-snapping con i nuovi parametri (`castHeight = 2.0`, `maxDistance = 8.0`, soglie) e quote dinamiche di NPC e collezionabili da `getTerrainHeight`.
+  5. Tracciabilità rigorosa di tutti gli asset (SHA-256, procedura di download via script, licenza CC0 da verificare dall'utente) e deduplicazione di `colormap.png`.
+  6. Verifica integrità della cronologia Git e dei tag `v0.3.1`-`v0.3.6`.
+  7. Esclusione screenshot diagnostici da Git (`.gitignore`) e istruzioni per `test:chrome`.
+  8. Consuntivo oggettivo dello stato dei punti del piano 0.3.1.
+- **Decisione**:
+  1. **Diagnostica Draw Calls e Piano di Riduzione (`TODO.md`)**:
+     - Misurato con `tests/profile_draw_calls.mjs`: 208-245 draw calls, 489 mesh totali, 214 shadow casters.
+     - Individuate le cause principali: 174 mesh di vegetazione minore procedurale (fiori e cespugli), 72 mesh di alberi procedurali rimasti attivi in parallelo agli alberi Kenney (30 mesh), e 214 shadow casters.
+     - Proposto piano per la Fase 4: `InstancedMesh` per fiori/cespugli (-170 draw calls), nascondimento alberi procedurali (-72 draw calls), `mergeGeometries` per pontile e balaustre (-25 draw calls) e profilo Bassa senza ombre/contorno. Proiezione: 45-65 draw calls.
+  2. **Asserzioni Rigorose Mid-Motion in Chrome (`tests/test_chrome_real.mjs`)**:
+     - Campionamento dello stato mentre `KeyW` è attivamente premuto: `currentAction === 'Running_A'` e $v_{xz} \ge 0.5\,\text{m/s}$ (misurati $5.2\,\text{m/s}$).
+     - Calcolo euclideo dello spostamento reale: $\Delta d = \sqrt{\Delta x^2 + \Delta z^2} \ge 1.5\,\text{m}$ (misurati $3.99\,\text{m}$).
+     - Verifica del ritorno a `Idle_A` e $v_{xz} = 0$ all'arresto.
+  3. **Completamento E2E Quest 1 e Misura Delta Nebbia**:
+     - Dialogo iniziale ad albero nodi con Nonna Bussola (avanzamento a stadio 1).
+     - Raggiungimento cerchio di pietre, accensione lanterna e raccolta 1° frammento (avanzamento a stadio 2, stato `restored = true`).
+     - Ritorno all'osservatorio e chiusura con Nonna Bussola.
+     - Misura densità nebbia: da $0.018$ a $0.0062$ (riduzione del $-65.6\%$).
+     - Disclaimer esplicito sul software rasterizer (SwiftShader / CPU) di Chrome headless.
+  4. **Suite di Regressione Altimetrica (`tests/altitude_grounding.test.ts`)**:
+     - 7 nuovi test unitari che blindano `spawnAt`, `checkGround`, tolleranze di snapping in discesa ($0.60\,\text{m}$), recupero da compenetrazione ($-0.36\,\text{m}$) e calcolo quote per Nonna Bussola (`plazaY + 0.48`) e collezionabili (`island.getTerrainHeight(x, z) + 0.35`).
+  5. **Tracciabilità Asset e Deduplicazione Colormap (`ASSETS.md`)**:
+     - Tabella completa con hash SHA-256 di tutti i 19 file in `public/models/`.
+     - Rimozione del duplicato `public/Textures/colormap.png` mantenendo la copia canonica `public/models/Textures/colormap.png`.
 - **Conseguenze**:
-  Copertura E2E totale dell'esperienza utente in-browser, assenza di difetti visivi (T-pose eliminata) e validazione visiva su layout sia desktop che smartphone.
+  Base di codice solida, completamente testata sia a livello unitario (82 test Vitest verdi) che a livello E2E in browser reale Google Chrome, con tracciabilità crittografica di ogni risorsa e piano di ottimizzazione pronto per la Fase 4.

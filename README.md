@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)
+Ultima modifica: 2026-11-11 - v0.3.7 - Verifiche pre-Fase 4, test E2E Quest 1 Chrome, SHA-256 asset e regressioni altimetriche
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  
@@ -147,8 +147,15 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di 75 test unitari e di integrazione con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
-- `npm run test:chrome`: esegue la suite automatizzata **E2E reale in Google Chrome headless** via Chrome DevTools Protocol (CDP), validando WebGL, fisica a terra, movimento WASD, interazione con Nonna Bussola e cattura screenshot senza errori in console.
+- `npm test`: esegue la suite completa di **82 test unitari e di integrazione** con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, quote dinamiche `getTerrainHeight`, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
+- `npm run test:chrome`: esegue la suite automatizzata **E2E reale in Google Chrome headless** via Chrome DevTools Protocol (CDP), validando:
+  - Posizionamento iniziale a terra e assenza di sprofondamento.
+  - Verifica dell'animazione `Running_A` e velocità orizzontale fisica *durante* la pressione di `KeyW`.
+  - Calcolo dello spostamento reale ($\Delta d \ge 1.5\,\text{m}$) e ritorno a `Idle_A` all'arresto.
+  - Completamento dell'intera prima missione (dialogo con Nonna Bussola, cerchio di pietre con lanterna magica, raccolta 1° frammento, ritorno e chiusura).
+  - Misurazione quantitativa della riduzione nebbia (targetDensity pre e post missione).
+  - *Prerequisiti*: Google Chrome installato (percorso predefinito `C:\Program Files\Google\Chrome\Application\chrome.exe` o variabile d'ambiente `CHROME_PATH`), porta di debug 9225 libera, server di sviluppo Vite avviato su `http://localhost:5173/`.
+  - *Nota Prestazionale*: Headless Chrome opera normalmente in software rendering (SwiftShader / CPU rasterization); gli FPS misurati in modalità headless non sono rappresentativi dell'hardware GPU reale.
 - `npm run test:ui`: esegue la suite di **test UI end-to-end su Chrome** con validazione di tutti i modal, bottoni, albero dei dialoghi, prompt di interazione e layout responsive smartphone 390x844.
 - `npm run lint`: analisi statica del codice con **ESLint** per TypeScript.
 - `npm run format`: formattazione automatica del codice sorgente con **Prettier**.

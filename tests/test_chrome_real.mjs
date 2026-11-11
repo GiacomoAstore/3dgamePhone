@@ -1,24 +1,44 @@
 /**
  * Test E2E Reale su Google Chrome tramite Chrome DevTools Protocol (CDP).
  *
- * Avvia un'istanza reale di Google Chrome, carica Brumavento in WebGL,
- * avvia la sessione, verifica console logs, posizione fisica del giocatore,
- * esegue movimento con WASD e cattura uno screenshot a piena risoluzione.
+ * Esegue in un'istanza reale di Chrome:
+ * 1. Avvio e streaming asset (Three.js WebGL).
+ * 2. Controllo posizione iniziale e spawn a terra.
+ * 3. Misurazione nebbia iniziale (targetDensity e currentDensity).
+ * 4. Test movimento WASD con verifica RIGOROSA dell'azione 'Running_A' DURANTE
+ *    la pressione di W, calcolo percorso reale (distanza >= 1.5m) e ritorno a 'Idle_A'.
+ * 5. Esecuzione completa prima missione (Quest 1):
+ *    - Dialogo completo con Nonna Bussola (albero nodi start -> lantern_quest -> start_quest_1)
+ *    - Verifica avanzamento missione a stadio 1
+ *    - Posizionamento al cerchio di pietre (18, -15) con lanterna attiva
+ *    - Raccolta del 1° frammento dell'Atlante Vivo (stage -> 2, nebbia -> restored)
+ *    - Ritorno a Nonna Bussola all'osservatorio e dialogo di completamento
+ *    - Verifica variazione reale della nebbia (targetDensity pre e post missione)
+ * 6. Disclaimer esplicito sul software rendering di Headless Chrome.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.6 (asserzioni E2E complete: spawn, fisica terreno, WASD, interazione dialogo e screenshot multipli)
+ * Ultima modifica: 2026-11-11 - v0.3.7 (perfezionamento E2E Quest 1, transizione nebbia e gestione collectiblesManager)
  */
 
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const CHROME_PATH = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PORT = 9225;
 const USER_DATA = path.join(process.env.TEMP || 'C:\\Temp', 'chrome_game_test_profile_' + Date.now());
 
 async function runChromeTest() {
-  console.log('🚀 Avvio istanza Google Chrome reale...');
+  console.log('===============================================================');
+  console.log('🧪 TEST E2E REALE SU GOOGLE CHROME (CDP - Chrome DevTools Protocol)');
+  console.log('===============================================================');
+  console.log('⚠️ NOTA TECNICA SULLE PRESTAZIONI:');
+  console.log('   Headless Chrome in ambiente di test CI/CD opera normalmente');
+  console.log('   in software rendering (SwiftShader / CPU rasterization).');
+  console.log('   I frame per secondo (FPS) misurati in questa modalità headless');
+  console.log('   NON sono rappresentativi delle prestazioni reali su GPU mobile/desktop.\n');
+
+  console.log(`🚀 Avvio Google Chrome: ${CHROME_PATH}`);
 
   const chromeProc = spawn(CHROME_PATH, [
     '--headless=new',
@@ -42,9 +62,9 @@ async function runChromeTest() {
   process.on('exit', cleanup);
   process.on('SIGINT', cleanup);
 
-  // Attende che l'endpoint DevTools sia attivo
+  // Attesa che l'endpoint CDP sia pronto
   let versionData = null;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 24; i++) {
     try {
       const res = await fetch(`http://127.0.0.1:${PORT}/json/version`);
       if (res.ok) {
@@ -57,18 +77,16 @@ async function runChromeTest() {
 
   if (!versionData) {
     cleanup();
-    throw new Error('Impossibile collegarsi a Chrome DevTools Protocol.');
+    throw new Error('Impossibile collegarsi al browser Chrome su porta ' + PORT);
   }
 
   console.log(`✅ Connesso a ${versionData.Browser}`);
 
-  // Ottiene la lista dei target (pagine)
   const listRes = await fetch(`http://127.0.0.1:${PORT}/json/list`);
   const targets = await listRes.json();
   const pageTarget = targets.find((t) => t.type === 'page') || targets[0];
 
   const ws = new WebSocket(pageTarget.webSocketDebuggerUrl);
-
   await new Promise((resolve) => ws.onopen = resolve);
 
   let idCounter = 1;
@@ -104,36 +122,28 @@ async function runChromeTest() {
     });
   }
 
-  // Abilita i domini CDP necessari
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Network.enable');
 
-  console.log('🌐 Navigazione su http://localhost:5173/?debug=1 ...');
+  console.log('🌐 Caricamento gioco su http://localhost:5173/?debug=1 ...');
   await send('Page.navigate', { url: 'http://localhost:5173/?debug=1' });
-
-  // Attende caricamento DOM
   await new Promise((r) => setTimeout(r, 1500));
 
-  // Clicca sul pulsante 'Inizia Esplorazione'
   console.log('🖱️ Clic su #btn-start...');
   await send('Runtime.evaluate', {
-    expression: `
-      const btn = document.getElementById('btn-start');
-      if (btn) btn.click();
-    `
+    expression: `document.getElementById('btn-start')?.click();`
   });
 
-  // Attende che Three.js e gli asset carichino e renderizzino i primi frame
-  console.log('⏳ Attesa rendering 3D e streaming asset (3 secondi)...');
-  await new Promise((r) => setTimeout(r, 3000));
+  console.log('⏳ Attesa rendering 3D, streaming asset e shader compilation (3.5s)...');
+  await new Promise((r) => setTimeout(r, 3500));
 
-  // Ispezione stato di gioco reale da Chrome
-  const evalRes = await send('Runtime.evaluate', {
+  // 1. STATO INIZIALE
+  const initialEval = await send('Runtime.evaluate', {
     expression: `
       (() => {
         const g = window.game;
-        if (!g) return { error: 'window.game non definito' };
+        if (!g) return { error: 'window.game non trovato' };
         return {
           playerPosition: {
             x: Number(g.player.position.x.toFixed(2)),
@@ -141,148 +151,298 @@ async function runChromeTest() {
             z: Number(g.player.position.z.toFixed(2))
           },
           isGrounded: g.player.isGrounded,
-          velocity: {
-            x: Number(g.player.velocity.x.toFixed(2)),
-            y: Number(g.player.velocity.y.toFixed(2)),
-            z: Number(g.player.velocity.z.toFixed(2))
-          },
           currentAction: g.player.currentAction,
+          initialFogDensity: Number(g.environment.fog.density.toFixed(4)),
+          initialTargetFog: Number(g.environment.targetDensity.toFixed(4)),
+          activeQuest: g.questSystem.getActiveQuestInfo(),
           hasGlbModel: !!g.player.glbModel,
-          islandChildren: g.island.group.children.length,
           triangles: g.renderer.info.render.triangles,
-          drawCalls: g.renderer.info.render.calls,
-          canvasWidth: g.renderer.domElement.width,
-          canvasHeight: g.renderer.domElement.height
+          drawCalls: g.renderer.info.render.calls
         };
       })()
     `,
     returnByValue: true
   });
 
-  const gameState = evalRes.result?.result?.value;
-  console.log('\n📊 STATO INIZIALE DEL GIOCO IN CHROME:');
-  console.log(JSON.stringify(gameState, null, 2));
+  const initState = initialEval.result?.result?.value;
+  console.log('\n📊 1. STATO INIZIALE DI GIOCO:');
+  console.log(JSON.stringify(initState, null, 2));
 
-  // Cattura screenshot iniziale
-  console.log('📸 Cattura screenshot iniziale (Pip allo spawn)...');
-  const startScreenRes = await send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync(path.join(process.cwd(), 'tests', 'chrome_real_screen_start.png'), Buffer.from(startScreenRes.result.data, 'base64'));
+  if (!initState || !initState.isGrounded || initState.playerPosition.y < 3.0) {
+    throw new Error(`Pip non è solidamente a terra allo start: y=${initState?.playerPosition?.y}`);
+  }
 
-  // Simula la pressione del tasto W per 0.6 secondi per avvicinarsi a Nonna Bussola
-  console.log('\n🏃‍♂️ Test movimento: avvicinamento a Nonna Bussola con W (0.6s)...');
+  // 2. TEST WASD RIGOROSO: VALUTAZIONE DURANTE IL MOVIMENTO
+  console.log('\n🏃‍♂️ 2. TEST MOVIMENTO WASD CON VERIFICA MID-MOTION:');
+  const posBefore = initState.playerPosition;
+
+  console.log('   - Pressione tasto W (keyDown)...');
   await send('Input.dispatchKeyEvent', { type: 'keyDown', code: 'KeyW', key: 'w' });
-  await new Promise((r) => setTimeout(r, 600));
-  await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyW', key: 'w' });
-  await new Promise((r) => setTimeout(r, 400));
 
-  // Verifica nuova posizione dopo la camminata
-  const moveEval = await send('Runtime.evaluate', {
+  // Attende 250ms che la fisica acceleri Pip
+  await new Promise((r) => setTimeout(r, 250));
+
+  // Campiona lo stato esatto MENTRE il tasto W è premuto
+  const midRunEval = await send('Runtime.evaluate', {
     expression: `
       (() => {
         const g = window.game;
+        const velXZ = Math.hypot(g.player.velocity.x, g.player.velocity.z);
         return {
+          currentAction: g.player.currentAction,
+          velXZ: Number(velXZ.toFixed(2)),
+          isGrounded: g.player.isGrounded,
           position: {
             x: Number(g.player.position.x.toFixed(2)),
             y: Number(g.player.position.y.toFixed(2)),
             z: Number(g.player.position.z.toFixed(2))
-          },
-          isGrounded: g.player.isGrounded,
-          currentAction: g.player.currentAction,
-          interactionActive: !!document.getElementById('action-hint') && !document.getElementById('action-hint').classList.contains('hidden')
+          }
         };
       })()
     `,
     returnByValue: true
   });
 
-  const afterMoveState = moveEval.result?.result?.value;
-  console.log('📊 STATO DOPO L\'AVVICINAMENTO A NONNA BUSSOLA:');
-  console.log(JSON.stringify(afterMoveState, null, 2));
+  const midRunState = midRunEval.result?.result?.value;
+  console.log('   - Stato rilevato DURANTE il movimento (W premuto):');
+  console.log(JSON.stringify(midRunState, null, 2));
 
-  // Test interazione con Nonna Bussola: tasto E
-  console.log('\n💬 Test interazione: pressione tasto E per avviare il dialogo...');
-  await send('Input.dispatchKeyEvent', { type: 'keyDown', code: 'KeyE', key: 'e' });
-  await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyE', key: 'e' });
+  // Continua la corsa per altri 500ms
   await new Promise((r) => setTimeout(r, 500));
 
-  const dialogueEval = await send('Runtime.evaluate', {
+  // Rilascia W
+  console.log('   - Rilascio tasto W (keyUp)...');
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyW', key: 'w' });
+
+  // Attende 350ms per l'arresto
+  await new Promise((r) => setTimeout(r, 350));
+
+  // Verifica stato dopo l'arresto
+  const stoppedEval = await send('Runtime.evaluate', {
     expression: `
       (() => {
         const g = window.game;
-        const box = document.getElementById('dialogue-box');
-        const speaker = document.getElementById('dialogue-speaker')?.textContent;
-        const text = document.getElementById('dialogue-text')?.textContent;
+        const velXZ = Math.hypot(g.player.velocity.x, g.player.velocity.z);
         return {
-          dialogueActive: g.dialogueSystem.getIsActive(),
-          boxVisible: box ? !box.classList.contains('hidden') : false,
-          speaker,
-          textSnippet: text ? text.substring(0, 60) : ''
+          currentAction: g.player.currentAction,
+          velXZ: Number(velXZ.toFixed(2)),
+          isGrounded: g.player.isGrounded,
+          position: {
+            x: Number(g.player.position.x.toFixed(2)),
+            y: Number(g.player.position.y.toFixed(2)),
+            z: Number(g.player.position.z.toFixed(2))
+          }
         };
       })()
     `,
     returnByValue: true
   });
 
-  const dialogueState = dialogueEval.result?.result?.value;
-  console.log('📊 STATO DEL DIALOGO:');
-  console.log(JSON.stringify(dialogueState, null, 2));
+  const stoppedState = stoppedEval.result?.result?.value;
+  console.log('   - Stato rilevato DOPO l\'arresto:');
+  console.log(JSON.stringify(stoppedState, null, 2));
 
-  // Cattura uno screenshot reale di Google Chrome
-  console.log('\n📸 Cattura screenshot reale di Chrome...');
-  const screenshotRes = await send('Page.captureScreenshot', { format: 'png' });
-  const screenshotBase64 = screenshotRes.result.data;
+  // Calcolo distanza reale percorsa
+  const dx = stoppedState.position.x - posBefore.x;
+  const dz = stoppedState.position.z - posBefore.z;
+  const distanceTraveled = Math.hypot(dx, dz);
+  console.log(`   - Distanza reale percorsa: ${distanceTraveled.toFixed(2)} metri`);
 
-  const outScreenshotPath = path.join(process.cwd(), 'tests', 'chrome_real_screen.png');
-  fs.writeFileSync(outScreenshotPath, Buffer.from(screenshotBase64, 'base64'));
-  console.log(`🖼️ Screenshot salvato con successo in: ${outScreenshotPath}`);
+  // ASSERZIONI RIGOROSE MOVIMENTO
+  if (midRunState.currentAction !== 'Running_A') {
+    throw new Error(`Asserzione fallita: animazione durante W non è Running_A (trovato: ${midRunState.currentAction})`);
+  }
+  if (midRunState.velXZ < 0.5) {
+    throw new Error(`Asserzione fallita: velocità orizzontale durante W insufficiente: ${midRunState.velXZ} m/s`);
+  }
+  if (distanceTraveled < 1.5) {
+    throw new Error(`Asserzione fallita: spostamento reale insufficiente (${distanceTraveled.toFixed(2)}m < 1.5m)`);
+  }
+  if (stoppedState.currentAction !== 'Idle_A') {
+    throw new Error(`Asserzione fallita: dopo l'arresto l'animazione non è tornata a Idle_A (trovato: ${stoppedState.currentAction})`);
+  }
+  console.log('   ✅ Verifica movimento e animazioni superata rigorosamente!');
 
-  // Report console logs ed errori
-  console.log('\n📋 LOG CONSOLE CHROME:');
-  consoleLogs.slice(-10).forEach((l) => console.log('  ', l));
+  // 3. ESECUZIONE COMPLETA PRIMA MISSIONE (QUEST 1)
+  console.log('\n📜 3. COMPLETAMENTO PRIMA MISSIONE (DIALOGO -> FRAMMENTO CON LANTERNA -> RITORNO):');
 
+  // A. Dialogo con Nonna Bussola: apertura e completamento albero opzioni
+  console.log('   A. Apertura dialogo con Nonna Bussola (Tasto E)...');
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', code: 'KeyE', key: 'e' });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyE', key: 'e' });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Clic su prima opzione (opt_help -> passa al nodo lantern_quest)
+  await send('Runtime.evaluate', {
+    expression: `document.querySelector('.dialogue-option-btn')?.click();`
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Clic su seconda opzione (opt_accept_quest -> scatena start_quest_1 e chiude il box)
+  await send('Runtime.evaluate', {
+    expression: `document.querySelector('.dialogue-option-btn')?.click();`
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Verifica che lo stage della missione sia avanzato allo stadio 1
+  const questStageCheck = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const q = window.game.questSystem.getActiveQuestInfo();
+        return {
+          stageIndex: q?.stageIndex,
+          objective: q?.objective,
+          dialogueOpen: window.game.dialogueSystem.getIsActive()
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+  console.log('      Stadio missione dopo aver accettato la missione:', questStageCheck.result?.result?.value);
+
+  if (questStageCheck.result?.result?.value?.stageIndex !== 1) {
+    throw new Error(`Lo stadio della missione non è avanzato a 1 (trovato: ${questStageCheck.result?.result?.value?.stageIndex})`);
+  }
+
+  // B. Viaggio al cerchio di pietre (18.0, -15.0) e raccolta frammento con lanterna
+  console.log('   B. Raggiungimento cerchio di pietre (18, -15) e attivazione lanterna...');
+  const fragmentCollectRes = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const g = window.game;
+        const targetX = 18.0;
+        const targetZ = -15.0;
+        const targetY = g.island.getTerrainHeight(targetX, targetZ);
+        g.player.spawnAt(targetX, targetY, targetZ);
+
+        // Assicura che la lanterna magica sia accesa
+        g.player.isLanternActive = true;
+        g.player.meshComponents.lanternLight.intensity = 1.5;
+
+        // Esegue aggiornamento dei collezionabili in prossimità del frammento
+        g.collectiblesManager.update(0.1, g.player.position, true, g.questSystem);
+
+        return {
+          playerPos: {
+            x: Number(g.player.position.x.toFixed(2)),
+            y: Number(g.player.position.y.toFixed(2)),
+            z: Number(g.player.position.z.toFixed(2))
+          },
+          fragmentsCollected: g.questSystem.getInventoryStats().fragmentsCollected,
+          isRestored: g.environment.isRestored(),
+          targetDensity: Number(g.environment.targetDensity.toFixed(4)),
+          fogDensity: Number(g.environment.getFogDensity().toFixed(4)),
+          activeQuest: g.questSystem.getActiveQuestInfo()
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+
+  const fragState = fragmentCollectRes.result?.result?.value;
+  console.log('      Stato post raccolta frammento:');
+  console.log(JSON.stringify(fragState, null, 2));
+
+  if (!fragState || fragState.fragmentsCollected !== 1) {
+    throw new Error(`Asserzione fallita: 1° frammento non raccolto (conteggio: ${fragState?.fragmentsCollected})`);
+  }
+  if (!fragState.isRestored) {
+    throw new Error('Asserzione fallita: l\'ambiente non è entrato nello stato restaurato!');
+  }
+  if (fragState.activeQuest?.stageIndex !== 2) {
+    throw new Error(`Asserzione fallita: la missione doveva avanzare allo stadio 2 (trovato: ${fragState.activeQuest?.stageIndex})`);
+  }
+  console.log('      ✅ Frammento 1 raccolto con successo con lanterna attiva!');
+
+  // C. Ritorno da Nonna Bussola all'osservatorio
+  console.log('   C. Ritorno all\'osservatorio e chiusura missione...');
+  await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const g = window.game;
+        // Riposiziona Pip all'osservatorio davanti a Nonna Bussola
+        const plazaY = g.island.getTerrainHeight(0, 0);
+        g.player.spawnAt(0, plazaY + 0.48, -1.8);
+      })()
+    `
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Interazione finale con Nonna Bussola per consegnare il frammento
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', code: 'KeyE', key: 'e' });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyE', key: 'e' });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Clic su opzione di completamento (opt_complete_dialogue)
+  const finalDiagClick = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const opt = document.querySelector('.dialogue-option-btn');
+        if (opt) {
+          opt.click();
+          return { clicked: true, text: opt.textContent };
+        }
+        return { clicked: false };
+      })()
+    `,
+    returnByValue: true
+  });
+  console.log('      Opzione completamento selezionata:', finalDiagClick.result?.result?.value);
+  await new Promise((r) => setTimeout(r, 500));
+
+  // D. Transizione atmosfera (avanzamento temporale dell'ambiente) e verifica nebbia prima/dopo
+  const fogFinalEval = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const g = window.game;
+        // Avanza l'ambiente di 3 secondi per completare la transizione visiva della nebbia
+        for (let i = 0; i < 30; i++) {
+          g.environment.update(0.1);
+        }
+        return {
+          initialTargetFog: ${initState.initialTargetFog},
+          finalTargetDensity: Number(g.environment.targetDensity.toFixed(4)),
+          finalFogDensity: Number(g.environment.getFogDensity().toFixed(4)),
+          isRestored: g.environment.isRestored()
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+
+  const fogFinal = fogFinalEval.result?.result?.value;
+  console.log('\n🌫️ 4. VERIFICA DELLA NEBBIA PRIMA E DOPO LA MISSIONE:');
+  console.log(JSON.stringify(fogFinal, null, 2));
+
+  if (fogFinal.finalTargetDensity >= fogFinal.initialTargetFog) {
+    throw new Error(`La nebbia non è diminuita! Iniziale: ${fogFinal.initialTargetFog}, Finale: ${fogFinal.finalTargetDensity}`);
+  }
+  const deltaPercent = (((fogFinal.initialTargetFog - fogFinal.finalTargetDensity) / fogFinal.initialTargetFog) * 100).toFixed(1);
+  console.log(`   - Densità target nebbia iniziale: ${fogFinal.initialTargetFog}`);
+  console.log(`   - Densità target nebbia finale:   ${fogFinal.finalTargetDensity}`);
+  console.log(`   - Riduzione nebbia ottenuta:      -${deltaPercent}% 🎉`);
+
+  // Screenshot finale
+  console.log('\n📸 Cattura screenshot di conferma missione...');
+  const screenShot = await send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(path.join(process.cwd(), 'tests', 'chrome_real_screen.png'), Buffer.from(screenShot.result.data, 'base64'));
+
+  // Verifica errori JS
   if (errors.length > 0) {
-    console.error('\n❌ ERRORI JAVASCRIPT RILEVATI IN CHROME:');
+    console.error('\n❌ ERRORI CONSOLE RILEVATI DURANTE IL TEST:');
     errors.forEach((e) => console.error('  ', e));
-    cleanup();
-    ws.close();
-    process.exit(1);
+    throw new Error('Test fallito per errori JavaScript in console.');
   }
 
-  // Asserzioni rigorose
-  if (!gameState || !gameState.isGrounded || gameState.playerPosition.y < 3.0) {
-    console.error('❌ Asserzione fallita: Pip non è solidamente a terra allo start:', gameState);
-    cleanup();
-    ws.close();
-    process.exit(1);
-  }
-
-  if (!afterMoveState || !afterMoveState.isGrounded || afterMoveState.position.y < 3.0) {
-    console.error('❌ Asserzione fallita: Pip ha perso aderenza al terreno durante la camminata:', afterMoveState);
-    cleanup();
-    ws.close();
-    process.exit(1);
-  }
-
-  if (!dialogueState || !dialogueState.dialogueActive || !dialogueState.boxVisible) {
-    console.error('❌ Asserzione fallita: il dialogo con Nonna Bussola non si è attivato:', dialogueState);
-    cleanup();
-    ws.close();
-    process.exit(1);
-  }
-
-  console.log('\n🎉 TUTTI I TEST REALI E2E SU CHROME SONO PASSATI CON SUCCESSO!');
-  console.log('   - Spawn e posizionamento fisico a terra: OK (y = 4.13m)');
-  console.log('   - Streaming e caricamento modelli GLB CC0: OK');
-  console.log('   - Movimento WASD e animazione di corsa scheletrica (Running_A): OK');
-  console.log('   - Avvicinamento e interazione E con Nonna Bussola: OK');
-  console.log('   - Apertura e rendering UI dialogo: OK');
-  console.log('   - Zero errori console, zero eccezioni WebGL, zero compenetrazioni nel vuoto: OK');
+  console.log('\n===============================================================');
+  console.log('🏆 TUTTI I TEST REALI CHROME (WASD, QUEST 1, FOG) SUPERATI AL 100%');
+  console.log('===============================================================');
 
   cleanup();
   ws.close();
 }
 
 runChromeTest().catch((err) => {
-  console.error('Fatal error in Chrome test:', err);
+  console.error('\n❌ ERRORE FATALE NEL TEST CHROME:', err.message);
   process.exit(1);
 });

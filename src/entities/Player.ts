@@ -1,7 +1,7 @@
 /**
  * Entità Giocatore (Pip) con fisica, controller di movimento e animazioni procedurali.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.6 (metodo spawnAt e ancoraggio spawnPoint per respawn sicuro)
+ * Ultima modifica: 2026-11-11 - v0.3.7 (calcolo componenti orizzontali velocity.x e velocity.z per vettore velocità 3D)
  */
 
 import * as THREE from 'three';
@@ -157,6 +157,11 @@ export class Player {
       const slideDir = physicsSystem.checkHorizontalCollision(this.position, horizDir, horizLen);
       this.position.x += slideDir.x * horizLen;
       this.position.z += slideDir.z * horizLen;
+      this.velocity.x = slideDir.x * (horizLen / clampedDt);
+      this.velocity.z = slideDir.z * (horizLen / clampedDt);
+    } else {
+      this.velocity.x = 0;
+      this.velocity.z = 0;
     }
 
     // 4. Salto e Gravità verticale

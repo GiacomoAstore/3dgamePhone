@@ -75,7 +75,36 @@ Ultima modifica: 2026-11-11 - v0.3.7 - Test UI Chrome, Animazione NPC Idle e Ris
 
 ---
 
-## 💳 Debito Tecnico
+## 💳 Debito Tecnico e Ottimizzazioni Prestazionali
+
+### 📉 Analisi Draw Calls (208-245 misurate vs Budget < 100) e Piano di Riduzione (v0.3.7)
+Durante il profiling diagnostico via Chrome DevTools Protocol (`tests/profile_draw_calls.mjs`) sono state rilevate **208-245 draw calls** per frame con **489 mesh totali** e **214 shadow casters** attivi nella scena.
+
+#### Ripartizione reale delle Mesh e Fonti di Draw Call:
+1. **Fogliame e Fiori Procedurali (174 mesh)**:
+   - 24 fiori selvatici × 6 mesh ciascuno (1 ricettacolo + 5 petali singoli) = 144 draw calls.
+   - 5 cespugli di bacche × 6 mesh ciascuno (1 sfera cespuglio + 5 bacche singole) = 30 draw calls.
+2. **Duplicazione Alberi Procedurali e Kenney (102 mesh totali)**:
+   - 9 alberi procedurali rimasti attivi in scena (9 tronchi + 27 radici + 36 batuffoli chioma = 72 mesh).
+   - 12 alberi cartoon Kenney caricati in parallelo = 30 mesh.
+3. **Personaggi SkinnedMesh (108 mesh)**: Pip (`Rogue_Hooded`), Nonna Bussola (`Mage`) e Volpe (`Fox`) con nodi e armature scheletriche articolate.
+4. **Strutture Statiche in Legno e Pietra (~40 mesh)**: 7 assi + 6 pali del pontile, 2 bitte, 12 montanti ringhiera dell'osservatorio e monoliti runici creati come `BoxGeometry` e `CylinderGeometry` separate.
+5. **Prop Kenney e Collezionabili (~49 mesh)**: barca a vela, cassa pirata, barili, cartelli, falò, frammenti e pergamene.
+6. **Pass Ombreggiatura (`castShadow = true`)**: 214 oggetti proiettano ombre, raddoppiando il campionamento nella shadow map pass.
+
+#### Proposta di Piano di Riduzione (programmato per Fase 4, senza modifiche in 0.3.7):
+- **Azione 1: Instancing (`InstancedMesh`) per Vegetazione Minore**:
+  Convertire i 24 fiori e i 5 cespugli in 4 `InstancedMesh` Three.js (ricettacolo fiore, petalo fiore, corpo cespuglio, bacca). Riduzione stimata: **da 174 draw calls a sole 4 draw calls** (risparmio netto: -170 draw calls).
+- **Azione 2: Disattivazione Alberi Procedurali con Asset Kenney Attivi**:
+  All'avvenuto caricamento dei modelli `.glb` di quercia e albero dettagliato Kenney, impostare `this.proceduralTreesGroup.visible = false` o rimuovere il gruppo dal grafo di scena. Risparmio netto: **-72 draw calls**.
+- **Azione 3: Geometria Unificata (`BufferGeometryUtils.mergeGeometries`) per Strutture Statiche**:
+  Unire le assi del molo, i montanti e la staccionata dell'osservatorio in un unico buffer geometrico con un solo materiale legnoso. Risparmio netto: **-25 draw calls**.
+- **Azione 4: Profilo "Bassa" Senza Ombre e Senza Inverted Hull**:
+  Nel preset grafico "Bassa" disattivare il rendering delle ombre (`renderer.shadowMap.enabled = false` o `sunLight.castShadow = false`) e rimuovere il pass contorno toon invertito, abbattendo le chiamate shadow pass.
+- **Risultato Previsto**: Riduzione del conteggio draw call totale da ~239 a **45-65 draw calls** (sotto il budget di 100).
+
+---
+
 - **Peso Bundle JS (~640 KB minificato, ~167 KB gzip)**: Dovuto essenzialmente al core di Three.js e BVH. Nella Fase 4, all'introduzione di modelli binari GLB e tracce audio, implementare il code-splitting con `dynamic import()` per mantenere il download iniziale sotto la soglia critica mobile.
 - **Aggiornamento Vitest / Tinypool**: ESLint è stato aggiornato a `9.39.5` (vulnerabilità `@eslint/plugin-kit` risolta). La migrazione di Vitest e Tinypool a Vitest 5.x è programmata come major upgrade dedicato, previa verifica della compatibilità con le API di mocking e con Vite 6 (ADR 004).
 - **Shader Nebbia Avanzato**: La nebbia utilizza `THREE.FogExp2` configurata in `environment.json`; valutabile l'aggiunta di un raggio di dissolvenza volumetrico attorno alla lanterna di Pip.

@@ -18,7 +18,7 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
 ├── README.md                     # Guida al gioco, avvio e istruzioni smartphone
 ├── ARCHITETTURA.md               # Architettura, moduli e flussi del gioco
 ├── CHANGELOG.md                  # Registro cronologico delle modifiche (SemVer)
-├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 012)
+├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 013)
 ├── TODO.md                       # Roadmap e backlog dei task per le prossime fasi
 ├── ASSETS.md                     # Censimento asset 3D, licenze e provenienza
 ├── VERSION                       # Indicatore della versione corrente (0.3.7)
@@ -89,7 +89,11 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
     ├── readable_night_contrast.test.ts # Test matematico luminanza e contrasto WCAG 2.1 notturno
     ├── debug_and_benchmark.test.ts   # Test calcolo 1% low FPS, debug touch da TouchOverlay e outline toggle
     ├── audio_system.test.ts          # Test sicurezza Web Audio, clamping volumi e gestione eventi
-    └── particle_system.test.ts       # Test sistema particellare, scalabilità e visibilità stelle
+    ├── particle_system.test.ts       # Test sistema particellare, scalabilità e visibilità stelle
+    ├── altitude_grounding.test.ts    # Test regressione quote getTerrainHeight, spawnAt e ground-snapping
+    ├── test_chrome_real.mjs          # Test E2E reale Chrome: spawn, WASD mid-motion, Quest 1 e delta nebbia
+    ├── test_chrome_ui.mjs            # Test E2E Chrome per tutti gli 8 flussi UI e responsive smartphone
+    └── profile_draw_calls.mjs        # Profiler diagnostico delle draw call e gerarchia mesh in WebGL
 ```
 
 ## 2. Flusso dei Sistemi e Architettura Disaccoppiata

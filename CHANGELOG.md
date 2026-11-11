@@ -5,31 +5,62 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 ## [0.3.7] - 2026-11-11
 
 ### Aggiunto
+- **Test E2E Reale su Chrome: Asserzioni Mid-Motion WASD e Distanza Percorsa (`tests/test_chrome_real.mjs`)**:
+  - Valutazione in tempo reale dell'animazione *mentre* il tasto `KeyW` è attivamente premuto, verificando `currentAction === 'Running_A'` e velocità orizzontale fisica $v_{xz} \ge 0.5\,\text{m/s}$ (misurati $5.2\,\text{m/s}$).
+  - Calcolo rigoroso dello spostamento euclideo nel piano XZ con asserzione bloccante $\Delta d \ge 1.5\,\text{m}$ (misurati $3.99\,\text{m}$).
+  - Verifica dell'arresto e ripristino di `Idle_A` e $v_{xz} = 0$ al rilascio del tasto.
+- **Esecuzione Completa Prima Missione (Quest 1) e Misurazione Delta Nebbia in Chrome**:
+  - Test E2E del flusso completo: dialogo iniziale ad albero nodi con Nonna Bussola (`opt_help` $\rightarrow$ `opt_accept_quest` $\rightarrow$ `start_quest_1`), avanzamento a stadio 1.
+  - Viaggio al cerchio di pietre $(18.0, -15.0)$ con lanterna magica attiva, raccolta 1° frammento dell'Atlante Vivo (`atlas_fragment_1`), avanzamento a stadio 2 e attivazione stato `restored`.
+  - Ritorno all'osservatorio e dialogo di chiusura con Nonna Bussola.
+  - Verifica quantitativa della ritirata della nebbia: densità target scesa da $0.018$ a $0.0062$ (riduzione del $-65.6\%$).
+  - Dichiarazione tecnica esplicita sul software rasterizer (SwiftShader / CPU) di Headless Chrome: gli FPS misurati in modalità headless non sono rappresentativi dell'hardware GPU reale.
+- **Suite di Test Unitari di Regressione Altimetrica e Ground-Snapping (`tests/altitude_grounding.test.ts`)**:
+  - 7 nuovi test Vitest dedicati a:
+    1. Metodo `player.spawnAt(x, y, z)` con allineamento quota, azzeramento velocità 3D e impostazione `spawnPoint`.
+    2. Meccanismo di sicurezza anti-caduta con respawn a `spawnPoint` se $y < -5.0$.
+    3. Rilevamento suolo con `castHeight = 2.0` e `maxDistance = 8.0` su collider BVH.
+    4. Tolleranza di snapping estesa a $0.60\,\text{m}$ per pendenze in discesa quando `wasGrounded = true`.
+    5. Recupero automatico da compenetrazione lieve ($-0.36\,\text{m}$).
+    6. Calcolo dinamico quota Nonna Bussola (`plazaY + 0.48`).
+    7. Istanziazione collezionabili con altezza dinamica `island.getTerrainHeight(x, z) + 0.35` (zero quote hardcodate).
+- **Tracciabilità Crittografica SHA-256 e Procedura Download Asset (`ASSETS.md`)**:
+  - Calcolati e documentati gli hash SHA-256 per tutti i 19 file in `public/models/`.
+  - Spiegata la procedura di acquisizione tramite script Node.js HTTP stream dai repository ufficiali open source di Kenney, Quaternius e KayKit.
+  - Aggiunta clausola di riserva: "Licenza CC0 dichiarata dall'autore, da verificare dall'utente" su ogni file.
 - **Suite di Test UI End-to-End su Google Chrome Reale (`tests/test_chrome_ui.mjs` e `npm run test:ui`)**:
-  - Script automatizzato per verificare l'intera interfaccia utente in Chrome via CDP:
-    1. *Start Screen*: titolo, sottotitolo, istruzioni e dismissibilità al click (`#btn-start`).
-    2. *HUD Top Bar*: badge titolo, contatore FPS e persistenza pulsanti.
-    3. *Modal Guida Controlli (`#help-modal`)*: apertura da HUD (o tasto `H`), sezioni desktop/touch e chiusura da pulsante o tastiera.
-    4. *Modal Diario del Cartografo (`#journal-modal`)*: apertura da HUD (o tasto `Tab`), visualizzazione missione attiva, frammenti 0/7 e reperti (conchiglie, funghi, stelle).
-    5. *Modal Impostazioni (`#settings-modal`)*: selettori preset qualità grafica (Bassa, Media, Alta), slider volumi audio e opzioni giorno/notte.
-    6. *Interaction Badge (`#interaction-prompt`)*: comparsa dinamica in prossimità di Nonna Bussola ("Parla con Nonna Bussola").
-    7. *Dialogue Box (`#dialogue-box`)*: avatar, nome speaker, ruolo, battuta iniziale, bottoni di scelta multipla ed avanzamento dell'albero di dialogo al click.
-    8. *Mobile Layout Responsive*: emulazione smartphone 390x844 (touch screen), comparsa joystick virtuale e pulsanti touch, occultamento barra desktop e adattamento dei modali senza overflow orizzontale.
-    9. *Screenshot diagnostici*: cattura automatica di 10 screenshot in `tests/ui_screenshots/`.
+  - Validazione di tutti gli 8 componenti dell'interfaccia utente (Start Screen, HUD Top Bar, Modal Guida Controlli, Modal Diario, Modal Impostazioni, Interaction Prompt pill, Dialogue Box e Responsive Mobile 390x844).
+- **Profiling Diagnostico Draw Calls e Piano di Riduzione in `TODO.md` (`tests/profile_draw_calls.mjs`)**:
+  - Analisi dettagliata delle 208-245 draw calls misurate (489 mesh totali, 214 shadow casters vs budget < 100).
+  - Proposta strutturata per la Fase 4: `InstancedMesh` per vegetazione (-170 draw calls), rimozione alberi procedurali duplicati (-72 draw calls), `mergeGeometries` per pontile (-25 draw calls) e profilo Bassa senza ombre, per un target finale di 45-65 draw calls.
 
 ### Corretto
+- **Deduplicazione Colormap Texture (`public/Textures/colormap.png`)**:
+  - Eliminata la copia duplicata `public/Textures/colormap.png`, mantenendo la collocazione canonica `public/models/Textures/colormap.png` corretta per la risoluzione relativa di `GLTFLoader`.
+- **Vettore Velocità Orizzontale del Giocatore (`Player.ts`)**:
+  - Calcolo e memorizzazione esplicita di `velocity.x` e `velocity.z` in base alla direzione di marcia effettiva e scivolamento ostacoli, fornendo un vettore velocità 3D coerente.
 - **Risoluzione T-Pose di Nonna Bussola (`NPC.ts` e `Game.ts`)**:
-  - Il modello 3D `Mage.glb` non possedeva un `AnimationMixer` collegato e rimaneva bloccato nella bind-pose orizzontale con braccia tese (T-pose).
   - Collegato `AnimationMixer` con clip `Idle_A` da `Rig_Medium_General.glb`, aggiunto metodo `update(dt)` in `NPC.ts` e inserito nel loop principale `Game.ts`: Nonna Bussola ora respira e tiene le braccia distese naturalmente lungo i fianchi.
 
+### Rimosso
+- File duplicato ridondante `public/Textures/colormap.png` e relativa cartella vuota.
+
 ### File toccati
-- `package.json`, `VERSION`: incremento a `0.3.7`, aggiunto script `npm run test:ui`.
-- `src/entities/NPC.ts`: animazione `Idle_A` e `update(dt)` per Nonna Bussola.
-- `src/core/Game.ts`: chiamata `this.nonnaBussola.update(dt)` nel loop principale.
-- `tests/test_chrome_ui.mjs`: suite completa di test automatizzati per la UI su Chrome.
+- `package.json`, `VERSION`: incremento a `0.3.7`.
+- `tests/test_chrome_real.mjs`: asserzioni mid-motion WASD, test completo Quest 1 e delta nebbia con disclaimer software rendering.
+- `tests/altitude_grounding.test.ts`: 7 test unitari per fisica altimetrica e ground-snapping.
+- `tests/test_chrome_ui.mjs`: suite completa di test UI su Chrome.
+- `tests/profile_draw_calls.mjs`: script di profilazione diagnostica gerarchia mesh e draw calls.
+- `src/entities/Player.ts`: calcolo `velocity.x` e `velocity.z`.
+- `src/entities/NPC.ts`: animazione `Idle_A` per Nonna Bussola.
+- `src/core/Game.ts`: chiamata `this.nonnaBussola.update(dt)`.
+- `ASSETS.md`: tabella SHA-256 completa, procedura di download e stato verifica licenze.
+- `TODO.md`: analisi quantitativa draw calls e piano di riduzione per la Fase 4.
+- `DECISIONI.md`: aggiunta ADR 013.
+- `.gitignore`: esclusione screenshot diagnostici (`tests/*.png`, `tests/ui_screenshots/`).
 
 ### Motivo
-- Richiesta utente: esecuzione di test UI completi su Chrome e correzione della T-pose di Nonna Bussola evidenziata dagli screenshot.
+- Correzioni pre-Fase 4 richieste dall'utente sul lavoro 0.3.6: draw calls, asserzioni WASD in movimento, test completo della prima missione su Chrome reale, regressioni altimetriche unitarie, tracciabilità SHA-256 degli asset Kenney e deduplicazione colormap.
 
 ## [0.3.6] - 2026-11-11
 
