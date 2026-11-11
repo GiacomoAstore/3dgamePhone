@@ -39,4 +39,3 @@ describe('Logica Collezionabili e Lanterna Magica', () => {
     expect(canCollectOrdinary(2.0)).toBe(false);
   });
 });
-

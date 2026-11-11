@@ -58,7 +58,10 @@ export class Environment {
     this.scene.add(this.hemiLight);
 
     // 4. Sole Toon (luce direzionale dorata)
-    this.sunLight = new THREE.DirectionalLight(this.config.sun.color, this.config.sun.initialIntensity);
+    this.sunLight = new THREE.DirectionalLight(
+      this.config.sun.color,
+      this.config.sun.initialIntensity
+    );
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 1024;
     this.sunLight.shadow.mapSize.height = 1024;
@@ -126,7 +129,7 @@ export class Environment {
     this.targetDensity = Math.max(
       this.config.fog.minDensity,
       this.config.fog.initialDensity * (1 - progress * 0.7) -
-        (collected >= 1 ? (this.config.fog.initialDensity - this.config.fog.restoredDensity) : 0)
+        (collected >= 1 ? this.config.fog.initialDensity - this.config.fog.restoredDensity : 0)
     );
     this.isTransitioning = true;
     this.isRestoredState = true;
@@ -187,7 +190,8 @@ export class Environment {
     }
 
     // 5. Aggiornamento particelle atmosferiche (lucciole, polline, spuma, stelle)
-    const isNightPhase = this.dayNightCycle.getPhase() === 'night' || this.dayNightCycle.getPhase() === 'sunset';
+    const isNightPhase =
+      this.dayNightCycle.getPhase() === 'night' || this.dayNightCycle.getPhase() === 'sunset';
     this.particleSystem.update(dt, isNightPhase);
   }
 

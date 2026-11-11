@@ -1,7 +1,7 @@
 # Architettura del Progetto
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)
+Ultima modifica: 2026-11-11 - v0.3.6 - Test E2E Chrome Reale, Binding Altimetrico e Palette Kenney
 -->
 
 Questo documento descrive la struttura delle cartelle, i moduli implementati, le loro interazioni e il diagramma del flusso di gioco di *Brumavento*.
@@ -18,10 +18,10 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
 ├── README.md                     # Guida al gioco, avvio e istruzioni smartphone
 ├── ARCHITETTURA.md               # Architettura, moduli e flussi del gioco
 ├── CHANGELOG.md                  # Registro cronologico delle modifiche (SemVer)
-├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 010)
+├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 011)
 ├── TODO.md                       # Roadmap e backlog dei task per le prossime fasi
 ├── ASSETS.md                     # Censimento asset 3D, licenze e provenienza
-├── VERSION                       # Indicatore della versione corrente (0.3.5)
+├── VERSION                       # Indicatore della versione corrente (0.3.6)
 ├── package.json                  # Dipendenze con versioni bloccate (senza ^ o ~)
 ├── package-lock.json             # Lockfile deterministico delle dipendenze
 ├── tsconfig.json                 # Configurazione TypeScript strict

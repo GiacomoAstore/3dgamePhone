@@ -147,7 +147,8 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di 69 test unitari e di integrazione con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
+- `npm test`: esegue la suite completa di 75 test unitari e di integrazione con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
+- `npm run test:chrome`: esegue la suite automatizzata **E2E reale in Google Chrome headless** via Chrome DevTools Protocol (CDP), validando WebGL, fisica a terra, movimento WASD, interazione con Nonna Bussola e cattura screenshot senza errori in console.
 - `npm run lint`: analisi statica del codice con **ESLint** per TypeScript.
 - `npm run format`: formattazione automatica del codice sorgente con **Prettier**.
 
@@ -157,6 +158,6 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 - [GEMINI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/GEMINI.md): Regole vincolanti di sviluppo per l'IA.
 - [ARCHITETTURA.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ARCHITETTURA.md): Mappa dei moduli, diagrammi di flusso e cartelle.
 - [CHANGELOG.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/CHANGELOG.md): Registro cronologico delle modifiche e versioning semantico.
-- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 007).
+- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 011).
 - [TODO.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/TODO.md): Roadmap e backlog per le prossime fasi.
 - [ASSETS.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ASSETS.md): Registro degli asset 3D e licenze.

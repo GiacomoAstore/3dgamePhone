@@ -84,4 +84,3 @@ export class InteractionSystem {
     return this.currentActiveTarget;
   }
 }
-

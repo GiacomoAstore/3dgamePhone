@@ -30,10 +30,11 @@ export class AssetManager {
   private constructor() {
     this.loader = new GLTFLoader();
     // Verifica se siamo in ambiente browser completo con location valida
-    const isBrowser = typeof window !== 'undefined' &&
-                      window.location &&
-                      window.location.protocol &&
-                      (window.location.protocol === 'http:' || window.location.protocol === 'https:');
+    const isBrowser =
+      typeof window !== 'undefined' &&
+      window.location &&
+      window.location.protocol &&
+      (window.location.protocol === 'http:' || window.location.protocol === 'https:');
     if (!isBrowser) {
       this.isAvailable = false;
     }
@@ -88,7 +89,10 @@ export class AssetManager {
         },
         undefined,
         (error) => {
-          console.warn(`[AssetManager] Impossibile caricare il modello '${id}' da '${url}':`, error);
+          console.warn(
+            `[AssetManager] Impossibile caricare il modello '${id}' da '${url}':`,
+            error
+          );
           reject(error);
         }
       );
@@ -128,7 +132,10 @@ export class AssetManager {
         },
         undefined,
         (error) => {
-          console.warn(`[AssetManager] Impossibile caricare animazioni '${id}' da '${url}':`, error);
+          console.warn(
+            `[AssetManager] Impossibile caricare animazioni '${id}' da '${url}':`,
+            error
+          );
           resolve([]);
         }
       );
@@ -204,4 +211,3 @@ export class AssetManager {
     });
   }
 }
-

@@ -54,12 +54,12 @@ function getContrastRatio(lumA: number, lumB: number): number {
 
 describe('Calcolo e verifica contrasto notturno (WCAG 2.1)', () => {
   // Colori reali del gioco (definiti in Island, ProceduralPip e DayNightCycle)
-  const SKY_NIGHT_STD = 0x111c2e;    // Cielo notturno standard
-  const SKY_NIGHT_READABLE = 0x1e2e47;// Cielo notturno leggibile mobile
-  const TERRAIN_GRASS = 0x588157;    // Erba isola
-  const PIP_FACE = 0xf4a261;         // Viso di Pip
-  const PIP_COAT = 0x2a9d8f;         // Cappotto verde-azzurro di Pip
-  const PIP_OUTLINE = 0x162238;      // Contorno scuro inverted hull
+  const SKY_NIGHT_STD = 0x111c2e; // Cielo notturno standard
+  const SKY_NIGHT_READABLE = 0x1e2e47; // Cielo notturno leggibile mobile
+  const TERRAIN_GRASS = 0x588157; // Erba isola
+  const PIP_FACE = 0xf4a261; // Viso di Pip
+  const PIP_COAT = 0x2a9d8f; // Cappotto verde-azzurro di Pip
+  const PIP_OUTLINE = 0x162238; // Contorno scuro inverted hull
 
   const lumSkyStd = getRelativeLuminance(SKY_NIGHT_STD);
   const lumSkyReadable = getRelativeLuminance(SKY_NIGHT_READABLE);
@@ -78,8 +78,8 @@ describe('Calcolo e verifica contrasto notturno (WCAG 2.1)', () => {
     expect(lumGrass).toBeGreaterThan(0.15);
     expect(lumGrass).toBeLessThan(0.22);
 
-    expect(lumPipFace).toBeGreaterThan(0.40);
-    expect(lumPipCoat).toBeGreaterThan(0.20);
+    expect(lumPipFace).toBeGreaterThan(0.4);
+    expect(lumPipCoat).toBeGreaterThan(0.2);
     expect(lumOutline).toBeLessThan(0.02);
   });
 

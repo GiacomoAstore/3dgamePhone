@@ -229,3 +229,27 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - Fauna selvatica dell'isola: volpina cartoon animata (`Fox.glb` di Quaternius) che si muove nel boschetto.
 - **Conseguenze**:
   Il mondo di gioco acquisisce immediatamente una grafica cartoon professionale e accattivante ("effetto wow"), mantenendo inalterate la logica delle missioni, la fluidità a 60 FPS, il budget di bundle (< 800 KB JS) e la completa copertura dei test automatici.
+
+---
+
+## ADR 011 - Test End-to-End Reale su Google Chrome e Vincolo Altimetrico Dinamico del Terreno (v0.3.6)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  L'utente ha richiesto test reali su Chrome per verificare in modo oggettivo l'esperienza in-browser ("voglio che fai dei test reali su chrome"). Dai test automatizzati CDP sono emerse due criticità reali:
+  1. Spiazzamento altimetrico: Pip e Nonna Bussola venivano istanziati a quote hardcodate arbitrarie ($y = 2.8\text{ m}$ e $y = 3.8\text{ m}$), mentre la superficie della collina collinare procedurale al centro dell'isola si attesta a $y \approx 4.66\text{ m}$. Di conseguenza il personaggio si trovava sotto il terreno all'avvio, proiettando il raggio di collisione nel vuoto sottostante e cadendo all'infinito nel mare.
+  2. Dipendenza da texture esterna non incorporata in modelli GLB Kenney (`barrel.glb`, `chest.glb`) che richiedeva `Textures/colormap.png`.
+- **Decisione**:
+  1. **Test E2E Reale su Chrome via CDP (`tests/test_chrome_real.mjs` e `npm run test:chrome`)**:
+     - Lancio headless nativo del binario ufficiale Google Chrome (`chrome.exe`) con porta di debug CDP remota.
+     - Ispezione dello stato WebGL in runtime (`isGrounded`, `triangles`, `drawCalls`, `fps`).
+     - Simulazione input WASD (`KeyW`) e interazione (`KeyE`).
+     - Cattura automatica di screenshot diagnostici a piena risoluzione.
+  2. **Vincolo Altimetrico Dinamico (`spawnAt` e `getTerrainHeight`)**:
+     - È proibito hardcodare quote $y$ di entità o oggetti scenici sull'isola.
+     - Pip, Nonna Bussola, forzieri, monoliti, rocce, cespugli, fiori e collezionabili calcolano la propria quota di spawn interrogando `island.getTerrainHeight(x, z)`.
+     - In `PhysicsSystem`, elevata l'origine del raycast verso il basso a `castHeight = 2.0m` e la portata a `maxDistance = 8.0m` con ground-snapping esteso a $-0.6\text{m}$.
+  3. **Texture Ufficiale CC0 Kenney Palette (`colormap.png`)**:
+     - Integrata la palette `colormap.png` in `public/models/Textures/` e `public/Textures/` eliminando i 404 e gli errori del GLTFLoader.
+- **Conseguenze**:
+  Aderenza perfetta al suolo verificata con test automatici E2E in Google Chrome reale, zero errori in console, 90-115 FPS e resa grafica cartoon coerente e rifinita.

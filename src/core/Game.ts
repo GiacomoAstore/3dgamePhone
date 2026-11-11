@@ -4,7 +4,7 @@
  * consumo dell'azione con priorità unificata, overlay di debug/benchmark e profili grafici.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.1
+ * Ultima modifica: 2026-11-11 - v0.3.6 (calcolo quote di spawn reali per Pip, Nonna Bussola e collezionabili)
  */
 
 import * as THREE from 'three';
@@ -108,10 +108,21 @@ export class Game {
     // 6. Entità
     this.player = new Player();
     this.scene.add(this.player.meshComponents.root);
-    this.player.position.set(0, 2.8, 0);
+    const spawnX = 0;
+    const spawnZ = 2.0;
+    const spawnY = this.island.getTerrainHeight(spawnX, spawnZ);
+    this.player.spawnAt(spawnX, spawnY + 0.05, spawnZ);
 
-    // Nonna Bussola all'osservatorio
-    this.nonnaBussola = new NPC('nonna_bussola', 'Nonna Bussola', new THREE.Vector3(0, 3.8, -2));
+    // Nonna Bussola all'osservatorio (posizionata sul pavimento in legno della terrazza panoramica)
+    const nonnaX = 0;
+    const nonnaZ = -2.0;
+    const plazaY = this.island.getTerrainHeight(0, -2.5);
+    const nonnaY = plazaY + 0.48;
+    this.nonnaBussola = new NPC(
+      'nonna_bussola',
+      'Nonna Bussola',
+      new THREE.Vector3(nonnaX, nonnaY, nonnaZ)
+    );
     this.scene.add(this.nonnaBussola.group);
 
     this.interactionSystem.registerTarget({
@@ -124,17 +135,18 @@ export class Game {
     });
 
     // Indizio cerchio di pietre per il frammento
+    const stoneCircleY = this.island.getTerrainHeight(18.0, -15.0);
     this.interactionSystem.registerTarget({
       id: 'stone_circle_hint',
       name: 'Cerchio di Pietre',
-      position: new THREE.Vector3(18.0, 1.8, -15.0),
+      position: new THREE.Vector3(18.0, stoneCircleY, -15.0),
       radius: 3.5,
       type: 'hint',
       hintText: 'Un bagliore pulsa qui... Accendi la Lanterna (E / 🏮) per rivelarlo!',
     });
 
     // Collezionabili e frammento magico
-    this.collectiblesManager = new CollectiblesManager();
+    this.collectiblesManager = new CollectiblesManager(this.island);
     this.scene.add(this.collectiblesManager.group);
 
     // 7. Componenti UI
@@ -181,7 +193,11 @@ export class Game {
         this.inputManager.setBlocked(true);
       } else {
         helpModal.classList.add('hidden');
-        if (!this.dialogueSystem.getIsActive() && !this.journalUI.getIsOpen() && !this.qualitySettingsUI.getIsOpen()) {
+        if (
+          !this.dialogueSystem.getIsActive() &&
+          !this.journalUI.getIsOpen() &&
+          !this.qualitySettingsUI.getIsOpen()
+        ) {
           this.inputManager.setBlocked(false);
         }
       }
@@ -411,23 +427,18 @@ export class Game {
             const msg = LocalizationSystem.t('ui.notification_quality_degraded', {
               level: newPreset.toUpperCase(),
             });
-            this.notificationBanner.show(
-              msg,
-              5000,
-              LocalizationSystem.t('ui.btn_undo'),
-              () => {
-                const restored = this.qualitySettingsUI.revertQualityDrop();
-                if (restored) {
-                  this.autoDegradeCooldown = 60.0; // Cooldown esteso se l'utente preferisce il profilo attuale
-                  this.notificationBanner.show(
-                    LocalizationSystem.t('ui.notification_quality_restored', {
-                      level: restored.toUpperCase(),
-                    }),
-                    3000
-                  );
-                }
+            this.notificationBanner.show(msg, 5000, LocalizationSystem.t('ui.btn_undo'), () => {
+              const restored = this.qualitySettingsUI.revertQualityDrop();
+              if (restored) {
+                this.autoDegradeCooldown = 60.0; // Cooldown esteso se l'utente preferisce il profilo attuale
+                this.notificationBanner.show(
+                  LocalizationSystem.t('ui.notification_quality_restored', {
+                    level: restored.toUpperCase(),
+                  }),
+                  3000
+                );
               }
-            );
+            });
           }
         }
       } else {

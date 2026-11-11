@@ -66,7 +66,7 @@ describe('DebugOverlay, 1% Low FPS & Toon Outline Quality Presets', () => {
     // Simulazione di 100 frame: 95 frame a 60 FPS (16.6ms) e 5 frame lenti (stutter: 50ms = 20 FPS)
     const samples: number[] = [];
     for (let i = 0; i < 95; i++) samples.push(0.0166);
-    for (let i = 0; i < 5; i++) samples.push(0.050);
+    for (let i = 0; i < 5; i++) samples.push(0.05);
 
     const fpsValues = samples.map((dt) => 1.0 / dt);
     const avgFps = Math.round(fpsValues.reduce((a, b) => a + b, 0) / fpsValues.length);

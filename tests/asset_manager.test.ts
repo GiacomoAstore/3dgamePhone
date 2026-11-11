@@ -34,7 +34,10 @@ describe('AssetManager (Cache modelli 3D e Cel-shading)', () => {
     const mockMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
     mockScene.add(mockMesh);
 
-    (manager as unknown as { modelCache: Map<string, THREE.Group> }).modelCache.set('mock_box', mockScene);
+    (manager as unknown as { modelCache: Map<string, THREE.Group> }).modelCache.set(
+      'mock_box',
+      mockScene
+    );
 
     expect(manager.hasModel('mock_box')).toBe(true);
 

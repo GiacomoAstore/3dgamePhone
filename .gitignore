@@ -24,6 +24,9 @@ out/
 *.pem
 *.key
 
+# Output test grafici
+tests/*.png
+
 # File di sistema operativo
 .DS_Store
 Thumbs.db

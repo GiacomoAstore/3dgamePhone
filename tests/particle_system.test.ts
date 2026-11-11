@@ -73,4 +73,3 @@ describe('ParticleSystem System', () => {
     expect(colAttr.getZ(starIndex)).toBeGreaterThan(0);
   });
 });
-

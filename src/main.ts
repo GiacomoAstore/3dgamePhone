@@ -17,6 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnStart = document.getElementById('btn-start');
 
   const game = new Game(canvas);
+  (window as unknown as { game: Game }).game = game;
 
   const startGame = () => {
     // Sblocca Web Audio API al primo gesto utente (Mobile Autoplay policy)

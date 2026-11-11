@@ -1,13 +1,14 @@
 /**
  * Gestione degli oggetti raccoglibili e del Frammento dell'Atlante Vivo.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.2.0
+ * Ultima modifica: 2026-11-11 - v0.3.6 (aggancio dinamico dei collezionabili alla quota del terreno)
  */
 
 import * as THREE from 'three';
 import collectiblesConfig from '../data/collectibles.json';
 import { QuestSystem } from '../systems/QuestSystem';
 import { globalEventBus } from '../core/EventBus';
+import type { Island } from '../world/Island';
 
 export interface CollectibleConfigItem {
   id: string;
@@ -30,16 +31,26 @@ export class CollectiblesManager {
   private items: RuntimeCollectible[] = [];
   private animTimer = 0;
 
-  constructor() {
+  constructor(island?: Island) {
     this.group = new THREE.Group();
     this.group.name = 'Collectibles_Group';
 
-    this.spawnAll();
+    this.spawnAll(island);
   }
 
-  private spawnAll(): void {
+  private spawnAll(island?: Island): void {
     const list = collectiblesConfig.collectibles as CollectibleConfigItem[];
-    for (const item of list) {
+    for (const rawItem of list) {
+      const item: CollectibleConfigItem = {
+        ...rawItem,
+        position: {
+          x: rawItem.position.x,
+          y: island
+            ? island.getTerrainHeight(rawItem.position.x, rawItem.position.z) + 0.35
+            : rawItem.position.y,
+          z: rawItem.position.z,
+        },
+      };
       if (item.type === 'fragment') {
         this.spawnFragment(item);
       } else if (item.type === 'seashell') {

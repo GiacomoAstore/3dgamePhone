@@ -2,6 +2,43 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.6] - 2026-11-11
+
+### Aggiunto
+- **Test E2E Reale su Google Chrome con DevTools Protocol (`tests/test_chrome_real.mjs` e script `npm run test:chrome`)**:
+  - Script automatizzato per avviare un'istanza reale di Google Chrome (`chrome.exe --headless=new --remote-debugging-port=9225`), connettersi via WebSocket CDP nativo, cliccare `#btn-start`, attendere lo streaming degli asset 3D e verificare:
+    - Posizione fisica al suolo e aderenza (`isGrounded = true`, $y \approx 4.13\text{ m}$).
+    - Ricezione input WASD (`KeyW`) con avanzamento fluido verso l'osservatorio e attivazione animazione di corsa scheletrica (`Running_A`).
+    - Avvicinamento a Nonna Bussola ed esecuzione dell'interazione da tastiera (`KeyE`).
+    - Apertura e rendering dell'interfaccia di dialogo (`#dialogue-box`) con opzioni di risposta.
+    - Cattura di screenshot a piena risoluzione (`tests/chrome_real_screen_start.png`, `tests/chrome_real_screen.png`).
+    - Verifica di assenza di errori JavaScript e crash WebGL nella console di Chrome.
+- **Integrazione Texture Ufficiale Palette Kenney (`colormap.png`)**:
+  - Scaricata e integrata la texture palette ufficiale CC0 Kenney in `public/models/Textures/colormap.png` e `public/Textures/colormap.png`, risolvendo l'errore di texture mancante segnalato da `GLTFLoader` per i modelli `barrel.glb` e `chest.glb`.
+
+### Corretto
+- **Allineamento Altimetrico Dinamico di Personaggi ed Elementi dell'Isola (`Island.ts`, `Game.ts`, `Collectibles.ts`)**:
+  - Rilevata discrepanza tra l'altitudine reale della collina sommitale ($y \approx 4.66\text{ m}$) e la quota di spawn originaria hardcodata ($y = 2.8\text{ m}$), che faceva generare Pip 1.86m sotto la superficie del terreno, rendendo il raycast verso il basso cieco e provocando la caduta nel vuoto.
+  - Implementato `player.spawnAt(x, y, z)` in `Player.ts`, che posiziona Pip dinamicamente a quota suolo reale calcolata da `island.getTerrainHeight(0, 2.0) + 0.05` ($y \approx 4.13\text{ m}$) e imposta un punto di respawn sicuro `spawnPoint`.
+  - Posizionata Nonna Bussola solidamente sul pavimento in legno dell'osservatorio (`plazaY + 0.48`), eliminando l'effetto di compenetrazione a metà busto.
+  - Elevati e agganciati al suolo reale tramite `getTerrainHeight(x, z)` tutti gli elementi scenici precedentemente posizionati a $y = 0$: cespugli con bacche, fiori selvatici, rocce litoranee e monoliti runici.
+  - Agganciata dinamicamente la quota di spawn dei collezionabili (`CollectiblesManager`) alla superficie dell'isola (+0.35m di galleggiamento).
+- **Rinforzo Raycasting Terreno e Ground-Snapping (`PhysicsSystem.ts`)**:
+  - Elevata l'altezza d'origine del raggio `castHeight` da 1.0m a 2.0m e aumentata la portata `maxDistance` a 8.0m, con tolleranza di snap fino a -0.6m per assorbire anche discese repentine o lievi compenetrazioni senza perdere il contatto col suolo.
+
+### File toccati
+- `package.json`, `VERSION`: incremento a `0.3.6`, aggiunto script `npm run test:chrome`.
+- `tests/test_chrome_real.mjs`: script di test E2E con DevTools Protocol e asserzioni rigorose.
+- `public/models/Textures/colormap.png`, `public/Textures/colormap.png`: texture palette CC0 Kenney.
+- `src/world/Island.ts`: allineamento altimetrico di alberi procedurali, fiori, cespugli, rocce, terrazza e monoliti.
+- `src/systems/PhysicsSystem.ts`: estensione `castHeight = 2.0m`, `maxDistance = 8.0m` e tolleranza snap.
+- `src/entities/Player.ts`: metodo `spawnAt(x, y, z)` e salvataggio `spawnPoint`.
+- `src/entities/Collectibles.ts`: integrazione altimetrica del terreno per la generazione dei collezionabili.
+- `src/core/Game.ts`: posizionamento dinamico di Pip, Nonna Bussola e collezionabili su quota terreno.
+
+### Motivo
+- Richiesta utente: esecuzione di test reali su Chrome e risoluzione definitiva dei problemi di caduta nel vuoto e animazioni.
+
 ## [0.3.5] - 2026-11-11
 
 ### Corretto

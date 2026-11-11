@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)
+Ultima modifica: 2026-11-11 - v0.3.6 - Test E2E Chrome Reale, Binding Altimetrico e Palette Kenney
 -->
 
 ## 🏁 Fasi Completate
@@ -48,7 +48,8 @@ Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenn
   - `?benchmark=1`: Benchmark di 30s deterministico con traiettoria orbitale automatica, ora bloccata a mezzogiorno e auto-degrade disattivato.
   - Copia report negli appunti con fallback automatico su modal con `<textarea>` selezionabile per connessioni HTTP locali.
 - [x] **Verifica Contrasto Notturno WCAG 2.1**: Test matematico relativo alle luminanze ITU-R BT.709 che prova contrasto silhouette $\ge 3.0:1$ e contorno $\ge 3.5:1$.
-- [x] **Suite di Test Completa**: 69 test in 18 file, tutti verdi (`npm test`).
+- [x] **Suite di Test Completa**: 75 test in 19 file, tutti verdi (`npm test`).
+- [x] **Test E2E Reale su Google Chrome (`npm run test:chrome`)**: Suite automatizzata su Chrome headless reale via CDP che valida WebGL, spawn physically grounded, input WASD/movimento, interazione dialogo con Nonna Bussola e cattura screenshot ad alta risoluzione senza errori JS.
 - [x] **Checklist di Verifica Manuale**: File `tests/MANUAL_CHECKLIST.md` creato per la validazione fisica su smartphone e desktop.
 
 ---

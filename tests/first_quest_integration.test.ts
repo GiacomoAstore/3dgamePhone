@@ -72,7 +72,8 @@ describe('Test di Integrazione: Prima Missione (Il Risveglio della Lanterna)', (
 
     // 6. RITORNO DA NONNA BUSSOLA
     // L'NPC rileva che lo stadio è >= 2 e seleziona il nodo "quest_1_completed"
-    const targetNodeForReturn = questInfo && questInfo.stageIndex >= 2 ? 'quest_1_completed' : 'quest_1_active';
+    const targetNodeForReturn =
+      questInfo && questInfo.stageIndex >= 2 ? 'quest_1_completed' : 'quest_1_active';
     expect(targetNodeForReturn).toBe('quest_1_completed');
 
     dialogueSystem.startDialogue('nonna_bussola', targetNodeForReturn);
@@ -89,4 +90,3 @@ describe('Test di Integrazione: Prima Missione (Il Risveglio della Lanterna)', (
     expect(finalStats.totalFragments).toBe(7);
   });
 });
-

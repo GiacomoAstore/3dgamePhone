@@ -215,7 +215,11 @@ export class DebugOverlay {
     return benchmarkCamera;
   }
 
-  private calculateStats(samples: number[]): { avgFps: number; minFps: number; onePercentLow: number } {
+  private calculateStats(samples: number[]): {
+    avgFps: number;
+    minFps: number;
+    onePercentLow: number;
+  } {
     if (samples.length === 0) {
       return { avgFps: 0, minFps: 0, onePercentLow: 0 };
     }

@@ -75,8 +75,10 @@ export class QualitySettingsUI {
       this.audioSystem.setSfxVolume(saved.sfxVol);
       if (this.dayNightCycle) {
         if (saved.isHourLocked !== undefined) this.dayNightCycle.setHourLocked(saved.isHourLocked);
-        if (saved.readableNight !== undefined) this.dayNightCycle.setReadableNight(saved.readableNight);
-        if (saved.smoothTransitions !== undefined) this.dayNightCycle.setSmoothTransitions(saved.smoothTransitions);
+        if (saved.readableNight !== undefined)
+          this.dayNightCycle.setReadableNight(saved.readableNight);
+        if (saved.smoothTransitions !== undefined)
+          this.dayNightCycle.setSmoothTransitions(saved.smoothTransitions);
       }
     } else {
       this.currentQuality = QualitySettingsUI.detectOptimalQuality();
@@ -255,11 +257,15 @@ export class QualitySettingsUI {
     this.masterValLabel = masterRow.label;
 
     // Ambiente / Onde
-    const ambientRow = this.createSliderRow(LocalizationSystem.t('ui.vol_ambient'), '50%', (val) => {
-      this.audioSystem.setAmbientVolume(val / 100);
-      this.ambientValLabel.textContent = `${val}%`;
-      this.saveSettings();
-    });
+    const ambientRow = this.createSliderRow(
+      LocalizationSystem.t('ui.vol_ambient'),
+      '50%',
+      (val) => {
+        this.audioSystem.setAmbientVolume(val / 100);
+        this.ambientValLabel.textContent = `${val}%`;
+        this.saveSettings();
+      }
+    );
     this.ambientValLabel = ambientRow.label;
 
     // Effetti / SFX

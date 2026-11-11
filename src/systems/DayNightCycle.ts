@@ -62,7 +62,8 @@ export class DayNightCycle {
   };
 
   constructor(config?: Partial<DayNightConfig>) {
-    if (config?.cycleDurationSeconds) this.cycleDuration = Math.max(30, config.cycleDurationSeconds);
+    if (config?.cycleDurationSeconds)
+      this.cycleDuration = Math.max(30, config.cycleDurationSeconds);
     if (config?.initialHour !== undefined) this.currentHour = (config.initialHour + 24) % 24;
     if (config?.timeScale !== undefined) this.timeScale = Math.max(0.1, config.timeScale);
     if (config?.readableNight !== undefined) this.readableNight = config.readableNight;
@@ -86,7 +87,11 @@ export class DayNightCycle {
       const targetAmbient = this.calculateRawAmbientIntensity();
       const blend = 1.0 - Math.exp(-2.5 * dt);
       this.dampedSunIntensity = THREE.MathUtils.lerp(this.dampedSunIntensity, targetSun, blend);
-      this.dampedAmbientIntensity = THREE.MathUtils.lerp(this.dampedAmbientIntensity, targetAmbient, blend);
+      this.dampedAmbientIntensity = THREE.MathUtils.lerp(
+        this.dampedAmbientIntensity,
+        targetAmbient,
+        blend
+      );
     } else {
       this.dampedSunIntensity = this.calculateRawSunIntensity();
       this.dampedAmbientIntensity = this.calculateRawAmbientIntensity();
@@ -129,7 +134,9 @@ export class DayNightCycle {
   public getInterpolatedSkyColor(isRestored = false): THREE.Color {
     const hour = this.currentHour;
     const result = new THREE.Color();
-    const effectiveNightColor = this.readableNight ? this.colors.nightSkyReadable : this.colors.nightSky;
+    const effectiveNightColor = this.readableNight
+      ? this.colors.nightSkyReadable
+      : this.colors.nightSky;
 
     if (hour >= 5.0 && hour < 8.0) {
       // Transizione Notte -> Alba -> Giorno
@@ -180,10 +187,13 @@ export class DayNightCycle {
   private calculateRawAmbientIntensity(): number {
     const phase = this.getPhase();
     switch (phase) {
-      case 'day': return 1.1;
+      case 'day':
+        return 1.1;
       case 'dawn':
-      case 'sunset': return 0.75;
-      case 'night': return this.readableNight ? 0.65 : 0.35;
+      case 'sunset':
+        return 0.75;
+      case 'night':
+        return this.readableNight ? 0.65 : 0.35;
     }
   }
 
@@ -191,7 +201,9 @@ export class DayNightCycle {
    * Restituisce l'intensità della luce ambientale in base all'ora.
    */
   public getAmbientIntensity(): number {
-    return this.smoothTransitions ? this.dampedAmbientIntensity : this.calculateRawAmbientIntensity();
+    return this.smoothTransitions
+      ? this.dampedAmbientIntensity
+      : this.calculateRawAmbientIntensity();
   }
 
   public setHour(hour: number): void {

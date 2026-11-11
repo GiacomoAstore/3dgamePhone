@@ -29,9 +29,11 @@ export class AudioSystem {
   private currentMusicAudio: HTMLAudioElement | null = null;
 
   constructor(options?: AudioSystemOptions) {
-    if (options?.masterVolume !== undefined) this.masterVol = Math.max(0, Math.min(1, options.masterVolume));
+    if (options?.masterVolume !== undefined)
+      this.masterVol = Math.max(0, Math.min(1, options.masterVolume));
     if (options?.sfxVolume !== undefined) this.sfxVol = Math.max(0, Math.min(1, options.sfxVolume));
-    if (options?.ambientVolume !== undefined) this.ambientVol = Math.max(0, Math.min(1, options.ambientVolume));
+    if (options?.ambientVolume !== undefined)
+      this.ambientVol = Math.max(0, Math.min(1, options.ambientVolume));
 
     this.initContext();
     this.initEventListeners();
@@ -42,7 +44,9 @@ export class AudioSystem {
    */
   private initContext(): void {
     if (typeof window === 'undefined') return;
-    const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtxClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (AudioCtxClass) {
       try {
         this.ctx = new AudioCtxClass();
@@ -274,12 +278,14 @@ export class AudioSystem {
       const output = noiseBuffer.getChannelData(0);
 
       // Rumore rosa/morbido
-      let b0 = 0, b1 = 0, b2 = 0;
+      let b0 = 0,
+        b1 = 0,
+        b2 = 0;
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
         b0 = 0.99886 * b0 + white * 0.0555179;
         b1 = 0.99332 * b1 + white * 0.0750759;
-        b2 = 0.96900 * b2 + white * 0.1538520;
+        b2 = 0.969 * b2 + white * 0.153852;
         output[i] = (b0 + b1 + b2) * 0.06;
       }
 
@@ -341,10 +347,7 @@ export class AudioSystem {
    * @param fallbackProcedural Callback procedurale da eseguire in caso di errore (default: startSeaBreezeAmbient)
    * @returns true se il file audio è stato caricato e avviato con successo, false se è scattato il ripiego.
    */
-  public async playMusicTrack(
-    url: string,
-    fallbackProcedural?: () => void
-  ): Promise<boolean> {
+  public async playMusicTrack(url: string, fallbackProcedural?: () => void): Promise<boolean> {
     if (typeof window === 'undefined' || typeof Audio === 'undefined') {
       if (fallbackProcedural) fallbackProcedural();
       else this.startSeaBreezeAmbient();
@@ -373,7 +376,11 @@ export class AudioSystem {
 
         const onError = (e: Event) => {
           cleanup();
-          reject(new Error(`Errore caricamento audio ${url}: ${(e as ErrorEvent).message || 'File non trovato o formato non supportato'}`));
+          reject(
+            new Error(
+              `Errore caricamento audio ${url}: ${(e as ErrorEvent).message || 'File non trovato o formato non supportato'}`
+            )
+          );
         };
 
         const cleanup = () => {
@@ -390,7 +397,10 @@ export class AudioSystem {
       this.currentMusicAudio = audio;
       return true;
     } catch (err) {
-      console.warn(`[AudioSystem] Impossibile riprodurre file audio '${url}'. Attivazione ripiego procedurale:`, err);
+      console.warn(
+        `[AudioSystem] Impossibile riprodurre file audio '${url}'. Attivazione ripiego procedurale:`,
+        err
+      );
       if (fallbackProcedural) {
         fallbackProcedural();
       } else {
@@ -403,10 +413,7 @@ export class AudioSystem {
   /**
    * Riproduce un effetto sonoro (SFX) da file (mp3/ogg) con fallback su suono procedurale.
    */
-  public async playSoundFile(
-    url: string,
-    fallbackProcedural?: () => void
-  ): Promise<boolean> {
+  public async playSoundFile(url: string, fallbackProcedural?: () => void): Promise<boolean> {
     if (typeof window === 'undefined' || typeof Audio === 'undefined') {
       if (fallbackProcedural) fallbackProcedural();
       return false;
@@ -418,7 +425,10 @@ export class AudioSystem {
       await audio.play();
       return true;
     } catch (err) {
-      console.warn(`[AudioSystem] File SFX '${url}' non disponibile. Esecuzione fallback procedurale:`, err);
+      console.warn(
+        `[AudioSystem] File SFX '${url}' non disponibile. Esecuzione fallback procedurale:`,
+        err
+      );
       if (fallbackProcedural) fallbackProcedural();
       return false;
     }

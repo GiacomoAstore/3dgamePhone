@@ -3,7 +3,7 @@
  * Include gestione pendenze (slope handling), scivolamento su pareti ripide e ground-snapping in discesa.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.1
+ * Ultima modifica: 2026-11-11 - v0.3.6 (estensione castHeight e tolleranza snap contro sprofondamento)
  */
 
 import * as THREE from 'three';
@@ -56,8 +56,8 @@ export class PhysicsSystem {
   public checkGround(
     position: THREE.Vector3,
     wasGrounded = false,
-    castHeight = 1.0,
-    maxDistance = 6.0
+    castHeight = 2.0,
+    maxDistance = 8.0
   ): GroundCheckResult {
     const origin = new THREE.Vector3(position.x, position.y + castHeight, position.z);
     this.raycaster.set(origin, this.downDirection);
@@ -70,9 +70,9 @@ export class PhysicsSystem {
       const groundHeight = hit.point.y;
       const verticalDiff = position.y - groundHeight;
 
-      // Tolleranza: se era a terra estendiamo a 0.50m (ground-snapping per pendenze in discesa)
-      const snapThreshold = wasGrounded ? 0.50 : 0.20;
-      const isGrounded = verticalDiff <= snapThreshold && verticalDiff >= -0.4;
+      // Tolleranza: se era a terra estendiamo a 0.60m (ground-snapping per pendenze in discesa)
+      const snapThreshold = wasGrounded ? 0.6 : 0.4;
+      const isGrounded = verticalDiff <= snapThreshold && verticalDiff >= -0.6;
 
       return {
         isGrounded,

@@ -125,7 +125,10 @@ export class ProceduralPip {
 
     // Bottoni dorati sul petto
     for (let b = 0; b < 3; b++) {
-      const btnMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.015, 8), brassMaterial);
+      const btnMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.025, 0.015, 8),
+        brassMaterial
+      );
       btnMesh.rotation.x = Math.PI / 2;
       btnMesh.position.set(0.06, 0.14 - b * 0.1, 0.28);
       body.add(btnMesh);
@@ -174,7 +177,10 @@ export class ProceduralPip {
       backpack.add(scroll);
 
       // Nastro dorato/rosso che chiude il rotolo
-      const ribbon = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.03, 8), scarfMaterial);
+      const ribbon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.042, 0.042, 0.03, 8),
+        scarfMaterial
+      );
       ribbon.position.copy(scroll.position);
       ribbon.rotation.copy(scroll.rotation);
       backpack.add(ribbon);
@@ -317,13 +323,19 @@ export class ProceduralPip {
       legGroup.position.set(side * 0.13, 0.32, 0);
 
       // Pantaloni alla zuava
-      const pant = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.22, 10), coatTrimMaterial);
+      const pant = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.09, 0.22, 10),
+        coatTrimMaterial
+      );
       pant.position.y = -0.02;
       pant.castShadow = true;
       legGroup.add(pant);
 
       // Gambetto stivale
-      const bootShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.085, 0.14, 10), bootsMaterial);
+      const bootShaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.085, 0.14, 10),
+        bootsMaterial
+      );
       bootShaft.position.y = -0.15;
       legGroup.add(bootShaft);
 
@@ -360,7 +372,10 @@ export class ProceduralPip {
       armGroup.add(sleeve);
 
       // Risvolto manica
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.05, 10), coatTrimMaterial);
+      const cuff = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.095, 0.095, 0.05, 10),
+        coatTrimMaterial
+      );
       cuff.position.y = -0.27;
       armGroup.add(cuff);
 
@@ -389,7 +404,10 @@ export class ProceduralPip {
     lantern.add(baseL);
 
     // Cilindro/gabbia di vetro satinato
-    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12), lanternGlassMaterial);
+    const glass = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12),
+      lanternGlassMaterial
+    );
     glass.position.y = 0.11;
     lantern.add(glass);
 

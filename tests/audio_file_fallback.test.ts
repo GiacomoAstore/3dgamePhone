@@ -24,10 +24,7 @@ describe('AudioSystem Audio File Support & Procedural Fallback', () => {
   it('esegue il ripiego procedurale se il file musicale non è reperibile', async () => {
     const fallbackSpy = vi.fn();
 
-    const success = await audio.playMusicTrack(
-      '/assets/music/non_existent_theme.ogg',
-      fallbackSpy
-    );
+    const success = await audio.playMusicTrack('/assets/music/non_existent_theme.ogg', fallbackSpy);
 
     expect(success).toBe(false);
     expect(fallbackSpy).toHaveBeenCalledOnce();
@@ -45,10 +42,7 @@ describe('AudioSystem Audio File Support & Procedural Fallback', () => {
   it('esegue il fallback procedurale per un effetto sonoro non disponibile', async () => {
     const sfxFallbackSpy = vi.fn();
 
-    const success = await audio.playSoundFile(
-      '/assets/sounds/missing_chime.ogg',
-      sfxFallbackSpy
-    );
+    const success = await audio.playSoundFile('/assets/sounds/missing_chime.ogg', sfxFallbackSpy);
 
     expect(success).toBe(false);
     expect(sfxFallbackSpy).toHaveBeenCalledOnce();
@@ -58,4 +52,3 @@ describe('AudioSystem Audio File Support & Procedural Fallback', () => {
     expect(() => audio.stopMusicTrack()).not.toThrow();
   });
 });
-

@@ -3,7 +3,7 @@
  * scogliere rocciose, spiaggia dorata, sentiero, vegetazione cartoon volumetrica e osservatorio.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.2
+ * Ultima modifica: 2026-11-11 - v0.3.6 (allineamento altimetrico completo di alberi, fiori, rocce, terrazza osservatorio al suolo reale)
  */
 
 import * as THREE from 'three';
@@ -110,7 +110,8 @@ export class Island {
    */
   private createObservatoryPlaza(gradientMap: THREE.Texture): void {
     const plazaGroup = new THREE.Group();
-    plazaGroup.position.set(0, 3.8, -2.5);
+    const plazaY = this.getTerrainHeight(0, -2.5);
+    plazaGroup.position.set(0, plazaY, -2.5);
 
     const stoneMat = new THREE.MeshToonMaterial({ color: 0xd6ccc2, gradientMap });
     const woodMat = new THREE.MeshToonMaterial({ color: 0x7f4f24, gradientMap });
@@ -151,7 +152,8 @@ export class Island {
    */
   private createStoneCircle(gradientMap: THREE.Texture): void {
     const circleGroup = new THREE.Group();
-    circleGroup.position.set(18.0, 1.8, -15.0);
+    const circleY = this.getTerrainHeight(18.0, -15.0);
+    circleGroup.position.set(18.0, circleY, -15.0);
 
     const ancientStoneMat = new THREE.MeshToonMaterial({
       color: 0x8d99ae,
@@ -213,7 +215,8 @@ export class Island {
 
     treePositions.forEach((pos) => {
       const tree = new THREE.Group();
-      tree.position.set(pos.x, 0, pos.z);
+      const groundY = this.getTerrainHeight(pos.x, pos.z);
+      tree.position.set(pos.x, groundY, pos.z);
       tree.scale.setScalar(pos.scale);
 
       // 1. Tronco sinuoso organico
@@ -290,7 +293,8 @@ export class Island {
 
     bushPositions.forEach((bp) => {
       const bush = new THREE.Group();
-      bush.position.set(bp.x, 0, bp.z);
+      const bushY = this.getTerrainHeight(bp.x, bp.z);
+      bush.position.set(bp.x, bushY, bp.z);
 
       const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 8), bushMat);
       bMesh.scale.set(1.2, 0.75, 1.0);
@@ -302,7 +306,11 @@ export class Island {
       for (let b = 0; b < 5; b++) {
         const berry = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), berryMat);
         const theta = b * 1.2;
-        berry.position.set(Math.cos(theta) * 0.55, 0.55 + Math.sin(b) * 0.15, Math.sin(theta) * 0.45);
+        berry.position.set(
+          Math.cos(theta) * 0.55,
+          0.55 + Math.sin(b) * 0.15,
+          Math.sin(theta) * 0.45
+        );
         bush.add(berry);
       }
 
@@ -314,7 +322,8 @@ export class Island {
       const flower = new THREE.Group();
       const fx = (Math.random() - 0.5) * 32;
       const fz = (Math.random() - 0.5) * 32;
-      flower.position.set(fx, 0, fz);
+      const fy = this.getTerrainHeight(fx, fz);
+      flower.position.set(fx, fy, fz);
 
       const isBlue = f % 2 === 0;
       const pMat = isBlue ? petalBlueMat : petalWhiteMat;
@@ -362,7 +371,8 @@ export class Island {
       // Rende la forma organica con scaling asimmetrico
       const rock = new THREE.Mesh(rockGeom, rockMat);
       rock.scale.set(1.2, 0.7, 0.9);
-      rock.position.set(rc.x, rc.s * 0.35, rc.z);
+      const rockY = this.getTerrainHeight(rc.x, rc.z);
+      rock.position.set(rc.x, rockY + rc.s * 0.25, rc.z);
       rock.rotation.set(rc.x * 0.2, rc.z * 0.4, 0.2);
       rock.castShadow = true;
       rock.receiveShadow = true;
@@ -433,9 +443,7 @@ export class Island {
 
     const terrace = Math.cos(normDist * Math.PI) * 0.5 + 0.5;
     const noise =
-      Math.sin(x * 0.3) * 0.35 +
-      Math.cos(z * 0.3) * 0.35 +
-      Math.sin((x + z) * 0.5) * 0.2;
+      Math.sin(x * 0.3) * 0.35 + Math.cos(z * 0.3) * 0.35 + Math.sin((x + z) * 0.5) * 0.2;
 
     const eastSlope = Math.max(0, (x - 6.0) / 16.0);
     let height = (hillHeight + terrace * 1.5 + noise) * (1.0 - eastSlope * 0.65);

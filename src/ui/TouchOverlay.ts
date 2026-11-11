@@ -220,8 +220,10 @@ export class TouchOverlay {
     if (this.joystickTouchId !== null) {
       result.push({
         identifier: this.joystickTouchId,
-        clientX: this.joystickCenter.x + this.state.joystickVector.x * controlsConfig.joystickRadius,
-        clientY: this.joystickCenter.y + this.state.joystickVector.y * controlsConfig.joystickRadius,
+        clientX:
+          this.joystickCenter.x + this.state.joystickVector.x * controlsConfig.joystickRadius,
+        clientY:
+          this.joystickCenter.y + this.state.joystickVector.y * controlsConfig.joystickRadius,
         role: 'joystick',
       });
     }

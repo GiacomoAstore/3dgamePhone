@@ -1,7 +1,7 @@
 /**
  * Entità Giocatore (Pip) con fisica, controller di movimento e animazioni procedurali.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.0
+ * Ultima modifica: 2026-11-11 - v0.3.6 (metodo spawnAt e ancoraggio spawnPoint per respawn sicuro)
  */
 
 import * as THREE from 'three';
@@ -14,7 +14,8 @@ import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Player {
   public meshComponents: PipMeshComponents;
-  public position: THREE.Vector3 = new THREE.Vector3(0, 2.8, 0);
+  public position: THREE.Vector3 = new THREE.Vector3(0, 4.8, 1.5);
+  public spawnPoint: THREE.Vector3 = new THREE.Vector3(0, 4.8, 1.5);
   public velocity: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
   // Parametri di movimento (senza numeri magici, configurati qui)
@@ -40,14 +41,31 @@ export class Player {
   }
 
   /**
+   * Posiziona Pip al punto di spawn specificato e ne aggiorna coordinate e mesh.
+   */
+  public spawnAt(x: number, y: number, z: number): void {
+    this.spawnPoint.set(x, y, z);
+    this.position.set(x, y, z);
+    this.velocity.set(0, 0, 0);
+    this.isGrounded = true;
+    this.meshComponents.root.position.copy(this.position);
+  }
+
+  /**
    * Carica in modo asincrono il modello 3D cartoon di Pip (KayKit Rogue Hooded)
    * e le tracce di animazione per movimento, idle e salto.
    */
   private async loadGLBCharacter(): Promise<void> {
     const assetMgr = AssetManager.getInstance();
     const model = await assetMgr.loadModel('pip_rogue', '/models/Rogue_Hooded.glb');
-    const moveAnims = await assetMgr.loadAnimations('pip_move', '/models/Rig_Medium_MovementBasic.glb');
-    const generalAnims = await assetMgr.loadAnimations('pip_general', '/models/Rig_Medium_General.glb');
+    const moveAnims = await assetMgr.loadAnimations(
+      'pip_move',
+      '/models/Rig_Medium_MovementBasic.glb'
+    );
+    const generalAnims = await assetMgr.loadAnimations(
+      'pip_general',
+      '/models/Rig_Medium_General.glb'
+    );
 
     if (model) {
       const inst = assetMgr.instantiate('pip_rogue');
@@ -172,10 +190,11 @@ export class Player {
       this.isGrounded = false;
     }
 
-    // Se per qualche motivo si cade sotto il mare (y < -5), respawn sull'isola
+    // Se per qualche motivo si cade sotto il mare (y < -5), respawn sull'isola al punto sicuro
     if (this.position.y < -5.0) {
-      this.position.set(0, 2.8, 0);
+      this.position.copy(this.spawnPoint);
       this.velocity.set(0, 0, 0);
+      this.isGrounded = true;
     }
 
     // 6. Aggiorna posizione visiva del gruppo 3D

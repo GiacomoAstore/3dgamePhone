@@ -15,12 +15,8 @@ describe('Toon Inverted Hull Outlines on Pip', () => {
   it('genera mesh di contorno per il corpo e la testa di Pip con materiale BackSide', () => {
     const pip = ProceduralPip.create();
 
-    const bodyOutline = pip.body.children.find(
-      (c) => c.name === 'Pip_Body_outline'
-    ) as THREE.Mesh;
-    const headOutline = pip.head.children.find(
-      (c) => c.name === 'Pip_Head_outline'
-    ) as THREE.Mesh;
+    const bodyOutline = pip.body.children.find((c) => c.name === 'Pip_Body_outline') as THREE.Mesh;
+    const headOutline = pip.head.children.find((c) => c.name === 'Pip_Head_outline') as THREE.Mesh;
 
     expect(bodyOutline).toBeDefined();
     expect(headOutline).toBeDefined();
@@ -39,12 +35,9 @@ describe('Toon Inverted Hull Outlines on Pip', () => {
   it('verifica che i contorni non proiettino ombre (castShadow = false)', () => {
     const pip = ProceduralPip.create();
 
-    const bodyOutline = pip.body.children.find(
-      (c) => c.name === 'Pip_Body_outline'
-    ) as THREE.Mesh;
+    const bodyOutline = pip.body.children.find((c) => c.name === 'Pip_Body_outline') as THREE.Mesh;
 
     expect(bodyOutline.castShadow).toBe(false);
     expect(bodyOutline.receiveShadow).toBe(false);
   });
 });
-

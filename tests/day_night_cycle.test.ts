@@ -102,4 +102,3 @@ describe('DayNightCycle System', () => {
     expect(newCycle.getHour()).toBeCloseTo(16.5);
   });
 });
-

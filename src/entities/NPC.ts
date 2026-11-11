@@ -43,16 +43,27 @@ export class NPC {
     const dressMat = new THREE.MeshToonMaterial({ color: 0x5e2a4a, gradientMap: stepGradMap }); // Prugna nobile
     const dressTrimMat = new THREE.MeshToonMaterial({ color: 0x8a3b6b, gradientMap: stepGradMap });
     const shawlMat = new THREE.MeshToonMaterial({ color: 0xfefae0, gradientMap: stepGradMap }); // Crema lana
-    const shawlBorderMat = new THREE.MeshToonMaterial({ color: 0xe76f51, gradientMap: stepGradMap }); // Bordo corallo
+    const shawlBorderMat = new THREE.MeshToonMaterial({
+      color: 0xe76f51,
+      gradientMap: stepGradMap,
+    }); // Bordo corallo
     const hairMat = new THREE.MeshToonMaterial({ color: 0xd8e2dc, gradientMap: stepGradMap }); // Argento morbido
     const skinMat = new THREE.MeshToonMaterial({ color: 0xfde2e4, gradientMap: stepGradMap }); // Incarnato dolce
     const woodMat = new THREE.MeshToonMaterial({ color: 0x582f0e, gradientMap: stepGradMap }); // Noce antico
     const brassMat = new THREE.MeshToonMaterial({ color: 0xf4a261, gradientMap: stepGradMap }); // Ottone brillante
     const bronzeMat = new THREE.MeshToonMaterial({ color: 0xb5838d, gradientMap: stepGradMap });
     const paperMat = new THREE.MeshToonMaterial({ color: 0xfaf0ca, gradientMap: stepGradMap }); // Mappa nautica
-    const glassLensMat = new THREE.MeshBasicMaterial({ color: 0xa8dadc, transparent: true, opacity: 0.65 });
+    const glassLensMat = new THREE.MeshBasicMaterial({
+      color: 0xa8dadc,
+      transparent: true,
+      opacity: 0.65,
+    });
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1d3557 });
-    const blushMat = new THREE.MeshBasicMaterial({ color: 0xf4a261, transparent: true, opacity: 0.5 });
+    const blushMat = new THREE.MeshBasicMaterial({
+      color: 0xf4a261,
+      transparent: true,
+      opacity: 0.5,
+    });
 
     // ==========================================
     // 1. PERSONAGGIO: NONNA BUSSOLA
@@ -132,7 +143,10 @@ export class NPC {
     head.add(nose);
 
     // Capelli argentati pettinati e chignon alto
-    const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.6), hairMat);
+    const hairCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.27, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.6),
+      hairMat
+    );
     hairCap.position.set(0, 0.06, -0.03);
     head.add(hairCap);
 
@@ -164,19 +178,21 @@ export class NPC {
     this.group.add(characterGroup);
 
     // Caricamento asincrono del modello 3D cartoon di Nonna Bussola (KayKit Mage CC0)
-    AssetManager.getInstance().loadModel('mage', '/models/Mage.glb').then((model) => {
-      if (model) {
-        const inst = AssetManager.getInstance().instantiate('mage');
-        if (inst) {
-          inst.scale.setScalar(0.65);
-          inst.position.set(0, 0, 0);
-          AssetManager.getInstance().applyCartoonShading(inst, stepGradMap);
-          characterGroup.add(inst);
-          // Nasconde la versione procedurale primitiva quando il modello 3D è pronto
-          proceduralMeshGroup.visible = false;
+    AssetManager.getInstance()
+      .loadModel('mage', '/models/Mage.glb')
+      .then((model) => {
+        if (model) {
+          const inst = AssetManager.getInstance().instantiate('mage');
+          if (inst) {
+            inst.scale.setScalar(0.65);
+            inst.position.set(0, 0, 0);
+            AssetManager.getInstance().applyCartoonShading(inst, stepGradMap);
+            characterGroup.add(inst);
+            // Nasconde la versione procedurale primitiva quando il modello 3D è pronto
+            proceduralMeshGroup.visible = false;
+          }
         }
-      }
-    });
+      });
 
     // ==========================================
     // 2. OSSERVATORIO: GRANDE TELESCOPIO IN OTTONE
