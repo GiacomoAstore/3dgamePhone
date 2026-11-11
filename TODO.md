@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.2 - Pendenze & Ground-Snapping, Guida Controlli HUD e Modelli 3D Cartoon Solidi
+Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)
 -->
 
 ## 🏁 Fasi Completate
@@ -41,6 +41,7 @@ Ultima modifica: 2026-11-11 - v0.3.2 - Pendenze & Ground-Snapping, Guida Control
 - [x] **Fisica Pendenze & Ground-Snapping (`PhysicsSystem.ts`)**: Tolleranza pendenze $Y \ge 0.55$, scivolamento tangenziale muri e snapping verticale fino a $0.50\,\text{m}$ in discesa.
 - [x] **Guida Controlli HUD & Modal Illustrato**: Barra rapida tasti a schermo e modal `#help-modal` consultabile con `H` o tocco pulsante.
 - [x] **Rifacimento Grafico Cartoon 3D Solido**: Geometria isola solida con scogliere a $-5.0\,\text{m}$ e fondale marino, piazza osservatorio in pietra e legno, alberi cartoon con chiome a nuvola, Pip e Nonna Bussola espressivi con accessori modellati e sciarpa svolazzante.
+- [x] **Integrazione Modelli 3D Cartoon CC0 (v0.3.3)**: Modulo `AssetManager.ts` con caching e cel-shading; integrazione `Rogue_Hooded.glb` (Pip con animazioni scheletriche), `Mage.glb` (Nonna Bussola), `BoatWSail.glb` (barca a vela ormeggiata al molo), querce modellate Kenney, forziere antico dei pirati al cerchio di pietre, barili, cartello in legno, falò e volpina animata `Fox.glb`.
 - [x] **Pannello Impostazioni & Auto-Degrade (`QualitySettingsUI`)**: Rilevamento automatico profilo (Mobile $\rightarrow$ Media, Desktop $\rightarrow$ Alta), persistenza su `localStorage`, declassamento automatico su frame drop persistenti con protezione anti-falsi positivi (warm-up 5s, tab nascosta, cooldown 30s) e toast con pulsante "Annulla".
 - [x] **Strumenti Diagnostici e Benchmark**:
   - `?debug=1`: Overlay con FPS medio, minimo, 1% low, draw calls, triangoli, geometrie, texture e monitor multi-touch da `TouchOverlay`.

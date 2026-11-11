@@ -2,6 +2,35 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.3] - 2026-11-11
+
+### Aggiunto
+- **Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)**:
+  - Scaricati in `public/models/` tramite runtime Node.js tutti i pacchetti 3D essenziali con licenza CC0 1.0 (Public Domain).
+  - **Pip (`Player.ts`)**: Integrato il modello 3D `Rogue_Hooded.glb` (KayKit Adventurers) con cappuccio, mantello e stivali, abbinato a `THREE.AnimationMixer` con animazioni scheletriche fluide per riposo (`Idle_A`), camminata (`Walking_A`), corsa (`Running_A`) e salto (`Jump_Start`).
+  - **Nonna Bussola (`NPC.ts`)**: Integrato il modello 3D `Mage.glb` (KayKit Adventurers) all'osservatorio astronomico, mantenendo il telescopio in ottone e il tavolo cartografico.
+  - **Isola & Ambientazione Scenografica (`Island.ts`)**:
+    - Nuovi alberi cartoon Kenney `tree_oak.glb` e `tree_detailed.glb` a sostituire le chiome sferiche primitive.
+    - Magnifica barca a vela cartoon `BoatWSail.glb` (Quaternius Ships) ormeggiata lungo il pontile di legno.
+    - Antico forziere in legno e ferro `chest.glb` (Kenney Pirate) al centro del cerchio di pietre della scogliera, a custodia del frammento dell'Atlante.
+    - Barili d'ormeggio (`barrel.glb`), cartello indicatore in legno (`sign.glb`) e ceppi di falò (`campfire_logs.glb`) lungo il sentiero collinare.
+    - Fauna dell'isola: simpatica volpina cartoon `Fox.glb` (Quaternius Animals) con animazione continua di riposo e osservazione.
+- **Modulo `AssetManager.ts` & Suite di Test**:
+  - Implementato singleton asincrono [`src/core/AssetManager.ts`](file:///c:/Users/user/Desktop/workspace/3dgamePhone/src/core/AssetManager.ts) per caricamento, caching ed instanziazione sicura con ombre WebGL.
+  - Metodo `applyCartoonShading()` che trasforma texture standard in `MeshToonMaterial` con shading a gradini.
+  - Suite di test automatizzati dedicata in [`tests/asset_manager.test.ts`](file:///c:/Users/user/Desktop/workspace/3dgamePhone/tests/asset_manager.test.ts) (75/75 test passati).
+
+### Modificato
+- `src/world/Island.ts`: caricamento asincrono modelli scenografici e aggiornamento loop animazione della volpina.
+- `src/entities/Player.ts`: integrazione scheletro GLB con transizioni animate di corsa/camminata/salto e gestione ombre scalate su profilo grafico.
+- `src/entities/NPC.ts`: integrazione modello 3D maga all'osservatorio con fallback controllato.
+- `ASSETS.md`: registrazione formale di tutti i 14 modelli 3D con provenienza, licenza CC0 e dimensioni.
+- `VERSION`, `package.json`: incremento a `0.3.3`.
+- `DECISIONI.md`: aggiunta ADR 010.
+
+### Motivo
+- Richiesta utente: trasformazione grafica del mondo di gioco con veri modelli 3D cartoon rifiniti ("effetto wow") al posto delle geometrie procedurali grezze.
+
 ## [0.3.2] - 2026-11-11
 
 ### Aggiunto

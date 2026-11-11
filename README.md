@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.2 - Pendenze & Ground-Snapping, Guida Controlli HUD e Modelli 3D Cartoon Solidi
+Ultima modifica: 2026-11-11 - v0.3.3 - Integrazione Modelli 3D Cartoon CC0 (Kenney, Quaternius, KayKit)
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  

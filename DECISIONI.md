@@ -202,3 +202,30 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - Applicato blending additivo `THREE.AdditiveBlending` con profondità di scrittura disattivata (`depthWrite = false`) e diametro ridotto da $0.35$ a $0.14$, trasformando i blocchi opachi in lucciole dorate e polline fluttuante soave.
 - **Conseguenze**:
   Navigazione dell'isola fluida e priva di blocchi o scatti su tutte le pendenze, accessibilità immediata ai comandi per qualunque nuovo giocatore e salto di qualità estetico con look cartoon 3D pieno e immersivo.
+
+---
+
+## ADR 010 - Integrazione Asset 3D Cartoon Esterni CC0 (Kenney, Quaternius, KayKit) tramite AssetManager (v0.3.3)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  L'utente ha espresso l'esigenza di un forte salto di qualità estetico ("effetto wow"), richiedendo modelli 3D rifiniti al posto delle primitive procedurali.
+  I download diretti da PowerShell fallivano precedentemente per via del mancato riconoscimento dei certificati SSL intermedi su Windows; tale limite è stato superato scaricando i modelli binari CC0 direttamente tramite runtime Node.js.
+- **Decisione**:
+  1. **Creazione di `AssetManager.ts`**:
+     - Singleton asincrono per il caricamento e la cache di file `.glb` e clip di animazione scheletriche.
+     - Metodo `applyCartoonShading()` che converte automaticamente texture e materiali fisici standard in `MeshToonMaterial` con ombreggiatura a gradini discreti.
+     - Degrado controllato: se eseguito in test o se un asset non è disponibile, il gioco non va in crash e mantiene i modelli procedurali come fallback.
+  2. **Personaggio Pip e Animazioni (`Player.ts`)**:
+     - Integrazione di `Rogue_Hooded.glb` (KayKit Adventurers, CC0), con mantello, cappuccio e scheletro animato.
+     - Collegamento di `THREE.AnimationMixer` alle clip `Idle_A`, `Walking_A`, `Running_A` e `Jump_Start` sincronizzate con velocità e salti.
+  3. **Nonna Bussola (`NPC.ts`)**:
+     - Integrazione di `Mage.glb` (KayKit Adventurers, CC0) all'Osservatorio astronomico.
+  4. **Elementi Scenografici dell'Isola (`Island.ts`)**:
+     - Alberi di quercia e sagomati cartoon (`tree_oak.glb`, `tree_detailed.glb` di Kenney Nature Kit).
+     - Splendida barca a vela ormeggiata al pontile di legno (`BoatWSail.glb` di Quaternius Ships).
+     - Antico forziere dei pirati (`chest.glb` di Kenney) al cerchio di pietre che custodisce il frammento dell'Atlante.
+     - Barili d'ormeggio (`barrel.glb`), cartello in legno (`sign.glb`) e ceppi di falò (`campfire_logs.glb`).
+     - Fauna selvatica dell'isola: volpina cartoon animata (`Fox.glb` di Quaternius) che si muove nel boschetto.
+- **Conseguenze**:
+  Il mondo di gioco acquisisce immediatamente una grafica cartoon professionale e accattivante ("effetto wow"), mantenendo inalterate la logica delle missioni, la fluidità a 60 FPS, il budget di bundle (< 800 KB JS) e la completa copertura dei test automatici.

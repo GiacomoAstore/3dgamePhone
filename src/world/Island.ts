@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
 import { ToonShaderUtils } from './ToonShaderUtils';
+import { AssetManager } from '../core/AssetManager';
 
 export class Island {
   public group: THREE.Group;
@@ -18,10 +19,14 @@ export class Island {
   private terrainMaterial!: THREE.MeshToonMaterial;
   private targetGrassColor = new THREE.Color(0x38b000); // Verde vivido primaverile
   private isColorShifting = false;
+  private proceduralTreesGroup = new THREE.Group();
+  private foxMixer: THREE.AnimationMixer | null = null;
 
   constructor(physicsSystem: PhysicsSystem) {
     this.group = new THREE.Group();
     this.group.name = 'Island_Bussola';
+    this.proceduralTreesGroup.name = 'Procedural_Trees';
+    this.group.add(this.proceduralTreesGroup);
 
     const stepGradMap = ToonShaderUtils.getStepGradientMap(3);
 
@@ -32,6 +37,7 @@ export class Island {
     this.createFoliageAndFlowers(stepGradMap);
     this.createRockBoulders(stepGradMap);
     this.createDock(stepGradMap);
+    this.loadExternalModels(stepGradMap);
 
     globalEventBus.on('fragment-collected', () => {
       this.isColorShifting = true;
@@ -286,7 +292,7 @@ export class Island {
       crown.add(sphere4);
 
       tree.add(crown);
-      this.group.add(tree);
+      this.proceduralTreesGroup.add(tree);
     });
   }
 
@@ -441,7 +447,139 @@ export class Island {
     this.group.add(dock);
   }
 
+  /**
+   * Carica in modo asincrono i modelli 3D cartoon (Kenney, Quaternius)
+   * per sostituire o arricchire la vegetazione e gli elementi dell'isola con un impatto visivo rifinito.
+   */
+  private async loadExternalModels(stepGradMap: THREE.Texture): Promise<void> {
+    const assetMgr = AssetManager.getInstance();
+
+    // 1. Carica i modelli
+    await Promise.all([
+      assetMgr.loadModel('tree_oak', '/models/tree_oak.glb'),
+      assetMgr.loadModel('tree_detailed', '/models/tree_detailed.glb'),
+      assetMgr.loadModel('boat', '/models/BoatWSail.glb'),
+      assetMgr.loadModel('chest', '/models/chest.glb'),
+      assetMgr.loadModel('barrel', '/models/barrel.glb'),
+      assetMgr.loadModel('sign', '/models/sign.glb'),
+      assetMgr.loadModel('campfire', '/models/campfire_logs.glb'),
+      assetMgr.loadModel('fox', '/models/Fox.glb'),
+    ]);
+
+    // 2. Barca a vela splendida ormeggiata al pontile
+    const boat = assetMgr.instantiate('boat');
+    if (boat) {
+      boat.name = 'Dock_Boat';
+      boat.position.set(5.8, -0.15, 23.5);
+      boat.rotation.set(0, -Math.PI / 6, 0);
+      boat.scale.setScalar(3.2);
+      assetMgr.applyCartoonShading(boat, stepGradMap);
+      this.group.add(boat);
+    }
+
+    // 3. Forziere antico al cerchio di pietre che racchiude il frammento
+    const chest = assetMgr.instantiate('chest');
+    if (chest) {
+      chest.name = 'RuneCircle_Chest';
+      chest.position.set(18.0, 1.05, -15.0);
+      chest.rotation.y = -Math.PI / 4;
+      chest.scale.setScalar(1.6);
+      assetMgr.applyCartoonShading(chest, stepGradMap);
+      this.group.add(chest);
+    }
+
+    // 4. Barili al molo e all'osservatorio
+    const barrelPositions = [
+      { x: 3.5, y: 0.15, z: 21.0, scale: 1.6 },
+      { x: 3.8, y: 0.15, z: 21.8, scale: 1.4 },
+      { x: -1.2, y: 3.75, z: -3.8, scale: 1.7 },
+      { x: -1.8, y: 3.75, z: -3.5, scale: 1.5 },
+    ];
+    barrelPositions.forEach((pos) => {
+      const b = assetMgr.instantiate('barrel');
+      if (b) {
+        b.position.set(pos.x, pos.y, pos.z);
+        b.scale.setScalar(pos.scale);
+        assetMgr.applyCartoonShading(b, stepGradMap);
+        this.group.add(b);
+      }
+    });
+
+    // 5. Cartello di legno indicatore lungo il sentiero
+    const sign = assetMgr.instantiate('sign');
+    if (sign) {
+      sign.position.set(2.2, 0.45, 12.0);
+      sign.rotation.y = Math.PI / 4;
+      sign.scale.setScalar(2.0);
+      assetMgr.applyCartoonShading(sign, stepGradMap);
+      this.group.add(sign);
+    }
+
+    // 6. Fuoco da campo con ceppi per l'accampamento
+    const campfire = assetMgr.instantiate('campfire');
+    if (campfire) {
+      campfire.position.set(-4.0, 1.2, 4.0);
+      campfire.scale.setScalar(1.8);
+      assetMgr.applyCartoonShading(campfire, stepGradMap);
+      this.group.add(campfire);
+    }
+
+    // 7. Alberi cartoon rifiniti Kenney a sostituzione
+    if (assetMgr.hasModel('tree_oak') || assetMgr.hasModel('tree_detailed')) {
+      const treePos = [
+        { x: -9, z: -8, type: 'tree_oak', scale: 3.2, rot: 0.4 },
+        { x: -14, z: 2, type: 'tree_detailed', scale: 3.0, rot: 1.2 },
+        { x: -11, z: 10, type: 'tree_oak', scale: 3.4, rot: 2.1 },
+        { x: 8, z: -14, type: 'tree_detailed', scale: 3.1, rot: 0.8 },
+        { x: 13, z: 4, type: 'tree_oak', scale: 2.9, rot: 3.0 },
+        { x: -6, z: 15, type: 'tree_detailed', scale: 3.3, rot: 1.7 },
+        { x: 6, z: 15, type: 'tree_oak', scale: 3.0, rot: 0.1 },
+        { x: -16, z: -10, type: 'tree_detailed', scale: 3.5, rot: 2.5 },
+        { x: 11, z: 12, type: 'tree_oak', scale: 2.8, rot: 1.1 },
+      ];
+
+      treePos.forEach((p) => {
+        const t = assetMgr.instantiate(p.type);
+        if (t) {
+          t.position.set(p.x, 0, p.z);
+          t.rotation.y = p.rot;
+          t.scale.setScalar(p.scale);
+          assetMgr.applyCartoonShading(t, stepGradMap);
+          this.group.add(t);
+        }
+      });
+      // Nasconde le chiome procedurali a sfere
+      this.proceduralTreesGroup.visible = false;
+    }
+
+    // 8. Volpina cartoon animata Quaternius vicino al boschetto
+    const fox = assetMgr.instantiate('fox');
+    if (fox) {
+      fox.name = 'Island_Fox';
+      fox.position.set(-8.0, 0.4, 7.5);
+      fox.rotation.y = Math.PI / 3;
+      fox.scale.setScalar(0.28);
+      assetMgr.applyCartoonShading(fox, stepGradMap);
+      this.group.add(fox);
+
+      // Clip di animazione della volpe
+      const anims = assetMgr.getAnimations('fox');
+      if (anims.length > 0) {
+        this.foxMixer = new THREE.AnimationMixer(fox);
+        const idleClip = anims.find((a) => a.name.includes('Idle')) || anims[0];
+        if (idleClip) {
+          this.foxMixer.clipAction(idleClip).play();
+        }
+      }
+    }
+  }
+
   public update(dt: number): void {
+    // Animazione fauna selvatica (volpe)
+    if (this.foxMixer) {
+      this.foxMixer.update(dt);
+    }
+
     // Viraggio cromatico dolce al ritrovamento del frammento
     if (this.isColorShifting) {
       this.terrainMaterial.color.lerp(this.targetGrassColor, dt * 1.5);

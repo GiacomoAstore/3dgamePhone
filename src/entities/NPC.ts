@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { DialogueSystem } from '../systems/DialogueSystem';
 import { QuestSystem } from '../systems/QuestSystem';
 import { ToonShaderUtils } from '../world/ToonShaderUtils';
+import { AssetManager } from '../core/AssetManager';
 
 export class NPC {
   public group: THREE.Group;
@@ -59,37 +60,41 @@ export class NPC {
     const characterGroup = new THREE.Group();
     characterGroup.name = 'NonnaBussola_Character';
 
+    const proceduralMeshGroup = new THREE.Group();
+    proceduralMeshGroup.name = 'Procedural_Nonna';
+    characterGroup.add(proceduralMeshGroup);
+
     // Gonna a campana con balze
     const skirtGeom = new THREE.CylinderGeometry(0.28, 0.52, 0.95, 14);
     const skirt = new THREE.Mesh(skirtGeom, dressMat);
     skirt.position.y = 0.52;
     skirt.castShadow = true;
     skirt.receiveShadow = true;
-    characterGroup.add(skirt);
+    proceduralMeshGroup.add(skirt);
 
     // Bordo ricamato alla base della gonna
     const skirtTrimGeom = new THREE.CylinderGeometry(0.51, 0.53, 0.08, 14);
     const skirtTrim = new THREE.Mesh(skirtTrimGeom, dressTrimMat);
     skirtTrim.position.y = 0.08;
-    characterGroup.add(skirtTrim);
+    proceduralMeshGroup.add(skirtTrim);
 
     // Busto e scialle a maglia spesso sulle spalle
     const torsoGeom = new THREE.CylinderGeometry(0.22, 0.3, 0.42, 12);
     const torso = new THREE.Mesh(torsoGeom, dressMat);
     torso.position.y = 1.05;
-    characterGroup.add(torso);
+    proceduralMeshGroup.add(torso);
 
     const shawlGeom = new THREE.ConeGeometry(0.52, 0.48, 14);
     const shawl = new THREE.Mesh(shawlGeom, shawlMat);
     shawl.position.y = 1.08;
     shawl.castShadow = true;
-    characterGroup.add(shawl);
+    proceduralMeshGroup.add(shawl);
 
     // Bordo corallo decorativo dello scialle
     const shawlBorder = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.035, 6, 16), shawlBorderMat);
     shawlBorder.position.y = 0.86;
     shawlBorder.rotation.x = Math.PI / 2;
-    characterGroup.add(shawlBorder);
+    proceduralMeshGroup.add(shawlBorder);
 
     // Testa dolce con proporzioni cartoon
     const headGeom = new THREE.SphereGeometry(0.26, 16, 14);
@@ -141,7 +146,7 @@ export class NPC {
     hairPin.rotation.z = Math.PI / 3;
     head.add(hairPin);
 
-    characterGroup.add(head);
+    proceduralMeshGroup.add(head);
 
     // Bastone da passeggio nodoso in legno lucido
     const cane = new THREE.Group();
@@ -154,9 +159,24 @@ export class NPC {
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), brassMat);
     knob.position.y = 0.96;
     cane.add(knob);
-    characterGroup.add(cane);
+    proceduralMeshGroup.add(cane);
 
     this.group.add(characterGroup);
+
+    // Caricamento asincrono del modello 3D cartoon di Nonna Bussola (KayKit Mage CC0)
+    AssetManager.getInstance().loadModel('mage', '/models/Mage.glb').then((model) => {
+      if (model) {
+        const inst = AssetManager.getInstance().instantiate('mage');
+        if (inst) {
+          inst.scale.setScalar(0.65);
+          inst.position.set(0, 0, 0);
+          AssetManager.getInstance().applyCartoonShading(inst, stepGradMap);
+          characterGroup.add(inst);
+          // Nasconde la versione procedurale primitiva quando il modello 3D è pronto
+          proceduralMeshGroup.visible = false;
+        }
+      }
+    });
 
     // ==========================================
     // 2. OSSERVATORIO: GRANDE TELESCOPIO IN OTTONE

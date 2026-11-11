@@ -9,6 +9,7 @@ import { ProceduralPip, PipMeshComponents } from './ProceduralPip';
 import { InputManager } from '../systems/InputManager';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
+import { AssetManager } from '../core/AssetManager';
 import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Player {
@@ -27,10 +28,57 @@ export class Player {
 
   private animTimer = 0;
   private currentAngle = 0;
+  private mixer: THREE.AnimationMixer | null = null;
+  private actions: Map<string, THREE.AnimationAction> = new Map();
+  private currentAction = 'Idle_A';
+  private glbModel: THREE.Group | null = null;
 
   constructor() {
     this.meshComponents = ProceduralPip.create();
     this.meshComponents.root.position.copy(this.position);
+    this.loadGLBCharacter();
+  }
+
+  /**
+   * Carica in modo asincrono il modello 3D cartoon di Pip (KayKit Rogue Hooded)
+   * e le tracce di animazione per movimento, idle e salto.
+   */
+  private async loadGLBCharacter(): Promise<void> {
+    const assetMgr = AssetManager.getInstance();
+    const model = await assetMgr.loadModel('pip_rogue', '/models/Rogue_Hooded.glb');
+    const moveAnims = await assetMgr.loadAnimations('pip_move', '/models/Rig_Medium_MovementBasic.glb');
+    const generalAnims = await assetMgr.loadAnimations('pip_general', '/models/Rig_Medium_General.glb');
+
+    if (model) {
+      const inst = assetMgr.instantiate('pip_rogue');
+      if (inst) {
+        inst.scale.setScalar(0.7);
+        inst.position.set(0, 0, 0);
+        assetMgr.applyCartoonShading(inst);
+        this.glbModel = inst;
+        this.meshComponents.root.add(inst);
+
+        // Nasconde le parti primitive procedurali
+        this.meshComponents.body.visible = false;
+        this.meshComponents.head.visible = false;
+        this.meshComponents.hat.visible = false;
+        if (this.meshComponents.scarfTail) this.meshComponents.scarfTail.visible = false;
+
+        // Setup animazioni
+        this.mixer = new THREE.AnimationMixer(inst);
+        const allClips = [...moveAnims, ...generalAnims];
+        for (const clip of allClips) {
+          const action = this.mixer.clipAction(clip);
+          this.actions.set(clip.name, action);
+        }
+
+        const idleAct = this.actions.get('Idle_A');
+        if (idleAct) {
+          idleAct.play();
+          this.currentAction = 'Idle_A';
+        }
+      }
+    }
   }
 
   /**
@@ -120,8 +168,34 @@ export class Player {
     // 6. Aggiorna posizione visiva del gruppo 3D
     this.meshComponents.root.position.copy(this.position);
 
-    // 7. Animazioni procedurali di camminata/salto
-    this.updateProceduralAnimation(clampedDt, inputMove.length);
+    // 7. Animazioni scheletriche (modello 3D GLB) o procedurali di fallback
+    if (this.mixer) {
+      this.mixer.update(clampedDt);
+      let desiredAction = 'Idle_A';
+      if (!this.isGrounded) {
+        desiredAction = 'Jump_Start';
+      } else if (inputMove.length > 0.05) {
+        desiredAction = inputMove.length > 0.7 ? 'Running_A' : 'Walking_A';
+        // Genera passi audio
+        const prevTimer = this.animTimer;
+        this.animTimer += clampedDt * 11.0;
+        if (Math.floor(this.animTimer / Math.PI) > Math.floor(prevTimer / Math.PI)) {
+          globalEventBus.emit('player-footstep');
+        }
+      }
+
+      if (this.currentAction !== desiredAction && this.actions.has(desiredAction)) {
+        const prev = this.actions.get(this.currentAction);
+        const next = this.actions.get(desiredAction);
+        if (prev && next) {
+          prev.fadeOut(0.15);
+          next.reset().fadeIn(0.15).play();
+          this.currentAction = desiredAction;
+        }
+      }
+    } else {
+      this.updateProceduralAnimation(clampedDt, inputMove.length);
+    }
   }
 
   /**
@@ -171,9 +245,16 @@ export class Player {
   }
 
   /**
-   * Adatta la visibilità del contorno toon al profilo qualitativo (disattivato su 'low').
+   * Adatta la visibilità del contorno toon e le ombre del modello GLB al profilo qualitativo (disattivato su 'low').
    */
   public setQuality(quality: QualityPreset): void {
     ProceduralPip.setOutlineVisible(this.meshComponents.root, quality !== 'low');
+    if (this.glbModel) {
+      this.glbModel.traverse((c) => {
+        if ((c as THREE.Mesh).isMesh) {
+          c.castShadow = quality !== 'low';
+        }
+      });
+    }
   }
 }
