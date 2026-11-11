@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-10 - v0.3.1 - Completamento Fase 3 e Pre-Fase 4 (Atmosfera, Benchmark, Debug 1% low, Contrasto WCAG, Toon Outline, Immutabilità Tag)
+Ultima modifica: 2026-11-11 - v0.3.2 - Pendenze & Ground-Snapping, Guida Controlli HUD e Modelli 3D Cartoon Solidi
 -->
 
 ## 🏁 Fasi Completate
@@ -29,15 +29,18 @@ Ultima modifica: 2026-11-10 - v0.3.1 - Completamento Fase 3 e Pre-Fase 4 (Atmosf
 - [x] **Sospensione Comandi**: Blocco pulito di movimento e camera durante dialoghi o diario, con reset istantaneo dei touch pointer del joystick.
 - [x] **Stato Serializzabile (POJO)**: `QuestSystem` e `DialogueSystem` gestiti come oggetti puri per i salvataggi della Fase 4.
 
-### ✅ Fase 3 & Refinement (v0.3.0 - v0.3.1)
+### ✅ Fase 3 & Refinement (v0.3.0 - v0.3.2)
 - [x] **Ciclo Giorno / Notte (`DayNightCycle`)**: 24 ore dinamiche (8 minuti), posizionamento Sole e Luna su arco celeste, calibrazione palette cromatiche (alba, mezzogiorno, tramonto, notte).
 - [x] **Accessibilità Visiva e Oraria**: Opzione per bloccare l'ora, "Notti Chiare" con intensità minima sollevata a 0.65 e transizioni smorzate esponenzialmente per evitare cambi bruschi.
 - [x] **Sintesi Audio Procedurale e Fallback (`AudioSystem`)**: Generatore sonoro Web Audio in tempo reale (brezza marina modulata, passi di Pip, salto cartoon, accensione lanterna, fanfare collezionabili). Supporto trasparente per file audio esterni (`playMusicTrack`, `playSoundFile`) con ripiego automatico su sintesi procedurale in caso di risorsa mancante o offline.
 - [x] **Ciclo di Vita Web Audio Mobile**: Sblocco su eventi `touchstart`, `pointerdown`, `mousedown`, `click` (conforme autoplay policy) e ripresa automatica su `visibilitychange` da background/chiamata.
 - [x] **Cel-Shading a Gradini Discreti & Contorno Toon**: Generazione texture 1D a 3 gradini per shading cartoon; contorno Inverted Hull applicato al modello di Pip con stacco visivo rispetto al terreno.
 - [x] **Contorno Toon Adattivo**: Disattivazione automatica dell'outline su profilo "Bassa" (`setQuality('low')`) per azzerare il costo di render su dispositivi modesti.
-- [x] **Particelle d'Atmosfera (`ParticleSystem`)**: Lucciole fluttuanti, polline del vento, spuma alla battigia e stelle notturne in singola draw-call instanziata.
+- [x] **Particelle d'Atmosfera Soffici (`ParticleSystem`)**: Texture a gradiente radiale con blending additivo per lucciole e polline soave, eliminando i pixel squadrati opachi.
 - [x] **Priorità Unica dell'Azione (`ActionPriorityDispatcher`)**: Consumo gerarchico dell'azione (Dialogo -> Interazione NPC -> Lanterna) senza debounce a timer.
+- [x] **Fisica Pendenze & Ground-Snapping (`PhysicsSystem.ts`)**: Tolleranza pendenze $Y \ge 0.55$, scivolamento tangenziale muri e snapping verticale fino a $0.50\,\text{m}$ in discesa.
+- [x] **Guida Controlli HUD & Modal Illustrato**: Barra rapida tasti a schermo e modal `#help-modal` consultabile con `H` o tocco pulsante.
+- [x] **Rifacimento Grafico Cartoon 3D Solido**: Geometria isola solida con scogliere a $-5.0\,\text{m}$ e fondale marino, piazza osservatorio in pietra e legno, alberi cartoon con chiome a nuvola, Pip e Nonna Bussola espressivi con accessori modellati e sciarpa svolazzante.
 - [x] **Pannello Impostazioni & Auto-Degrade (`QualitySettingsUI`)**: Rilevamento automatico profilo (Mobile $\rightarrow$ Media, Desktop $\rightarrow$ Alta), persistenza su `localStorage`, declassamento automatico su frame drop persistenti con protezione anti-falsi positivi (warm-up 5s, tab nascosta, cooldown 30s) e toast con pulsante "Annulla".
 - [x] **Strumenti Diagnostici e Benchmark**:
   - `?debug=1`: Overlay con FPS medio, minimo, 1% low, draw calls, triangoli, geometrie, texture e monitor multi-touch da `TouchOverlay`.

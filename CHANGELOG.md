@@ -2,6 +2,66 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.2] - 2026-11-11
+
+### Aggiunto
+- **Guida Controlli HUD & Modal Illustrato**:
+  - Aggiunta scorciatoia visiva persistente in basso a sinistra dello schermo (`.hud-controls-bar`) con tasti `WASD`, `Spazio`, `F`, `E`, `Q/C`, `H`.
+  - Aggiunto pulsante rapido `❓ Controlli` nella barra superiore di gioco.
+  - Implementato modal interattivo `#help-modal` consultabile con il tasto `H` o tramite tocco/click, con schede dettagliate per movimento, interazione e comandi touch mobile, con sospensione dell'input di gioco e testo renderizzato in modo sicuro con `textContent`.
+- **Rotazione Telecamera da Tastiera (`KeyQ` e `KeyC`)**:
+  - Aggiunti tasti `Q` (rotazione orizzontale oraria) e `C` (rotazione antioraria) in `InputManager.ts` per esplorare agevolmente anche senza mouse.
+- **Modelli 3D Cartoon Procedurali Completi**:
+  - *Pip*: viso cartoon modellato con occhi espressivi provvisti di iride turchese e punto luce speculare, guance rosate, ciuffo di capelli, cappotto a doppio petto con collo ripiegato e bottoni in ottone, cinta in pelle con tascapane, sciarpa corallo animata dinamicamente con oscillazione al vento (`scarfTail`), zaino da esploratore con rotoli di mappe nautiche e lanterna esagonale ottocentesca rifinita.
+  - *Nonna Bussola*: abito prugna plissettato con ricami dorati, scialle in morbida lana crema a righe corallo, occhiali da lettura cerchiati d'oro, capelli argentati con crocchia e spillone a rosa dei venti, bastone in legno con pomo d'ambra, telescopio astronomico in ottone su treppiede in noce e tavolo cartografico con carte nautiche e bussola.
+- **Geometria Terreno Tridimensionale Solida**:
+  - Isola solida volumetrica dotata di scogliere verticali rocciose (`Terrain_Cliff`) estese fino a -5.0 m di profondità e fondale marino scuro (`seabedGeom`), eliminando definitivamente l'effetto lamina sottile fluttuante nel vuoto.
+  - Piazza dell'osservatorio sopraelevata con basamento in pietra, pavimentazione in assi di legno e parapetto protettivo.
+  - Alberi cartoon volumetrici con fusti sinuosi a radici visibili e chiome a grappolo di sfere cel-shaded stile The Witness/Animal Crossing, cespugli di bacche, margherite e campanule selvatiche sul prato.
+- **Particelle Atmosferiche Soffici**:
+  - Texture procedurale generata dinamicamente su canvas con gradiente radiale circolare morbido e blending additivo per le lucciole dorate e i pollini, eliminando i pixel squadrati opachi.
+
+### Modificato
+- `src/systems/PhysicsSystem.ts`:
+  - Soglia pendenze camminabili in `checkHorizontalCollision`: i poligoni con normale verticale Y >= 0.55 non sono più trattati come muri ma come pendenze calpestabili, permettendo la risalita fluida delle colline.
+  - Scivolamento muri ripidi (Y < 0.55): la velocità orizzontale viene proiettata lungo la tangente orizzontale della parete evitando incastri e blocchi improvvisi.
+  - Ground-snapping in discesa in `checkGround`: estensione della tolleranza di aggancio verticale a 0.50 m verso il basso quando il giocatore era già al suolo e non sta saltando in alto, eliminando sfarfallii e micro-salti scendendo i pendii.
+- `src/entities/Player.ts`:
+  - Passaggio dello stato `isGrounded` del frame precedente al controllo fisico per il ground snapping.
+  - Animazione procedurale della sciarpa (`scarfTail`) e oscillazione dinamica di braccia e gambe durante la corsa.
+- `src/systems/InputManager.ts`:
+  - Calibrazione sensibilità rotazione telecamera da mouse a 0.0045 rad/px per movimenti più reattivi e confortevoli.
+- `src/world/Island.ts`:
+  - Calcolo della transizione cromatica del terreno con tolleranza Manhattan RGB sicura senza dipendere da metodi inesistenti di THREE.Color.
+- `src/entities/NPC.ts`:
+  - Gestione sicura a prova di null di `activeQuest` nel metodo `interact()`.
+
+### Corretto
+- Risolto blocco di Pip sui pendii erbosi risalendo verso l'Osservatorio.
+- Risolto tremolio e perdita continua di aderenza (grounded jitter) scendendo colline ripide.
+- Risolto rendering delle particelle che apparivano a schermo come blocchi quadrati bianchi opachi.
+- Risolto errore TypeScript TS18047 (`activeQuest` null check in `NPC.ts`) e TS2339 (`Color.distanceTo` in `Island.ts`).
+
+### File toccati
+- `index.html`: aggiunta barra scorciatoie controlli desktop e modal `#help-modal`.
+- `src/style.css`: stili grafici per bottoni guida, chip kbd e layout dialoghi guida.
+- `src/core/Game.ts`: integrazione eventi per apertura/chiusura guida comandi con sospensione input.
+- `src/data/controlsConfig.ts`: taratura sensibilità telecamera e rotazione tastiera.
+- `src/entities/ProceduralPip.ts`: rifacimento integrale del modello 3D cartoon di Pip.
+- `src/entities/NPC.ts`: rifacimento integrale del modello 3D di Nonna Bussola e scena telescopio/tavolo.
+- `src/entities/Player.ts`: animazioni procedurali sciarpa e arti, propagazione stato ground snapping.
+- `src/systems/InputManager.ts`: supporto rotazione telecamera con tasti Q e C.
+- `src/systems/PhysicsSystem.ts`: logica pendenze scalabili Y >= 0.55 e ground-snapping esteso a 0.50 m.
+- `src/world/Island.ts`: volume 3D solido dell'isola con scogliere fino a -5m, alberi volumetrici, piazza e lerp colore sicuro.
+- `src/world/ParticleSystem.ts`: generazione texture canvas a gradiente radiale e blending additivo.
+- `tests/player_physics.test.ts`: test automatici per soglia pendenze camminabili e ground-snapping in discesa.
+- `tests/MANUAL_CHECKLIST.md`: aggiunti test MAN-11 e MAN-12 per pendenze e modal controlli.
+- `VERSION`, `package.json`: incremento versione a 0.3.2.
+- `DECISIONI.md`: registrazione ADR 009.
+
+### Motivo
+- Feedback utente: risoluzione dei bug di movimento su pendenze, aggiunta guida immediata ai comandi a schermo e rifacimento totale degli asset in stile cartoon 3D pieno.
+
 ## [0.3.1] - 2026-11-10
 
 > [!NOTE]

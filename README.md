@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-10 - v0.3.1 - Refinement Pre-Fase 4 (Benchmark 30s deterministico, Debug Overlay 1% low, Contrasto WCAG, Toon Outline toggleabile e Guida Wi-Fi)
+Ultima modifica: 2026-11-11 - v0.3.2 - Pendenze & Ground-Snapping, Guida Controlli HUD e Modelli 3D Cartoon Solidi
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  
@@ -90,10 +90,11 @@ La lista delle prove fisiche su smartphone e desktop (audio lifecycle, multi-tou
 | Azione | Desktop (Tastiera e Mouse) | Smartphone (Touch Screen) |
 | :--- | :--- | :--- |
 | **Movimento** | `W`, `A`, `S`, `D` o Frecce direzionali | **Joystick virtuale** dinamico in basso a sinistra |
-| **Rotazione Camera** | Trascina con il Mouse (tasto sinistro o destro) | **Trascina con il dito** sulla metà destra dello schermo |
+| **Rotazione Camera** | Trascina con il Mouse oppure tasti `Q` / `C` | **Trascina con il dito** sulla metà destra dello schermo |
 | **Salto** | Barra spaziatrice (`Spazio`) | Pulsante circolare **⤴** in basso a destra |
-| **Interazione / Parla con NPC** | Tasto `E` quando vicino a un target | Pulsante circolare **🏮** quando vicino a un target |
-| **Lanterna Magica (Accendi/Spegni)** | Tasto `E` | Pulsante circolare **🏮** |
+| **Interazione / Parla con NPC** | Tasto `E` (priorità massima vicino a target) | Pulsante circolare **🏮** vicino al target |
+| **Lanterna Magica (Accendi/Spegni)** | Tasto `F` (oppure `E` se nessun target) | Pulsante circolare **🏮** |
+| **Guida Controlli** | Tasto `H` oppure pulsante `❓ Controlli` | Pulsante `❓ Controlli` in alto a destra |
 | **Diario del Cartografo** | Tasto `Tab`, `Esc` o `J` | Icona **📖 Diario** in alto a destra |
 | **Pannello Impostazioni (Qualità & Audio)** | Icona `⚙️` nell'HUD | Icona **⚙️** in alto a destra |
 

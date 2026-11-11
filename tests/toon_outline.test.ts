@@ -47,3 +47,4 @@ describe('Toon Inverted Hull Outlines on Pip', () => {
     expect(bodyOutline.receiveShadow).toBe(false);
   });
 });
+

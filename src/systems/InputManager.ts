@@ -1,7 +1,9 @@
 /**
  * Gestore unificato degli input (Desktop Tastiera/Mouse + Mobile Touch).
+ * Include supporto rotazione camera da tastiera (Q / C) e sensibilità mouse calibrata.
+ *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-11 - v0.3.2
  */
 
 import { TouchOverlay } from '../ui/TouchOverlay';
@@ -78,8 +80,8 @@ export class InputManager {
 
     window.addEventListener('mousemove', (e: MouseEvent) => {
       if (this.isMouseDown) {
-        this.mouseDelta.x += e.movementX * 0.003;
-        this.mouseDelta.y += e.movementY * 0.003;
+        this.mouseDelta.x += e.movementX * 0.0045;
+        this.mouseDelta.y += e.movementY * 0.0045;
       }
     });
   }
@@ -151,7 +153,7 @@ export class InputManager {
   }
 
   /**
-   * Consuma la rotazione camera accumulata (Mouse o Touch swipe).
+   * Consuma la rotazione camera accumulata (Mouse, Touch swipe o tasti Q/C).
    */
   public consumeCameraDelta(): { x: number; y: number } {
     const touchCameraDelta = this.touchOverlay.consumeCameraDelta();
@@ -159,12 +161,17 @@ export class InputManager {
       this.mouseDelta = { x: 0, y: 0 };
       return { x: 0, y: 0 };
     }
+
+    // Supporto rotazione camera da tastiera (tasti Q e C)
+    let keyboardCamX = 0;
+    if (this.keysDown.has('KeyQ')) keyboardCamX -= 0.035;
+    if (this.keysDown.has('KeyC')) keyboardCamX += 0.035;
+
     const totalDelta = {
-      x: this.mouseDelta.x + touchCameraDelta.x,
+      x: this.mouseDelta.x + touchCameraDelta.x + keyboardCamX,
       y: this.mouseDelta.y + touchCameraDelta.y,
     };
-    this.mouseDelta.x = 0;
-    this.mouseDelta.y = 0;
+    this.mouseDelta = { x: 0, y: 0 };
     return totalDelta;
   }
 }

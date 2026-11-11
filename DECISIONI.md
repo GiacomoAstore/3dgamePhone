@@ -170,3 +170,35 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - *Ciclo di Vita Web Audio*: ascolto esteso degli eventi di sblocco (`touchstart`, `pointerdown`, `mousedown`, `click`) e ripresa automatica su evento `visibilitychange` (iOS Safari e Android Chrome).
 - **Conseguenze**:
   Tracciabilità cronologica trasparente e ineccepibile, zero rischi di tag desincronizzati e suite completa di strumenti diagnostici oggettivi per la validazione su dispositivi reali.
+
+---
+
+## ADR 009 - Geometria 3D Solida Cartoon, Ground-Snapping delle Pendenze e Guida Comandi HUD (v0.3.2)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  Durante i test sul campo sono emersi tre punti critici per la giocabilità e l'esperienza visiva:
+  1. *Fisica e movimento*: Pip si bloccava improvvisamente risalendo i pendii erbosi verso l'osservatorio (il raycast orizzontale a mezza altezza scambiava il terreno inclinato per un muro) e sfarfallava/vibrava in discesa (perdendo il contatto con il suolo per dislivelli frame-by-frame superiori a 15 cm e riattivando la caduta libera).
+  2. *Usabilità e comandi*: Mancava una guida visiva immediata ai comandi di gioco (movimento, orientamento telecamera, lanterna, interazione, diario) sia per chi gioca da desktop (tastiera/mouse) sia per touch screen.
+  3. *Aspetto visivo*: Il prototipo iniziale appariva come una lamina verde bidimensionale sospesa nel vuoto marino con cubi grezzi; le particelle apparivano come grossi quadrati bianchi opachi dovuti a `PointsMaterial` privo di texture map; i modelli di Pip e Nonna Bussola necessitavano di una chiara identità cartoon da fiaba.
+- **Decisione**:
+  1. **Fisica Pendenze e Scivolamento Muri (`PhysicsSystem.ts`)**:
+     - Nei controlli di collisione orizzontale (`checkHorizontalCollision`), i triangoli con normale verticale $Y \ge 0.55$ (pendenza $\le 56.6^\circ$) sono considerati calpestabili e non ostacoli.
+     - Per le pareti ripide ($Y < 0.55$), il vettore velocità orizzontale viene proiettato lungo la tangente alla parete eliminando i blocchi a spigolo vivo e consentendo uno scivolamento continuo.
+     - Implementato il *Ground-Snapping* in `checkGround`: se Pip era già a terra (`wasGrounded === true`) e la velocità verticale non è positiva (`velocity.y <= 0`), la tolleranza di aggancio verso il basso viene estesa fino a $0.50\,\text{m}$, azzerando le micro-cadute e i rimbalzi in discesa.
+  2. **Comandi Telecamera e Guida HUD (`InputManager.ts`, `Game.ts`, `index.html`)**:
+     - Aggiunta rotazione orizzontale della telecamera via tastiera con i tasti `Q` (ruota a sinistra) e `C` (ruota a destra), con sensibilità mouse calibrata a $0.0045$.
+     - Inserita una barra rapida dei comandi in basso a sinistra dello schermo (`desktop-controls-bar`) con scorciatoie evidenziate (`WASD`, `Spazio`, `F`, `E`, `Q/C`, `H`).
+     - Aggiunto il pulsante `❓ Controlli` nella barra superiore e un modal illustrato completo (`#help-modal`) consultabile in ogni momento con il tasto `H` o tocco/click, con blocco controlli di gioco quando aperto e testi renderizzati esclusivamente con `textContent`.
+  3. **Mondo 3D Solido e Coerente (`Island.ts`)**:
+     - Terreno volumetrico composto da plateau superiore collinare (`Terrain_Top`), scarpata rocciosa verticale (`Terrain_Cliff`) che sprofonda fino a $-5.0\,\text{m}$ sotto il pelo dell'acqua e disco scuro di fondale marino (`seabedGeom`), eliminando per sempre l'effetto lamina fluttuante.
+     - Nuova piazza panoramica dell'osservatorio con basamento in conci di pietra, camminamento in assi di legno e balaustra in legno tornito.
+     - Alberi cartoon volumetrici con tronchi sinuosi a radici visibili e chiome a nuvola sferoidale multistrato (stile *The Witness* / *Animal Crossing*), cespugli di more, fiori di prato (margherite e campanule) e monoliti con rune celtiche luminescenti.
+  4. **Restyling dei Personaggi (`ProceduralPip.ts` e `NPC.ts`)**:
+     - *Pip*: viso pesca cartoon morbido con occhi grandi composti da sclera bianca, iride turchese, pupilla nera e punto luce speculare; guance rosate; ciuffo sbarazzino; cappotto doppio petto a collo ripiegato con bottoni d'ottone e cinta in cuoio con tascapane; sciarpa corallo sventolante animata dinamicamente (`scarfTail`); zaino da viaggio con mappe nautiche arrotolate; stivali da trekking con suola a contrasto; lanterna esagonale in ottone del XIX secolo con tiranti e calotta sagomata.
+     - *Nonna Bussola*: abito prugna a pieghe con ricami, scialle pesante in lana color crema con bordo corallo, occhialini tondi cerchiati d'oro, crocchia argentata con fermaglio a rosa dei venti, bastone da passeggio in legno con pomo d'ambra; grande telescopio astronomico in ottone su treppiede in noce tornito e tavolo da cartografo con carte nautiche e bussola.
+  5. **Morbidezza Particelle Atmosferiche (`ParticleSystem.ts`)**:
+     - Sostituito il `PointsMaterial` grezzo non mappato con una texture procedurale generata su `HTMLCanvasElement` a gradiente radiale circolare morbido (centro oro caldo `#fff0a0` $\rightarrow$ alone ambrato semitrasparente $\rightarrow$ bordo nero trasparente).
+     - Applicato blending additivo `THREE.AdditiveBlending` con profondità di scrittura disattivata (`depthWrite = false`) e diametro ridotto da $0.35$ a $0.14$, trasformando i blocchi opachi in lucciole dorate e polline fluttuante soave.
+- **Conseguenze**:
+  Navigazione dell'isola fluida e priva di blocchi o scatti su tutte le pendenze, accessibilità immediata ai comandi per qualunque nuovo giocatore e salto di qualità estetico con look cartoon 3D pieno e immersivo.

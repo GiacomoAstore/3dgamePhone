@@ -81,6 +81,7 @@ export class Player {
     }
 
     // 4. Salto e Gravità verticale
+    const wasGrounded = this.isGrounded;
     if (this.isGrounded) {
       if (inputManager.consumeJump()) {
         this.velocity.y = this.jumpImpulse;
@@ -95,8 +96,8 @@ export class Player {
 
     this.position.y += this.velocity.y * clampedDt;
 
-    // 5. Rilevamento terreno e aggancio a terra
-    const groundInfo = physicsSystem.checkGround(this.position);
+    // 5. Rilevamento terreno e aggancio a terra con ground-snapping
+    const groundInfo = physicsSystem.checkGround(this.position, wasGrounded);
     if (groundInfo.isGrounded && this.velocity.y <= 0) {
       this.position.y = groundInfo.groundHeight;
       this.velocity.y = 0;
@@ -144,17 +145,20 @@ export class Player {
         this.meshComponents.leftArm.rotation.x = -swing * 0.8;
         this.meshComponents.rightArm.rotation.x = swing * 0.8;
         // Piccolo rimbalzo verticale del corpo
-        this.meshComponents.body.position.y = 0.55 + Math.abs(Math.sin(this.animTimer)) * 0.05;
+        this.meshComponents.body.position.y = 0.56 + Math.abs(Math.sin(this.animTimer)) * 0.05;
+        // Sciarpa svolazzante indietro nella corsa
+        this.meshComponents.scarfTail.rotation.x = -0.45 + Math.sin(this.animTimer * 1.5) * 0.15;
       } else {
         // Idle (respiro dolce)
         this.animTimer += dt * 2.5;
         const breath = Math.sin(this.animTimer) * 0.02;
-        this.meshComponents.body.position.y = 0.55 + breath;
-        this.meshComponents.head.position.y = 0.95 + breath * 1.2;
+        this.meshComponents.body.position.y = 0.56 + breath;
+        this.meshComponents.head.position.y = 1.05 + breath * 1.2;
         this.meshComponents.leftLeg.rotation.x = 0;
         this.meshComponents.rightLeg.rotation.x = 0;
         this.meshComponents.leftArm.rotation.x = 0;
         this.meshComponents.rightArm.rotation.x = 0;
+        this.meshComponents.scarfTail.rotation.x = -0.15 + Math.sin(this.animTimer * 0.8) * 0.06;
       }
     } else {
       // In aria (salto): gambe leggermente piegate e braccia aperte
@@ -162,6 +166,7 @@ export class Player {
       this.meshComponents.rightLeg.rotation.x = -0.25;
       this.meshComponents.leftArm.rotation.z = 0.35;
       this.meshComponents.rightArm.rotation.z = -0.35;
+      this.meshComponents.scarfTail.rotation.x = 0.3;
     }
   }
 

@@ -3,8 +3,8 @@
 Documento di riferimento per i test funzionali ed esperienziali su dispositivi fisici (smartphone touch e desktop).
 Questa checklist copre gli aspetti non automatizzabili nei test headless (touch reale, WebGL mobile, audio hardware, rendering toon).
 
-**Versione corrente:** 0.3.1  
-**Data revisione:** 2026-11-10  
+**Versione corrente:** 0.3.2  
+**Data revisione:** 2026-11-11  
 
 ---
 
@@ -22,9 +22,12 @@ Questa checklist copre gli aspetti non automatizzabili nei test headless (touch 
 | **MAN-08** | **Auto-Degrade con Annulla** | Forzare lag o simulare FPS < 26 per oltre 5 secondi su profilo Alta. | Compare il toast "⚡ Qualità grafica ridotta a MEDIA". Cliccando "Annulla", il profilo torna ad ALTA con 60s di cooldown. | [ ] | Dispositivo con thermal throttling o FPS limitati | L'auto-degrade non si attiva nei primi 5s né con scheda in background. |
 | **MAN-09** | **Benchmark Ripetibile (30s)** | Aprire l'URL con `?benchmark=1` (es. `http://localhost:5173/?benchmark=1`). Non toccare lo schermo per 30 secondi. | La camera segue un'orbita deterministica attorno all'isola; al termine compare il report con FPS medio, min, 1% low, draw calls e triangoli. | [ ] | Dispositivo di riferimento | Permette confronti oggettivi tra diverse build e profili. |
 | **MAN-10** | **Copia Report & Fallback HTTP** | Nel pannello di debug/benchmark cliccare "Copia Report" su connessione HTTP non protetta (`http://192.168.x.x`). | Se gli appunti di sistema sono inaccessibili, si apre il modal con `<textarea>` selezionabile e pulsante "Seleziona Tutto". | [ ] | Browser mobile su rete locale | Nessun blocco silencioso o perdita del testo del report. |
+| **MAN-11** | **Salita Pendenze e Ground Snapping** | Correre con Pip su per il pendio dell'isola verso l'Osservatorio e poi ridiscendere verso la spiaggia. | Pip non si incastra contro il terreno salendo le pendenze; in discesa non si verificano sfarfallii o scatti di caduta/atterraggio continui. | [ ] | Tastiera WASD / Joystick touch | Risolto con threshold normale $Y \ge 0.55$ e tolleranza snap estesa a $0.50\,\text{m}$. |
+| **MAN-12** | **Guida Controlli HUD & Modal** | Cliccare il pulsante "❓ Controlli" o premere `H` sulla tastiera; verificare anche la barra tasti permanente in basso a sinistra. | Il modal dei controlli illustrato si apre sospendendo l'input di gioco; alla chiusura Pip riprende il controllo regolarmente. | [ ] | Desktop / Smartphone | Text rendering in `textContent`, layout responsive. |
 
 ---
 
 ## Note per il Tester
 - Quando si compila la tabella, indicare il modello esatto del dispositivo (es. *Google Pixel 7*, *iPhone 13*, *Samsung Galaxy A53*) e il browser utilizzato.
 - Per inviare i risultati del benchmark, incollare il report generato da `?benchmark=1` direttamente nella discussione o annotarlo in `CHANGELOG.md`.
+

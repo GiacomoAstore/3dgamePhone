@@ -17,3 +17,4 @@ export const controlsConfig: ControlsConfig = {
   cameraTouchSensitivity: 0.005,
   cameraMouseSensitivity: 0.003,
 };
+

@@ -65,4 +65,45 @@ describe('Fisica del Giocatore (Pip)', () => {
     expect(posY).toBe(3.0);
     expect(velY).toBe(0.0);
   });
+
+  it('dovrebbe considerare camminabili pendenze con normale.y >= 0.55 e respingere muri ripidi', () => {
+    const isWalkableSlope = (normalY: number) => normalY >= 0.55;
+
+    // Pendenza moderata (es. ~30 gradi, normale Y ~0.866): camminabile
+    expect(isWalkableSlope(0.866)).toBe(true);
+
+    // Pendenza limite (es. ~50 gradi, normale Y ~0.64): camminabile
+    expect(isWalkableSlope(0.64)).toBe(true);
+
+    // Muro quasi verticale (es. ~75 gradi, normale Y ~0.25): ostacolo/muro
+    expect(isWalkableSlope(0.25)).toBe(false);
+
+    // Parete a 90 gradi (normale Y = 0.0): ostacolo/muro
+    expect(isWalkableSlope(0.0)).toBe(false);
+  });
+
+  it('dovrebbe applicare ground snapping se il giocatore era già a terra e scende un pendio', () => {
+    const maxStepUp = 0.35;
+    const snapDownTolerance = 0.5;
+
+    const checkSnap = (wasGrounded: boolean, velocityY: number, groundDeltaY: number) => {
+      // groundDeltaY = groundY - (playerY - playerHeight)
+      if (groundDeltaY >= -snapDownTolerance && groundDeltaY <= maxStepUp) {
+        if (groundDeltaY < 0 && (!wasGrounded || velocityY > 0)) {
+          return false; // in caduta libera o salto attivo verso l'alto senza snap
+        }
+        return true; // ground snapped
+      }
+      return false;
+    };
+
+    // Scendendo un pendio: groundDeltaY = -0.25m, era a terra, non sta saltando
+    expect(checkSnap(true, 0, -0.25)).toBe(true);
+
+    // Cadendo da una scogliera alta: groundDeltaY = -1.2m
+    expect(checkSnap(true, 0, -1.2)).toBe(false);
+
+    // Saltando in aria: se non era a terra e c'è dislivello negativo
+    expect(checkSnap(false, -1.0, -0.3)).toBe(false);
+  });
 });

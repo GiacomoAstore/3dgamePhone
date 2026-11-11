@@ -44,12 +44,32 @@ export class ParticleSystem {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
     this.geometry.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
 
+    // Texture radiale morbida per particelle soffuse e rotonde (anti-quadratoni)
+    let particleMap: THREE.Texture | null = null;
+    if (typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.3, 'rgba(255, 245, 210, 0.85)');
+        grad.addColorStop(0.65, 'rgba(255, 220, 130, 0.3)');
+        grad.addColorStop(1, 'rgba(255, 200, 100, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 64, 64);
+        particleMap = new THREE.CanvasTexture(canvas);
+      }
+    }
+
     // Materiale particellare con vertex colors e blending additivo per bagliore magico
     this.material = new THREE.PointsMaterial({
-      size: 0.35,
+      size: 0.14,
+      map: particleMap,
       vertexColors: true,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.8,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });

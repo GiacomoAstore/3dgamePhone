@@ -1,7 +1,9 @@
 /**
- * Sistema di fisica e rilevamento del terreno con accelerazione BVH.
+ * Sistema di fisica, collisioni orizzontali e rilevamento terreno con accelerazione BVH.
+ * Include gestione pendenze (slope handling), scivolamento su pareti ripide e ground-snapping in discesa.
+ *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.1.0
+ * Ultima modifica: 2026-11-10 - v0.3.1
  */
 
 import * as THREE from 'three';
@@ -45,15 +47,17 @@ export class PhysicsSystem {
   }
 
   /**
-   * Esegue un raycast verso il basso a partire dalla posizione di Pip.
+   * Esegue un raycast verso il basso con supporto a ground-snapping in discesa.
    * @param position Posizione centrale del personaggio.
-   * @param castHeight Altezza da cui scoccare il raggio (default 1.0m sopra i piedi).
-   * @param maxDistance Distanza massima di ricerca (default 2.5m).
+   * @param wasGrounded Se il personaggio era a terra nel frame precedente.
+   * @param castHeight Altezza da cui scoccare il raggio.
+   * @param maxDistance Distanza massima di ricerca.
    */
   public checkGround(
     position: THREE.Vector3,
+    wasGrounded = false,
     castHeight = 1.0,
-    maxDistance = 2.5
+    maxDistance = 3.0
   ): GroundCheckResult {
     const origin = new THREE.Vector3(position.x, position.y + castHeight, position.z);
     this.raycaster.set(origin, this.downDirection);
@@ -64,14 +68,17 @@ export class PhysicsSystem {
     if (intersections.length > 0) {
       const hit = intersections[0];
       const groundHeight = hit.point.y;
-      const distance = castHeight - (hit.point.y - position.y);
-      const isGrounded = position.y - groundHeight <= 0.15 && position.y - groundHeight >= -0.3;
+      const verticalDiff = position.y - groundHeight;
+
+      // Tolleranza: se era a terra estendiamo a 0.50m (ground-snapping per pendenze in discesa)
+      const snapThreshold = wasGrounded ? 0.50 : 0.20;
+      const isGrounded = verticalDiff <= snapThreshold && verticalDiff >= -0.4;
 
       return {
         isGrounded,
         groundHeight,
         groundNormal: hit.face ? hit.face.normal.clone() : new THREE.Vector3(0, 1, 0),
-        distance,
+        distance: castHeight - verticalDiff,
       };
     }
 
@@ -84,26 +91,43 @@ export class PhysicsSystem {
   }
 
   /**
-   * Esegue una verifica orizzontale per impedire la compenetrazione con pareti e rocce ripide.
+   * Verifica le collisioni orizzontali evitando di bloccare Pip su pendenze calpestabili.
+   * Se la pendenza della superficie è < 55° (normal.y >= 0.55), non è considerata un muro.
+   * Se è una parete ripida, fa scivolare il movimento sul piano della normale orizzontale.
    */
   public checkHorizontalCollision(
     currentPos: THREE.Vector3,
     moveDir: THREE.Vector3,
     moveDist: number,
-    capsuleRadius = 0.4
+    capsuleRadius = 0.35
   ): THREE.Vector3 {
     if (moveDist <= 0.0001) return moveDir.clone();
 
-    const origin = new THREE.Vector3(currentPos.x, currentPos.y + 0.4, currentPos.z);
+    // Raggio a mezza altezza del busto di Pip
+    const origin = new THREE.Vector3(currentPos.x, currentPos.y + 0.35, currentPos.z);
     this.raycaster.set(origin, moveDir);
     this.raycaster.far = moveDist + capsuleRadius;
 
     const hits = this.raycaster.intersectObjects(this.colliderMeshes, false);
     if (hits.length > 0 && hits[0].distance < moveDist + capsuleRadius) {
-      // Slitta lungo la normale della parete
       const normal = hits[0].face ? hits[0].face.normal : new THREE.Vector3(0, 1, 0);
-      const projected = moveDir.clone().sub(normal.clone().multiplyScalar(moveDir.dot(normal)));
-      return projected;
+
+      // 1. Se è una superficie calpestabile (inclinazione < 55 gradi), non bloccare il movimento!
+      if (normal.y >= 0.55) {
+        return moveDir.clone();
+      }
+
+      // 2. Se è una parete ripida o una roccia, proietta e scivola lungo la parete
+      const horizNorm = new THREE.Vector3(normal.x, 0, normal.z);
+      if (horizNorm.lengthSq() > 0.001) {
+        horizNorm.normalize();
+        const dot = moveDir.x * horizNorm.x + moveDir.z * horizNorm.z;
+        if (dot < 0) {
+          // Rimuove la componente diretta contro la parete
+          const slide = moveDir.clone().sub(horizNorm.clone().multiplyScalar(dot));
+          return slide;
+        }
+      }
     }
 
     return moveDir.clone();

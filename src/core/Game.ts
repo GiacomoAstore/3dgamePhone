@@ -168,6 +168,39 @@ export class Game {
       this.qualitySettingsUI.toggle();
     });
 
+    // Pulsante e modale Guida Controlli / Aiuto
+    const helpModal = document.getElementById('help-modal');
+    const btnHelp = document.getElementById('btn-hud-help');
+    const btnCloseHelp = document.getElementById('help-btn-close');
+
+    const toggleHelp = () => {
+      if (!helpModal) return;
+      const isHidden = helpModal.classList.contains('hidden');
+      if (isHidden) {
+        helpModal.classList.remove('hidden');
+        this.inputManager.setBlocked(true);
+      } else {
+        helpModal.classList.add('hidden');
+        if (!this.dialogueSystem.getIsActive() && !this.journalUI.getIsOpen() && !this.qualitySettingsUI.getIsOpen()) {
+          this.inputManager.setBlocked(false);
+        }
+      }
+    };
+
+    btnHelp?.addEventListener('click', () => toggleHelp());
+    btnHelp?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      toggleHelp();
+    });
+    btnCloseHelp?.addEventListener('click', () => toggleHelp());
+
+    // Tasto H per aprire la guida controlli
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyH') {
+        toggleHelp();
+      }
+    });
+
     // 8. Eventi di sospensione comandi e resize
     this.initPauseAndBlockListeners();
     window.addEventListener('resize', () => this.onWindowResize());
