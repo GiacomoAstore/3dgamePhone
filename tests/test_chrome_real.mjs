@@ -225,6 +225,55 @@ async function runChromeTest() {
   await verifyNonnaBones('Start partita all osservatorio');
   console.log('   ✅ Eliminazione T-pose verificata: le mani di Nonna Bussola sono naturalmente abbassate lungo i fianchi!');
 
+  // 1.2 VERIFICA BUDGET DRAW CALL SU PROFILI BASSA E MEDIA (SOGLIE < 100 TOTALI)
+  console.log('\n🎯 1.2 VERIFICA BUDGET DRAW CALL (SOGLIE < 100 PER BASSA E MEDIA):');
+  const drawCallsBudgetEval = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const g = window.game;
+        if (!g) return { error: 'window.game non trovato' };
+
+        const measure = (quality) => {
+          g.setQuality(quality);
+          g.renderer.info.autoReset = true;
+          g.renderer.render(g.scene, g.camera);
+          const forward = g.renderer.info.render.calls;
+
+          g.renderer.info.autoReset = false;
+          g.renderer.info.reset();
+          g.renderer.render(g.scene, g.camera);
+          const total = g.renderer.info.render.calls;
+          const shadow = total - forward;
+
+          return { forward, shadow, total };
+        };
+
+        const low = measure('low');
+        const medium = measure('medium');
+        // Ripristina profilo high per i test successivi
+        g.setQuality('high');
+
+        return { low, medium };
+      })()
+    `,
+    returnByValue: true
+  });
+
+  const budgetData = drawCallsBudgetEval.result?.result?.value;
+  console.log('   Misure draw call effettive:', JSON.stringify(budgetData, null, 2));
+
+  if (!budgetData || !budgetData.low || !budgetData.medium) {
+    throw new Error('Impossibile misurare il budget draw call per Bassa e Media!');
+  }
+  if (budgetData.low.total >= 100) {
+    throw new Error(`Budget draw call superato per profilo BASSA: ${budgetData.low.total} >= 100`);
+  }
+  if (budgetData.medium.total >= 100) {
+    throw new Error(`Budget draw call superato per profilo MEDIA: ${budgetData.medium.total} >= 100`);
+  }
+  console.log(`   ✅ Profilo BASSA: ${budgetData.low.total} draw call totali (${budgetData.low.forward} forward + ${budgetData.low.shadow} shadow) < 100 OK!`);
+  console.log(`   ✅ Profilo MEDIA: ${budgetData.medium.total} draw call totali (${budgetData.medium.forward} forward + ${budgetData.medium.shadow} shadow) < 100 OK!`);
+
   // 2. TEST WASD RIGOROSO: VALUTAZIONE DURANTE IL MOVIMENTO
   console.log('\n🏃‍♂️ 2. TEST MOVIMENTO WASD CON VERIFICA MID-MOTION:');
   const posBefore = initState.playerPosition;

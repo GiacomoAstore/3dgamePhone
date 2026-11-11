@@ -1,12 +1,24 @@
 /**
- * Misurazione diagnostica precisa e riproducibile delle draw call per i profili
- * Bassa, Media e Alta (con e senza shadow pass, e spiegazione 93 vs 90).
+ * Misurazione formale, precisa e riproducibile dei profili grafici di Brumavento.
+ * Per ogni profilo (Bassa, Media, Alta) stampa:
+ * - profilo
+ * - contorni visibili (outline meshes)
+ * - shadow casters (mesh con castShadow = true)
+ * - draw call forward
+ * - draw call shadow pass
+ * - draw call totali (forward + shadow)
+ * - triangoli renderizzati
+ *
+ * Autore: Pip & Nonna Bussola dev team
+ * Ultima modifica: 2026-11-11 - v0.4.0
  */
 
 import { spawn } from 'child_process';
+import path from 'path';
 
 const CHROME_PATH = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const PORT = 9231;
+const PORT = 9232;
+const USER_DATA = path.join(process.env.TEMP || 'C:\\Temp', 'chrome_prof_' + Date.now());
 
 async function run() {
   const chrome = spawn(CHROME_PATH, [
@@ -14,7 +26,7 @@ async function run() {
     `--remote-debugging-port=${PORT}`,
     '--disable-gpu-sandbox',
     '--no-sandbox',
-    'about:blank'
+    `--user-data-dir=${USER_DATA}`
   ]);
 
   const cleanup = () => {
@@ -51,9 +63,10 @@ async function run() {
     });
 
   await send('Page.navigate', { url: 'http://localhost:5173/?debug=1' });
-  await new Promise((r) => setTimeout(r, 2500));
+  await new Promise((r) => setTimeout(r, 2000));
   await send('Runtime.evaluate', { expression: `document.getElementById('btn-start')?.click()` });
-  await new Promise((r) => setTimeout(r, 3500));
+  // Attesa streaming asset completo (modelli Kenney, instancing, alberi, props)
+  await new Promise((r) => setTimeout(r, 4000));
 
   const result = await send('Runtime.evaluate', {
     expression: `(() => {
@@ -63,10 +76,10 @@ async function run() {
       const sample = (quality) => {
         g.setQuality(quality);
 
-        // 1. Misura del solo forward pass (scene camera)
+        // 1. Misura del solo forward pass
         g.renderer.info.autoReset = true;
         g.renderer.render(g.scene, g.camera);
-        const forwardPassCalls = g.renderer.info.render.calls;
+        const forwardCalls = g.renderer.info.render.calls;
         const triangles = g.renderer.info.render.triangles;
 
         // 2. Misura del TOTALE (shadow pass + forward pass) con autoReset disattivato
@@ -74,72 +87,51 @@ async function run() {
         g.renderer.info.reset();
         g.renderer.render(g.scene, g.camera);
         const totalCalls = g.renderer.info.render.calls;
-        const shadowPassCalls = totalCalls - forwardPassCalls;
+        const shadowCalls = totalCalls - forwardCalls;
 
         let shadowCasters = 0;
+        let visibleOutlines = 0;
         let totalMeshes = 0;
+
         g.scene.traverse((o) => {
           if (o.isMesh || o.isSkinnedMesh || o.isInstancedMesh) {
             totalMeshes++;
             if (o.castShadow) shadowCasters++;
+            if (o.name && o.name.toLowerCase().includes('outline') && o.visible) {
+              visibleOutlines++;
+            }
           }
         });
 
         return {
-          profile: quality,
-          forwardPassCalls,
-          shadowPassCalls,
-          totalCalls,
-          triangles,
+          profilo: quality,
+          contorniVisibili: visibleOutlines,
           shadowCasters,
-          totalMeshes,
-          shadowMapEnabled: g.renderer.shadowMap.enabled,
-          shadowMapType: g.renderer.shadowMap.type
+          drawCallsForward: forwardCalls,
+          drawCallsShadow: shadowCalls,
+          drawCallsTotali: totalCalls,
+          triangoli: triangles,
+          shadowMapAttiva: g.renderer.shadowMap.enabled
         };
       };
 
-      // Misura anche prima e dopo aver togglato gli outline per spiegare il 93 vs 90
-      g.setQuality('high');
-      // Forziamo outline attivi su Pip
-      let outlinesActiveCalls = 0;
-      let outlinesActiveTriangles = 0;
-      g.player.meshComponents.root.traverse(o => {
-        if (o.name && o.name.toLowerCase().includes('outline')) o.visible = true;
-      });
-      g.renderer.info.autoReset = true;
-      g.renderer.render(g.scene, g.camera);
-      outlinesActiveCalls = g.renderer.info.render.calls;
-      outlinesActiveTriangles = g.renderer.info.render.triangles;
-
-      g.player.meshComponents.root.traverse(o => {
-        if (o.name && o.name.toLowerCase().includes('outline')) o.visible = false;
-      });
-      g.renderer.info.autoReset = true;
-      g.renderer.render(g.scene, g.camera);
-      const outlinesDisabledCalls = g.renderer.info.render.calls;
-      const outlinesDisabledTriangles = g.renderer.info.render.triangles;
-
       return {
-        measurements: {
-          bassa: sample('low'),
-          media: sample('medium'),
-          alta: sample('high')
-        },
-        reproducibleExplanation93vs90: {
-          outlinesActiveCalls,
-          outlinesActiveTriangles,
-          outlinesDisabledCalls,
-          outlinesDisabledTriangles,
-          deltaCalls: outlinesActiveCalls - outlinesDisabledCalls,
-          deltaTriangles: outlinesActiveTriangles - outlinesDisabledTriangles
-        }
+        bassa: sample('low'),
+        media: sample('medium'),
+        alta: sample('high')
       };
     })()`,
     returnByValue: true
   });
 
-  console.log('RISULTATI_MISURAZIONE_UFFICIOSA:');
-  console.log(JSON.stringify(result.result?.result?.value, null, 2));
+  const data = result.result?.result?.value;
+  console.log('========================================================================================');
+  console.log('📊 REPORT MISURAZIONE PROFILI GRAFICI (Chrome DevTools Protocol)');
+  console.log('========================================================================================');
+  console.table(data);
+
+  console.log('\nJSON completo:');
+  console.log(JSON.stringify(data, null, 2));
 
   cleanup();
   ws.close();

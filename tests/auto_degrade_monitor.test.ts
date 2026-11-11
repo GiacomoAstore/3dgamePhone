@@ -150,4 +150,35 @@ describe('AutoDegradeMonitor (Media Mobile 5s e Soglia 28 FPS)', () => {
     }
     expect(secondTrigger).toBe(true);
   });
+
+  it('dovrebbe far tornare il suggerimento dopo SUGGESTION_COOLDOWN_SECONDS (60s) se l utente preme Annulla', () => {
+    const monitor = new AutoDegradeMonitor();
+
+    // Prima degradazione a t = 9.5
+    for (let t = 5.0; t <= 9.5; t += 0.5) {
+      monitor.recordSample(20, 0.5, false, false, t);
+    }
+    // L'utente preme "Annulla": non è permanente, imposta cooldown di 60s
+    monitor.onUserCancelled();
+    expect(monitor.getCooldown()).toBe(AUTO_DEGRADE_CONFIG.SUGGESTION_COOLDOWN_SECONDS);
+    expect(AUTO_DEGRADE_CONFIG.SUGGESTION_COOLDOWN_SECONDS).toBe(60.0);
+
+    // Durante i successivi 60 secondi (da t=10 a t=69.5), nessun suggerimento
+    let cancelledTrigger = false;
+    for (let t = 10.0; t < 69.5; t += 0.5) {
+      if (monitor.recordSample(20, 0.5, false, false, t)) {
+        cancelledTrigger = true;
+      }
+    }
+    expect(cancelledTrigger).toBe(false);
+
+    // Trascorsi i 60 secondi di cooldown + la finestra di 5 secondi (da t=70.0 a 75.0)
+    for (let t = 70.0; t <= 75.0; t += 0.5) {
+      if (monitor.recordSample(20, 0.5, false, false, t)) {
+        cancelledTrigger = true;
+      }
+    }
+    // Il suggerimento ritorna regolarmente!
+    expect(cancelledTrigger).toBe(true);
+  });
 });

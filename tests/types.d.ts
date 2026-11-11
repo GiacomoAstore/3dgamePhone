@@ -4,6 +4,13 @@
  */
 
 declare module 'node:fs' {
+  export interface BufferLike {
+    buffer: ArrayBuffer;
+    byteOffset: number;
+    byteLength: number;
+    toString(encoding?: string): string;
+  }
+  export function readFileSync(path: string): BufferLike;
   export function readFileSync(path: string, encoding: string): string;
 }
 

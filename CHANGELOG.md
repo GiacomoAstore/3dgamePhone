@@ -5,9 +5,27 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 ## [0.4.0] - 2026-11-11
 
 ### Aggiunto
-- **Riduzione Shadow Caster e Ottimizzazione Totale Draw Call Profilo Media (< 100)**:
-  - Ristretta la shadow pass in Media alle sole mesh volumetriche dei personaggi (`Player.ts`, `NPC.ts`), disattivando le ombre sugli elementi scenici statici dell'isola (`Island.ts`, `Collectibles.ts`).
-  - Misurazione totale: **Bassa: 90 draw calls**, **Media: 95 draw calls**, **Alta: 223 draw calls** (forward pass stabile a 90 per tutti).
+- **Release Ufficiale di Consolidamento Pre-Fase 4 (ADR 018)**:
+  - Consolidamento, hardening e rimisurazione quantitativa certificata prima dell'avvio della Fase 4 (che uscirà come release `0.5.0` con schemaVersion 1).
+- **Misurazione Diagnostica Riproducibile Profili Grafici (`tests/profile_draw_calls_reproducible.mjs`)**:
+  - Script formale che stampa per ciascun profilo (Bassa, Media, Alta): contorni visibili, shadow casters, draw call forward, draw call shadow pass, draw call totali e triangoli.
+  - Tabella certificata CDP:
+    - **Bassa**: 0 contorni, 0 casters, 87-90 forward, 0 shadow $\rightarrow$ **87-90 draw call totali** (< 100), 34.561-34.913 triangoli.
+    - **Media**: 0 contorni, 4 casters (Pip e Nonna), 87-90 forward, 4 shadow $\rightarrow$ **91-94 draw call totali** (< 100), 34.561-34.913 triangoli.
+    - **Alta**: 0 contorni, 132 casters, 87-90 forward, 132 shadow $\rightarrow$ **222 draw call totali**, 34.561-34.913 triangoli.
+  - Controllo automatico di budget integrato in `tests/test_chrome_real.mjs` (sezione 1.2: fallimento se Bassa o Media $\ge 100$).
+- **Eliminazione Shadow Caster Residuo in Bassa (`Player.ts`, `ProceduralPip.ts`)**:
+  - Rimosso lo zaino (`backpack`) e il colletto (`scarfCollar`) procedurali dal grafo quando il modello GLB viene istanziato, portando i shadow caster di Bassa a esattamente **0**.
+- **Test Scheletrico con Modelli Reali e `expect().toThrow()` (`tests/t_pose_bug_demonstration.test.ts`)**:
+  - Parser Node per i file GLB reali `public/models/Mage.glb` e `public/models/Rig_Medium_General.glb`.
+  - Dimostrazione che in rest-pose pura senza animazione $y_{\text{shoulder}} = 1.107\,\text{m}$ e $y_{\text{hand}} = 1.107\,\text{m}$ ($\Delta y = 0.000\,\text{m}$, T-pose a braccia orizzontali) e il test lancia eccezione superata con `expect(...).toThrowError()`.
+  - Con animazione Idle applicata, $\Delta y = 0.459\,\text{m}$ (a scala 1.0) e $\Delta y = 0.298\,\text{m} \approx 0.30\,\text{m}$ (in-game a scala 0.65). Chiarito che il valore $0.208\,\text{m}$ derivava da un mock sintetico locale.
+- **Ritorno Suggerimento Auto-Degrade dopo Annulla (`AutoDegradeMonitor.ts`)**:
+  - Aggiunta costante `SUGGESTION_COOLDOWN_SECONDS = 60.0` e metodo `onUserCancelled()` con test unitario: la scelta manuale non è permanente e il suggerimento ricompare dopo 60s se le prestazioni restano degradate.
+- **Configurazione Autore Pulita in `src/data/config.json`**:
+  - Impostato `authorName: ""` (nessun nome inventato nei crediti, compilabile liberamente dall'utente).
+- **Consultazione Fonti Licenze in `ASSETS.md`**:
+  - Aggiunta data di consultazione ufficiale (2026-11-11) delle pagine CC0 (Kenney, KayKit, Quaternius) mantenendo lo stato vincolante "da verificare dall'utente".
 - **Tabella di Progressione e Viraggio Cromatico Nebbia (`Environment.ts` e `environment.json`)**:
   - Densità della nebbia governata dalla tabella `densityByFragments` ($0 \rightarrow 0.018$, $1 \rightarrow 0.014$, $3 \rightarrow 0.010$, $7 \rightarrow 0.005 = \text{minDensity}$).
   - Viraggio cromatico dinamico: interpolazione continua tra `initialColor` (`#a3b8cc`) e `restoredColor` (`#8ecae6`) in base al rapporto di frammenti raccolti. Rimossi rami di ripiego inutilizzati.

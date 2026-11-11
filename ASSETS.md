@@ -22,7 +22,13 @@ Durante il download automatizzato degli asset eseguito dall'ambiente Node.js:
 - Tutte le richieste HTTP sono state veicolate su protocollo sicuro HTTPS standard (`https://`) con validazione crittografica della catena di certificati delle Certificate Authority (CA) ufficiali.
 
 > [!IMPORTANT]
-> **Stato di verifica licenza**: Tutti gli autori rilasciano i loro pacchetti sotto la dicitura **CC0 1.0 Universal (Public Domain Dedication)**. Come da politica vincolante di progetto (`GEMINI.md`), ciascun asset è contrassegnato con la dicitura **"Licenza CC0 dichiarata dall'autore, da verificare dall'utente"** finché non viene esplicitamente confermata e validata dall'utente finale prima di qualsiasi distribuzione commerciale.
+> **Stato di verifica licenza (Data consultazione fonti: 2026-11-11)**:
+> Tutti gli autori originali (Kenney, Kay Lousberg, Quaternius) dichiarano pubblicamente sui rispettivi portali web ufficiali la licenza **CC0 1.0 Universal (Public Domain Dedication)** per i pacchetti utilizzati.
+> Le pagine ufficiali con le licenze e i termini di rilascio sono state consultate in data **2026-11-11**:
+> - Kenney: [https://kenney.nl/assets/nature-kit](https://kenney.nl/assets/nature-kit) e [https://kenney.nl/assets/pirate-kit](https://kenney.nl/assets/pirate-kit)
+> - KayKit: [https://kaylousberg.itch.io/kaykit-adventurers](https://kaylousberg.itch.io/kaykit-adventurers) e [https://kaylousberg.itch.io/kaykit-animations](https://kaylousberg.itch.io/kaykit-animations)
+> - Quaternius: [https://quaternius.com/packs/modularships.html](https://quaternius.com/packs/modularships.html) e [https://quaternius.com/packs/modularanimals.html](https://quaternius.com/packs/modularanimals.html)
+> Come prescritto dalla regola vincolante di progetto (`GEMINI.md`), ciascun asset rimane formalmente contrassegnato con lo stato **"Licenza CC0 dichiarata dall'autore, da verificare dall'utente"** fino alla definitiva convalida manuale dell'utente prima della pubblicazione commerciale.
 
 ---
 

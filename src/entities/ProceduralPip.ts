@@ -16,6 +16,8 @@ export interface PipMeshComponents {
   body: THREE.Mesh;
   head: THREE.Mesh;
   hat: THREE.Group;
+  backpack: THREE.Group;
+  scarfCollar: THREE.Mesh;
   scarfTail: THREE.Group;
   leftArm: THREE.Group;
   rightArm: THREE.Group;
@@ -451,6 +453,8 @@ export class ProceduralPip {
       body,
       head,
       hat,
+      backpack,
+      scarfCollar,
       scarfTail,
       leftArm,
       rightArm,

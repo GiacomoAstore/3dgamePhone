@@ -86,6 +86,8 @@ export class Player {
           this.meshComponents.leftLeg,
           this.meshComponents.rightLeg,
           this.meshComponents.scarfTail,
+          this.meshComponents.scarfCollar,
+          this.meshComponents.backpack,
         ];
         toRemove.forEach((part) => {
           if (part && part.parent) {
@@ -306,6 +308,20 @@ export class Player {
           } else {
             c.castShadow = true;
           }
+        }
+      });
+    }
+    if (this.meshComponents.lantern) {
+      this.meshComponents.lantern.traverse((c) => {
+        if ((c as THREE.Mesh).isMesh) {
+          c.castShadow = quality === 'high';
+        }
+      });
+    }
+    if (quality === 'low') {
+      this.meshComponents.root.traverse((c) => {
+        if ((c as THREE.Mesh).isMesh) {
+          c.castShadow = false;
         }
       });
     }

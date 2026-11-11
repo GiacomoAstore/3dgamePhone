@@ -18,6 +18,8 @@ export const AUTO_DEGRADE_CONFIG = {
   COOLDOWN_SECONDS: 30.0,
   /** Cooldown esteso se l'utente annulla il declassamento (secondi) */
   REVERT_COOLDOWN_SECONDS: 60.0,
+  /** Cooldown prima che il suggerimento di declassamento ricompaia dopo che l'utente ha premuto Annulla */
+  SUGGESTION_COOLDOWN_SECONDS: 60.0,
 } as const;
 
 export interface FpsSample {
@@ -124,6 +126,16 @@ export class AutoDegradeMonitor {
 
   public setCooldown(seconds: number): void {
     this.cooldownTimer = seconds;
+  }
+
+  /**
+   * Chiamato quando l'utente preme "Annulla" o rifiuta temporaneamente il declassamento.
+   * La scelta non è permanente: avvia un cooldown di 60 secondi (SUGGESTION_COOLDOWN_SECONDS)
+   * dopodiché il suggerimento potrà ricomparire se il framerate rimane insufficiente.
+   */
+  public onUserCancelled(): void {
+    this.cooldownTimer = AUTO_DEGRADE_CONFIG.SUGGESTION_COOLDOWN_SECONDS;
+    this.samples = [];
   }
 
   public reset(): void {

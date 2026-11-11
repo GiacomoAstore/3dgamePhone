@@ -390,15 +390,34 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
 - **Decisione**:
   1. **Riduzione Selettiva Caster d'Ombra nel Profilo Media**:
      - In Media, la shadow pass viene ristretta esclusivamente alle mesh volumetriche dei personaggi (Pip e Nonna Bussola), disattivando le ombre sugli elementi scenici statici (alberi, cespugli, rocce, pontile).
-     - *Risultato*: i shadow caster scendono a 5, la shadow pass richiede sole 5 chiamate, portando il totale del profilo Media a **95 draw call totali** (ampiamente <100). Bassa rimane a **90 draw call totali**.
+     - *Risultato*: i shadow caster scendono a 4, la shadow pass richiede sole 4 chiamate, portando il totale del profilo Media a **91-94 draw call totali** (ampiamente <100). Bassa scende a **87-90 draw call totali** (0 casters).
   2. **Ciclo di Vita Audio con Stato di Pausa**:
      - `AudioSystem.handleVisibilityChange(isVisible)` verifica rigorosamente `isPaused`. Se il gioco è in pausa, il ritorno alla visibilità NON invoca `resume()`, preservando il silenzio assoluto e azzerando i consumi finché l'utente non seleziona "Riprendi".
   3. **Service Worker Nativo Scritto a Mano**:
-     - Si adotta un Service Worker nativo versionato (`brumavento-cache-v0.4.0`) privo di dipendenze esterne.
+     - Si adotta un Service Worker nativo versionato (`brumavento-cache-v0.5.0`) privo di dipendenze esterne.
      - Strategia *Cache-First* per file statici e modelli 3D con query string versionata o hash; strategia *Network-First* per `index.html`.
      - Nessun ricaricamento forzato in-game su `updatefound` senza previo salvataggio sincrono immediato.
 - **Conseguenze**:
   Draw call conformi al budget in Bassa e Media, audio robusto al 100% su mobile, architettura PWA trasparente, controllabile e testabile via `adb reverse`.
+
+---
+
+## ADR 018 - Consolidamento Release v0.4.0 e Designazione Fase 4 come v0.5.0
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  Il tag `v0.4.0` è stato applicato all'audit di consolidamento e rimisurazione pre-Fase 4. Come da principio vincolante dell'ADR 008, i tag Git non vengono mai spostati né riscritti.
+- **Decisione**:
+  1. **Consolidamento Release 0.4.0**:
+     - La versione `0.4.0` è formalmente designata come release di consolidamento, hardening e verifica quantitativa E2E pre-Fase 4 (riduzione draw call, eliminazione 6 GLB non usati, test ossa Nonna Bussola su modello reale, monitoraggio media mobile 28 FPS su 5s con SUGGESTION_COOLDOWN_SECONDS a 60s, interpolazione continua colore e densità nebbia).
+  2. **Designazione Fase 4 come Release v0.5.0**:
+     - L'implementazione completa della Fase 4 (Salvataggio automatico con migrazione e slot dedicato per schemi più recenti, Schermate Menu/Pausa/Crediti con autore vuoto configurabile, Service Worker PWA con cache `brumavento-cache-v0.5.0`) sarà rilasciata sotto la versione semantica **`0.5.0`** (tag `v0.5.0`).
+  3. **Allineamento Schema e Cache**:
+     - `gameVersion` della Fase 4 sarà `"0.5.0"`.
+     - `schemaVersion` del salvataggio sarà `1`.
+     - Il nome della cache del Service Worker sarà `brumavento-cache-v0.5.0`.
+- **Conseguenze**:
+  Integrità assoluta della storia Git, tracciamento trasparente e conformità totale alle regole di progetto `GEMINI.md`.
 
 
 
