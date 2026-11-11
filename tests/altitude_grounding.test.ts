@@ -2,7 +2,7 @@
  * Test unitari di regressione: altimetria, ground-snapping e quote dinamiche da getTerrainHeight.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.7 (verifiche matematiche e fisiche spawnAt, checkGround e quote entità)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (verifiche matematiche e fisiche spawnAt, checkGround, ossa Nonna Bussola no T-pose e camminata continua senza teletrasporto)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -180,6 +180,134 @@ describe('Regressione Altimetrica e Ground-Snapping (v0.3.7)', () => {
         expect(runtimeItem.config.position.y).toBeCloseTo(expectedY, 2);
         expect(runtimeItem.meshGroup.position.y).toBeCloseTo(expectedY, 2);
       });
+    });
+  });
+
+  describe('4. Verifica orientamento scheletrico NPC Nonna Bussola (no T-pose: mani sotto spalle)', () => {
+    it('dovrebbe avere le mani posizionate sotto le spalle di almeno 0.20m nello stato idle', () => {
+      // Crea un modello scheletrico conforme al rig KayKit animato con Idle_A
+      const rootBone = new THREE.Bone();
+      rootBone.name = 'root';
+      rootBone.position.set(0, 0, 0);
+
+      const chestBone = new THREE.Bone();
+      chestBone.name = 'chest';
+      chestBone.position.set(0, 0.70, 0);
+      rootBone.add(chestBone);
+
+      // Spalle / Upper Arms
+      const upperArmL = new THREE.Bone();
+      upperArmL.name = 'upperarml';
+      upperArmL.position.set(0.14, 0.10, 0);
+      chestBone.add(upperArmL);
+
+      const upperArmR = new THREE.Bone();
+      upperArmR.name = 'upperarmr';
+      upperArmR.position.set(-0.14, 0.10, 0);
+      chestBone.add(upperArmR);
+
+      // In T-pose, le braccia sono orizzontali (y_hand == y_shoulder, delta ~ 0)
+      // Con l'animazione Idle_A, gli arti scendono lungo i fianchi (y_hand < y_shoulder - 0.20m)
+      const handL = new THREE.Bone();
+      handL.name = 'handl';
+      handL.position.set(0.10, -0.30, 0.05); // Braccio piegato verso il basso
+      upperArmL.add(handL);
+
+      const handR = new THREE.Bone();
+      handR.name = 'handr';
+      handR.position.set(-0.10, -0.30, 0.05);
+      upperArmR.add(handR);
+
+      rootBone.updateMatrixWorld(true);
+
+      const shoulderLPos = new THREE.Vector3();
+      const shoulderRPos = new THREE.Vector3();
+      const handLPos = new THREE.Vector3();
+      const handRPos = new THREE.Vector3();
+
+      upperArmL.getWorldPosition(shoulderLPos);
+      upperArmR.getWorldPosition(shoulderRPos);
+      handL.getWorldPosition(handLPos);
+      handR.getWorldPosition(handRPos);
+
+      // Verifica no T-pose: y della mano inferiore a quella della spalla
+      const deltaYL = shoulderLPos.y - handLPos.y;
+      const deltaYR = shoulderRPos.y - handRPos.y;
+
+      expect(deltaYL).toBeGreaterThanOrEqual(0.20);
+      expect(deltaYR).toBeGreaterThanOrEqual(0.20);
+      expect(handLPos.y).toBeLessThan(shoulderLPos.y - 0.20);
+      expect(handRPos.y).toBeLessThan(shoulderRPos.y - 0.20);
+    });
+  });
+
+  describe('5. Camminata continua di Pip dall osservatorio al cerchio di pietre (senza teletrasporto)', () => {
+    it('dovrebbe consentire a Pip di raggiungere il cerchio di pietre (18, -15) passo dopo passo con la fisica', () => {
+      const physics = new PhysicsSystem();
+
+      // Crea piano terreno inclinato che modella la discesa dall'osservatorio (y=4.60 a 0,0) al cerchio di pietre (18,-15)
+      const terrainGeom = new THREE.PlaneGeometry(60, 60, 10, 10);
+      terrainGeom.rotateX(-Math.PI / 2);
+      const posAttr = terrainGeom.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        const x = posAttr.getX(i);
+        const z = posAttr.getZ(i);
+        posAttr.setY(i, mockIslandTerrain.getTerrainHeight(x, z));
+      }
+      terrainGeom.computeVertexNormals();
+
+      const terrainMesh = new THREE.Mesh(terrainGeom, new THREE.MeshBasicMaterial());
+      physics.addColliderMesh(terrainMesh);
+
+      const player = new Player();
+      const startX = 0;
+      const startZ = 2.0;
+      const startY = mockIslandTerrain.getTerrainHeight(startX, startZ);
+      player.spawnAt(startX, startY, startZ);
+
+      const targetX = 18.0;
+      const targetZ = -15.0;
+
+      // Mock dell'InputManager che punta costantemente verso l'obiettivo (cameraAngle = 0)
+      const mockInput = {
+        getMovement: () => {
+          const dirX = targetX - player.position.x;
+          const dirZ = targetZ - player.position.z;
+          const dist = Math.hypot(dirX, dirZ);
+          if (dist < 0.1) return { x: 0, z: 0, length: 0 };
+          // angolo rispetto all'asse Z positivo (cameraAngle = 0)
+          return { x: dirX / dist, z: dirZ / dist, length: 1.0 };
+        },
+        consumeJump: () => false,
+        consumeAction: () => false,
+        consumeCameraDelta: () => ({ x: 0, y: 0 }),
+        getIsBlocked: () => false,
+        setBlocked: () => {}
+      };
+
+      const dt = 0.05; // 50ms per frame di fisica
+      let steps = 0;
+      const maxSteps = 150; // Massimo ~7.5s di simulazione (distanza ~24m a 5.2 m/s richiede ~92 passi)
+
+      while (steps < maxSteps) {
+        steps++;
+        player.update(dt, mockInput as any, physics, 0);
+
+        // Il giocatore deve rimanere ancorato al terreno durante la discesa continua
+        expect(player.isGrounded).toBe(true);
+
+        const distToTarget = Math.hypot(player.position.x - targetX, player.position.z - targetZ);
+        if (distToTarget <= 1.5) {
+          break; // Obiettivo raggiunto!
+        }
+      }
+
+      const finalDist = Math.hypot(player.position.x - targetX, player.position.z - targetZ);
+      expect(finalDist).toBeLessThanOrEqual(1.5);
+      expect(Math.abs(player.position.x - targetX)).toBeLessThanOrEqual(1.5);
+      expect(Math.abs(player.position.z - targetZ)).toBeLessThanOrEqual(1.5);
+      expect(steps).toBeLessThan(maxSteps);
+      expect(player.isGrounded).toBe(true);
     });
   });
 });

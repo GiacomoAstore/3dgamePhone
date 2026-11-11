@@ -4,7 +4,7 @@
  * e Osservatorio Astronomico (grande telescopio in ottone, treppiede tornito, tavolo cartografico).
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.7 (animazione idle per Nonna Bussola ed eliminazione T-pose)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (rimozione mesh primitive con modello GLB attivo e disattivazione ombre su profilo Bassa)
  */
 
 import * as THREE from 'three';
@@ -12,6 +12,7 @@ import { DialogueSystem } from '../systems/DialogueSystem';
 import { QuestSystem } from '../systems/QuestSystem';
 import { ToonShaderUtils } from '../world/ToonShaderUtils';
 import { AssetManager } from '../core/AssetManager';
+import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class NPC {
   public group: THREE.Group;
@@ -205,7 +206,10 @@ export class NPC {
               }
             }
 
-            // Nasconde la versione procedurale primitiva quando il modello 3D è pronto
+            // Rimuove e nasconde la versione procedurale primitiva quando il modello 3D è pronto
+            if (proceduralMeshGroup.parent) {
+              characterGroup.remove(proceduralMeshGroup);
+            }
             proceduralMeshGroup.visible = false;
           }
         }
@@ -344,5 +348,14 @@ export class NPC {
         dialogueSystem.startDialogue('nonna_bussola', 'start');
       }
     }
+  }
+
+  public setQuality(quality: QualityPreset): void {
+    const enableShadows = quality !== 'low';
+    this.group.traverse((c) => {
+      if ((c as THREE.Mesh).isMesh) {
+        c.castShadow = enableShadows;
+      }
+    });
   }
 }

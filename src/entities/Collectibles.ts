@@ -1,10 +1,11 @@
 /**
  * Gestione degli oggetti raccoglibili e del Frammento dell'Atlante Vivo.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.6 (aggancio dinamico dei collezionabili alla quota del terreno)
+ * Ultima modifica: 2026-11-11 - v0.3.8 (mergeGeometries per cerchio pietre del frammento)
  */
 
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import collectiblesConfig from '../data/collectibles.json';
 import { QuestSystem } from '../systems/QuestSystem';
 import { globalEventBus } from '../core/EventBus';
@@ -70,15 +71,21 @@ export class CollectiblesManager {
     const root = new THREE.Group();
     root.position.set(config.position.x, config.position.y, config.position.z);
 
-    // Cerchio di antiche pietre sagomate
+    // Cerchio di antiche pietre sagomate unito con mergeGeometries (1 sola draw call per le pietre)
     const stoneMat = new THREE.MeshToonMaterial({ color: 0x5a6575 });
+    const stoneGeoms: THREE.BufferGeometry[] = [];
     for (let i = 0; i < 5; i++) {
       const angle = (i * Math.PI * 2) / 5;
-      const stone = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.85, 0.32), stoneMat);
-      stone.position.set(Math.cos(angle) * 1.5, -0.4, Math.sin(angle) * 1.5);
-      stone.rotation.y = angle;
-      stone.castShadow = true;
-      root.add(stone);
+      const stoneGeom = new THREE.BoxGeometry(0.38, 0.85, 0.32);
+      stoneGeom.rotateY(angle);
+      stoneGeom.translate(Math.cos(angle) * 1.5, -0.4, Math.sin(angle) * 1.5);
+      stoneGeoms.push(stoneGeom);
+    }
+    if (stoneGeoms.length > 0) {
+      const mergedStones = BufferGeometryUtils.mergeGeometries(stoneGeoms);
+      const stonesMesh = new THREE.Mesh(mergedStones, stoneMat);
+      stonesMesh.castShadow = true;
+      root.add(stonesMesh);
     }
 
     // Pergamena dorata fluttuante

@@ -2,6 +2,74 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.9] - 2026-11-11
+
+### Aggiunto
+- **Verifica Scheletrica NPC Nonna Bussola nel Test Chrome E2E e Vitest (`tests/test_chrome_real.mjs` e `tests/altitude_grounding.test.ts`)**:
+  - Test delle ossa del rig GLB in runtime (`upperarml`, `upperarmr`, `handl`, `handr`), verificando matematicamente che le mani si trovino stabilmente e costantemente sotto le spalle di almeno 0.20m ($y_{\text{shoulder}} - y_{\text{hand}} \approx 0.30\,\text{m}$, assenza totale di T-pose).
+- **Test Camminata Continua di Pip verso il Cerchio di Pietre e Ritorno (`tests/test_chrome_real.mjs` e `tests/altitude_grounding.test.ts`)**:
+  - Eliminato ogni teletrasporto artificiale (`spawnAt`) durante lo svolgimento della prima missione: Pip percorre l'intera tratta dall'osservatorio al cerchio di pietre (18, -15) in 82 passi fisici frame-by-frame, e la tratta di ritorno in 79 passi fisici, testando gravità, velocità orizzontale e ground-snapping con aderenza al suolo certificata (`isGrounded === true`, 0 perdite di contatto).
+- **Tracciabilità Estesa ASSETS.md con URL Diretti di Download e Licenze (`ASSETS.md`)**:
+  - Inserito l'URL esatto di download diretto e l'URL della pagina ufficiale di licenza per ciascuno dei 19 file.
+  - Dichiarazione formale sulla sicurezza TLS: i download sono avvenuti tramite HTTPS standard nativo con verifica dei certificati attiva (TLS MAI disabilitato, `NODE_TLS_REJECT_UNAUTHORIZED` mai impostato a 0).
+  - Censimento dei 6 file non usati dal codice (`character.glb`, `boat-sail-a.glb`, `plant_bushDetailed.glb`, `flower_purpleA.glb`, `mushroom_redGroup.glb`, `rock_largeA.glb`, totale ~158.8 KB) con proposta formale di eliminazione.
+- **Ripristino Completo di DOCS_DESIGN.md**:
+  - Documento esaustivo di Game Design e Specifiche Tecniche con stack tecnologico (TS strict, Three.js 0.180.0, Vite 6.4.6, three-mesh-bvh, Web Audio API), budget prestazionali (<100 draw calls, <150k triangoli, 30+ FPS mobile, 60 FPS desktop, caricamento <15-20 MB), pipeline asset CC0, accessibilità WCAG 2.1 e "Notti Chiare", gestione rischi con auto-degrade a 5.0s, controlli corretti (Lanterna su tasto `F`, Interazione su `E`) e perimetro roadmap Fase 4 vs Fase 5.
+
+### Modificato
+- **Allineamento Parametri Discordanti in Codice e Documentazione (`DECISIONI.md`, `README.md`, `TODO.md`)**:
+  - Soglia Auto-Degrade: confermata a **5.0 secondi** consecutivi con FPS < 24 (conforme a `Game.ts:423`).
+  - Intensità Luce Ambientale Notturna: confermata a **0.35** per notte standard e a **0.65** per la modalità accessibile "Notti Chiare" (`readableNight = true` in `DayNightCycle.ts:196`).
+  - Densità della Nebbia: confermata a **0.008** come valore nominale di ripristino (`environment.json`), e a **0.0062** come densità dinamica effettiva calcolata dalla formula al ritrovamento del 1° frammento.
+- **Correzione ADR 011**:
+  - Rimossa la menzione non rappresentativa "90-115 FPS" per Google Chrome headless; specificato che l'ambiente headless adotta rasterizzazione software CPU (SwiftShader).
+- **Perimetro Roadmap Fasi 4 e 5**:
+  - Chiarito formalmente che la Fase 4 comprende esclusivamente salvataggi persistenti, schermate di menu complete (Start/Pausa/Crediti), Progressive Web App (PWA) e impostazioni audio; Capitano Marea, viaggio in barca e seconda isola sono assegnati alla Fase 5.
+
+### File toccati
+- `package.json`, `VERSION`: avanzamento a `0.3.9`.
+- `tests/test_chrome_real.mjs`: verifica ossa Nonna Bussola (no T-pose) e camminata continua E2E senza teletrasporti.
+- `tests/altitude_grounding.test.ts`: test unitari per rig Nonna Bussola e camminata continua passo dopo passo.
+- `ASSETS.md`: URL diretti di download, link licenze, dichiarazione TLS e catalogo asset non usati.
+- `DOCS_DESIGN.md`: ripristino completo del documento di Game Design e specifiche tecniche.
+- `DECISIONI.md`: correzione ADR 011, aggiunta ADR 014 (deviazione tag v0.3.7), ADR 015 (draw call <100) e ADR 016 (allineamenti e perimetri).
+- `README.md`: allineamento parametri e controlli (Lanterna F).
+- `TODO.md`: aggiornamento perimetro Fase 4/5 e chiusura debito draw call.
+
+### Motivo
+- Sessione di consolidamento e rifinitura pre-Fase 4 su richiesta vincolante dell'utente.
+
+---
+
+## [0.3.8] - 2026-11-11
+
+### Aggiunto
+- **Ottimizzazione e Riduzione Radicale Draw Call Sotto il Budget (< 100) (`Island.ts`, `Collectibles.ts`, `ProceduralPip.ts`, `Player.ts`, `NPC.ts`)**:
+  - `InstancedMesh` per cespugli e bacche (5 istanze cespuglio, 25 istanze bacche).
+  - `InstancedMesh` per fiori (24 centri margherita, 60 petali blu, 60 petali bianchi).
+  - Unione geometrie statiche con `BufferGeometryUtils.mergeGeometries`: balaustra dell'osservatorio (11 colonne fuse in 1 mesh), pontile (13 elementi fusi in 2 mesh), cerchio di pietre e lanterna in ottone.
+  - Rimozione fisica dal grafo di scena di alberi procedurali e mesh primitive di Pip/Nonna Bussola al caricamento dei rispettivi modelli GLB.
+  - Disattivazione passaggio ombre (`castShadow = false`) e outline toon nel profilo qualitativo "Bassa".
+
+### Corretto
+- **Race Condition DOMContentLoaded in `src/main.ts`**:
+  - Aggiunto controllo `document.readyState === 'loading'` prima di registrare il listener `DOMContentLoaded`, garantendo l'inizializzazione corretta del gioco quando gli script ES module completano il caricamento dopo il parsing DOM.
+
+### File toccati
+- `src/world/Island.ts`: `InstancedMesh` fogliame e merge pontile/balaustra.
+- `src/entities/Collectibles.ts`: merge pietre cerchio.
+- `src/entities/ProceduralPip.ts`: merge elementi lanterna.
+- `src/entities/Player.ts`: rimozione mesh primitive e toggle ombre in qualità Bassa.
+- `src/entities/NPC.ts`: rimozione mesh primitive e toggle ombre in qualità Bassa.
+- `src/core/Game.ts`: propagazione qualità grafica a Island e NPC.
+- `src/main.ts`: fix guardia `document.readyState`.
+- `tests/profile_draw_calls.mjs`: script di misurazione profilazione draw calls.
+
+### Motivo
+- Raggiungimento del budget prestazionale del design document (< 100 draw calls, misurate 93 draw calls).
+
+---
+
 ## [0.3.7] - 2026-11-11
 
 ### Aggiunto

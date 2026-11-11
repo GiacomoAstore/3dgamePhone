@@ -1,12 +1,12 @@
 /**
  * Punto di ingresso principale (Entry point) di Brumavento.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.0
+ * Ultima modifica: 2026-11-11 - v0.3.8 (guardia document.readyState anti-race condition su DOMContentLoaded)
  */
 
 import { Game } from './core/Game';
 
-window.addEventListener('DOMContentLoaded', () => {
+function initGame(): void {
   const canvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
   if (!canvas) {
     console.error('Canvas WebGL non trovato nella pagina.');
@@ -37,4 +37,10 @@ window.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     startGame();
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initGame);
+} else {
+  initGame();
+}

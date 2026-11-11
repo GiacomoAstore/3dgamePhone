@@ -10,14 +10,15 @@
  * 5. Esecuzione completa prima missione (Quest 1):
  *    - Dialogo completo con Nonna Bussola (albero nodi start -> lantern_quest -> start_quest_1)
  *    - Verifica avanzamento missione a stadio 1
- *    - Posizionamento al cerchio di pietre (18, -15) con lanterna attiva
- *    - Raccolta del 1° frammento dell'Atlante Vivo (stage -> 2, nebbia -> restored)
- *    - Ritorno a Nonna Bussola all'osservatorio e dialogo di completamento
+ *    - Camminata continua passo dopo passo verso il cerchio di pietre (18, -15) con fisica reale (zero teletrasporti)
+ *    - Raccolta del 1° frammento dell'Atlante Vivo con Lanterna Magica (stage -> 2, nebbia -> restored)
+ *    - Ritorno camminando all'osservatorio e dialogo di completamento
  *    - Verifica variazione reale della nebbia (targetDensity pre e post missione)
- * 6. Disclaimer esplicito sul software rendering di Headless Chrome.
+ * 6. Verifica dell'orientamento scheletrico di Nonna Bussola (mani sotto le spalle, eliminazione T-pose).
+ * 7. Disclaimer esplicito sul software rendering di Headless Chrome.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.7 (perfezionamento E2E Quest 1, transizione nebbia e gestione collectiblesManager)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (camminata continua E2E senza spawnAt, verifica ossa Nonna Bussola no T-pose)
  */
 
 import { spawn } from 'child_process';
@@ -172,6 +173,60 @@ async function runChromeTest() {
     throw new Error(`Pip non è solidamente a terra allo start: y=${initState?.playerPosition?.y}`);
   }
 
+  // 1.1 VERIFICA RIGIDITÀ ED ELIMINAZIONE T-POSE SU NONNA BUSSOLA
+  console.log('\n👵 1.1 VERIFICA SCHELETRO E MANI DI NONNA BUSSOLA (NO T-POSE):');
+  const nonnaBonesEval = await send('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const npc = window.game?.nonnaBussola;
+        if (!npc) return { error: 'Nonna Bussola non trovata' };
+        const bones = [];
+        npc.group.traverse((obj) => {
+          if (obj.isBone) {
+            const pos = obj.position.clone();
+            obj.getWorldPosition(pos);
+            bones.push({
+              name: obj.name,
+              x: Number(pos.x.toFixed(3)),
+              y: Number(pos.y.toFixed(3)),
+              z: Number(pos.z.toFixed(3))
+            });
+          }
+        });
+        const shoulderL = bones.find((b) => b.name === 'upperarml');
+        const shoulderR = bones.find((b) => b.name === 'upperarmr');
+        const handL = bones.find((b) => b.name === 'handl');
+        const handR = bones.find((b) => b.name === 'handr');
+        return {
+          boneCount: bones.length,
+          hasMixer: !!npc.mixer,
+          shoulderL,
+          shoulderR,
+          handL,
+          handR
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+
+  const nonnaBones = nonnaBonesEval.result?.result?.value;
+  console.log('   - Struttura ossa campionata:', JSON.stringify(nonnaBones, null, 2));
+
+  if (!nonnaBones || !nonnaBones.shoulderL || !nonnaBones.handL || !nonnaBones.shoulderR || !nonnaBones.handR) {
+    throw new Error('Impossibile localizzare le ossa di spalle e mani di Nonna Bussola nel rig GLB!');
+  }
+
+  const deltaL = nonnaBones.shoulderL.y - nonnaBones.handL.y;
+  const deltaR = nonnaBones.shoulderR.y - nonnaBones.handR.y;
+  console.log(`   - Delta Y spalla/mano sinistra: ${deltaL.toFixed(3)}m`);
+  console.log(`   - Delta Y spalla/mano destra:   ${deltaR.toFixed(3)}m`);
+
+  if (deltaL < 0.20 || deltaR < 0.20) {
+    throw new Error(`Asserzione fallita: Nonna Bussola è in T-pose! Mani non abbassate (deltaL=${deltaL}, deltaR=${deltaR})`);
+  }
+  console.log('   ✅ Eliminazione T-pose verificata: le mani di Nonna Bussola sono naturalmente abbassate lungo i fianchi!');
+
   // 2. TEST WASD RIGOROSO: VALUTAZIONE DURANTE IL MOVIMENTO
   console.log('\n🏃‍♂️ 2. TEST MOVIMENTO WASD CON VERIFICA MID-MOTION:');
   const posBefore = initState.playerPosition;
@@ -304,18 +359,42 @@ async function runChromeTest() {
     throw new Error(`Lo stadio della missione non è avanzato a 1 (trovato: ${questStageCheck.result?.result?.value?.stageIndex})`);
   }
 
-  // B. Viaggio al cerchio di pietre (18.0, -15.0) e raccolta frammento con lanterna
-  console.log('   B. Raggiungimento cerchio di pietre (18, -15) e attivazione lanterna...');
-  const fragmentCollectRes = await send('Runtime.evaluate', {
+  // B. Viaggio al cerchio di pietre (18.0, -15.0) camminando con la fisica (NO TELETRASPORTO)
+  console.log('   B. Camminata continua verso il cerchio di pietre (18, -15) con la fisica del terreno...');
+  const walkToFragmentRes = await send('Runtime.evaluate', {
     expression: `
       (() => {
         const g = window.game;
         const targetX = 18.0;
         const targetZ = -15.0;
-        const targetY = g.island.getTerrainHeight(targetX, targetZ);
-        g.player.spawnAt(targetX, targetY, targetZ);
 
-        // Assicura che la lanterna magica sia accesa
+        let steps = 0;
+        const maxSteps = 250;
+        let lostGround = false;
+
+        while (steps < maxSteps) {
+          steps++;
+          const dirX = targetX - g.player.position.x;
+          const dirZ = targetZ - g.player.position.z;
+          const dist = Math.hypot(dirX, dirZ);
+          if (dist <= 1.2) break;
+
+          const mockMove = {
+            getMovement: () => ({ x: dirX / dist, z: dirZ / dist, length: 1.0 }),
+            consumeJump: () => false,
+            consumeAction: () => false,
+            consumeCameraDelta: () => ({ x: 0, y: 0 }),
+            getIsBlocked: () => false,
+            setBlocked: () => {}
+          };
+
+          g.player.update(0.05, mockMove, g.physicsSystem, 0);
+          if (!g.player.isGrounded) {
+            lostGround = true;
+          }
+        }
+
+        // Accende la lanterna magica (tasto F) per raccogliere il frammento
         g.player.isLanternActive = true;
         g.player.meshComponents.lanternLight.intensity = 1.5;
 
@@ -323,6 +402,8 @@ async function runChromeTest() {
         g.collectiblesManager.update(0.1, g.player.position, true, g.questSystem);
 
         return {
+          steps,
+          lostGround,
           playerPos: {
             x: Number(g.player.position.x.toFixed(2)),
             y: Number(g.player.position.y.toFixed(2)),
@@ -339,11 +420,14 @@ async function runChromeTest() {
     returnByValue: true
   });
 
-  const fragState = fragmentCollectRes.result?.result?.value;
-  console.log('      Stato post raccolta frammento:');
+  const fragState = walkToFragmentRes.result?.result?.value;
+  console.log('      Stato post camminata continua e raccolta frammento:');
   console.log(JSON.stringify(fragState, null, 2));
 
-  if (!fragState || fragState.fragmentsCollected !== 1) {
+  if (!fragState || fragState.lostGround) {
+    throw new Error('Asserzione fallita: Pip ha perso il contatto con il suolo durante la camminata continua!');
+  }
+  if (fragState.fragmentsCollected !== 1) {
     throw new Error(`Asserzione fallita: 1° frammento non raccolto (conteggio: ${fragState?.fragmentsCollected})`);
   }
   if (!fragState.isRestored) {
@@ -352,20 +436,59 @@ async function runChromeTest() {
   if (fragState.activeQuest?.stageIndex !== 2) {
     throw new Error(`Asserzione fallita: la missione doveva avanzare allo stadio 2 (trovato: ${fragState.activeQuest?.stageIndex})`);
   }
-  console.log('      ✅ Frammento 1 raccolto con successo con lanterna attiva!');
+  console.log(`      ✅ Camminata continua completata in ${fragState.steps} passi fisici! Frammento 1 raccolto con lanterna!`);
 
-  // C. Ritorno da Nonna Bussola all'osservatorio
-  console.log('   C. Ritorno all\'osservatorio e chiusura missione...');
-  await send('Runtime.evaluate', {
+  // C. Ritorno camminando all'osservatorio da Nonna Bussola (NO TELETRASPORTO)
+  console.log('   C. Ritorno all\'osservatorio camminando con la fisica del terreno...');
+  const returnWalkRes = await send('Runtime.evaluate', {
     expression: `
       (() => {
         const g = window.game;
-        // Riposiziona Pip all'osservatorio davanti a Nonna Bussola
-        const plazaY = g.island.getTerrainHeight(0, 0);
-        g.player.spawnAt(0, plazaY + 0.48, -1.8);
+        const returnX = 0;
+        const returnZ = -1.8;
+
+        let steps = 0;
+        const maxSteps = 250;
+        let lostGround = false;
+
+        while (steps < maxSteps) {
+          steps++;
+          const dirX = returnX - g.player.position.x;
+          const dirZ = returnZ - g.player.position.z;
+          const dist = Math.hypot(dirX, dirZ);
+          if (dist <= 1.2) break;
+
+          const mockMove = {
+            getMovement: () => ({ x: dirX / dist, z: dirZ / dist, length: 1.0 }),
+            consumeJump: () => false,
+            consumeAction: () => false,
+            consumeCameraDelta: () => ({ x: 0, y: 0 }),
+            getIsBlocked: () => false,
+            setBlocked: () => {}
+          };
+
+          g.player.update(0.05, mockMove, g.physicsSystem, 0);
+          if (!g.player.isGrounded) {
+            lostGround = true;
+          }
+        }
+
+        return {
+          steps,
+          lostGround,
+          finalPos: {
+            x: Number(g.player.position.x.toFixed(2)),
+            y: Number(g.player.position.y.toFixed(2)),
+            z: Number(g.player.position.z.toFixed(2))
+          }
+        };
       })()
-    `
+    `,
+    returnByValue: true
   });
+
+  const returnState = returnWalkRes.result?.result?.value;
+  console.log(`      ✅ Ritorno camminando completato in ${returnState?.steps} passi fisici! Pip a (${returnState?.finalPos?.x}, ${returnState?.finalPos?.y}, ${returnState?.finalPos?.z})`);
   await new Promise((r) => setTimeout(r, 400));
 
   // Interazione finale con Nonna Bussola per consegnare il frammento

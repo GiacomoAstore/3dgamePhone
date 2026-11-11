@@ -3,14 +3,16 @@
  * scogliere rocciose, spiaggia dorata, sentiero, vegetazione cartoon volumetrica e osservatorio.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.6 (allineamento altimetrico completo di alberi, fiori, rocce, terrazza osservatorio al suolo reale)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (InstancedMesh per fogliame/fiori, merge geometrie balaustra e pontile, rimozione alberi procedurali con GLB attivi)
  */
 
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PhysicsSystem } from '../systems/PhysicsSystem';
 import { globalEventBus } from '../core/EventBus';
 import { ToonShaderUtils } from './ToonShaderUtils';
 import { AssetManager } from '../core/AssetManager';
+import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Island {
   public group: THREE.Group;
@@ -131,17 +133,25 @@ export class Island {
     floor.receiveShadow = true;
     plazaGroup.add(floor);
 
-    // Parapetto con colonnine in pietra
-    const colGeom = new THREE.CylinderGeometry(0.12, 0.14, 0.75, 8);
+    // Parapetto con colonnine in pietra unite con mergeGeometries (1 sola draw call per l'intera balaustra)
+    const colGeoms: THREE.BufferGeometry[] = [];
     for (let i = 0; i < 14; i++) {
       const angle = (i * Math.PI * 2) / 14;
       // Lascia un varco d'accesso a sud verso il sentiero
       if (angle > Math.PI * 0.35 && angle < Math.PI * 0.65) continue;
 
-      const col = new THREE.Mesh(colGeom, stoneMat);
-      col.position.set(Math.cos(angle) * 3.8, 0.8, Math.sin(angle) * 3.8);
-      col.castShadow = true;
-      plazaGroup.add(col);
+      const singleColGeom = new THREE.CylinderGeometry(0.12, 0.14, 0.75, 8);
+      singleColGeom.translate(Math.cos(angle) * 3.8, 0.8, Math.sin(angle) * 3.8);
+      colGeoms.push(singleColGeom);
+    }
+
+    if (colGeoms.length > 0) {
+      const mergedColsGeom = BufferGeometryUtils.mergeGeometries(colGeoms);
+      const colsMesh = new THREE.Mesh(mergedColsGeom, stoneMat);
+      colsMesh.name = 'Observatory_Railing_Merged';
+      colsMesh.castShadow = true;
+      colsMesh.receiveShadow = true;
+      plazaGroup.add(colsMesh);
     }
 
     this.group.add(plazaGroup);
@@ -164,28 +174,41 @@ export class Island {
       color: 0xffd166,
     });
 
+    const stoneGeoms: THREE.BufferGeometry[] = [];
+    const runeGeoms: THREE.BufferGeometry[] = [];
+
     for (let i = 0; i < 6; i++) {
       const angle = (i * Math.PI * 2) / 6;
-      const monolith = new THREE.Group();
-      monolith.position.set(Math.cos(angle) * 3.2, 0, Math.sin(angle) * 3.2);
+      const posX = Math.cos(angle) * 3.2;
+      const posZ = Math.sin(angle) * 3.2;
 
       // Colonna di pietra rastremata
       const stoneGeom = new THREE.CylinderGeometry(0.28, 0.42, 2.2 + (i % 3) * 0.3, 6);
-      const stone = new THREE.Mesh(stoneGeom, ancientStoneMat);
-      stone.position.y = 1.1;
-      stone.rotation.y = angle + 0.3;
-      stone.rotation.z = (Math.random() - 0.5) * 0.15;
-      stone.castShadow = true;
-      stone.receiveShadow = true;
-      monolith.add(stone);
+      stoneGeom.rotateY(angle + 0.3);
+      stoneGeom.rotateZ((Math.sin(i * 1.7) - 0.5) * 0.15);
+      stoneGeom.translate(posX, 1.1, posZ);
+      stoneGeoms.push(stoneGeom);
 
       // Incisione runica dorata che brilla debolmente
       const runeGeom = new THREE.RingGeometry(0.08, 0.14, 6);
-      const rune = new THREE.Mesh(runeGeom, runeMat);
-      rune.position.set(0, 1.2, 0.38);
-      monolith.add(rune);
+      runeGeom.translate(posX, 1.2, posZ + 0.38);
+      runeGeoms.push(runeGeom);
+    }
 
-      circleGroup.add(monolith);
+    if (stoneGeoms.length > 0) {
+      const mergedStones = BufferGeometryUtils.mergeGeometries(stoneGeoms);
+      const stonesMesh = new THREE.Mesh(mergedStones, ancientStoneMat);
+      stonesMesh.name = 'StoneCircle_Monoliths_Merged';
+      stonesMesh.castShadow = true;
+      stonesMesh.receiveShadow = true;
+      circleGroup.add(stonesMesh);
+    }
+
+    if (runeGeoms.length > 0) {
+      const mergedRunes = BufferGeometryUtils.mergeGeometries(runeGeoms);
+      const runesMesh = new THREE.Mesh(mergedRunes, runeMat);
+      runesMesh.name = 'StoneCircle_Runes_Merged';
+      circleGroup.add(runesMesh);
     }
 
     this.group.add(circleGroup);
@@ -273,7 +296,8 @@ export class Island {
   }
 
   /**
-   * Cespugli di bacche e fiori selvatici (margherite e campanule) che ravvivano il prato.
+   * Cespugli di bacche e fiori selvatici (margherite e campanule) generati tramite InstancedMesh.
+   * Ottimizzazione mobile: abbatte 174 draw call individuali a sole 5 draw call aggregate.
    */
   private createFoliageAndFlowers(gradientMap: THREE.Texture): void {
     const bushMat = new THREE.MeshToonMaterial({ color: 0x52b788, gradientMap });
@@ -282,7 +306,13 @@ export class Island {
     const petalBlueMat = new THREE.MeshToonMaterial({ color: 0x48cae4 });
     const flowerCenterMat = new THREE.MeshBasicMaterial({ color: 0xffb703 });
 
-    // Cespugli
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const rotation = new THREE.Euler();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3(1, 1, 1);
+
+    // 1. Cespugli (5 istanze) e relative bacche (25 istanze)
     const bushPositions = [
       { x: -3, z: 2 },
       { x: 3, z: -4 },
@@ -291,60 +321,114 @@ export class Island {
       { x: 14, z: -6 },
     ];
 
-    bushPositions.forEach((bp) => {
-      const bush = new THREE.Group();
+    const bushGeom = new THREE.SphereGeometry(0.65, 10, 8);
+    bushGeom.scale(1.2, 0.75, 1.0);
+    const bushInstanced = new THREE.InstancedMesh(bushGeom, bushMat, bushPositions.length);
+    bushInstanced.name = 'Instanced_Bushes';
+    bushInstanced.castShadow = true;
+    bushInstanced.receiveShadow = true;
+
+    const berryGeom = new THREE.SphereGeometry(0.07, 6, 6);
+    const berryInstanced = new THREE.InstancedMesh(berryGeom, berryMat, bushPositions.length * 5);
+    berryInstanced.name = 'Instanced_Berries';
+    berryInstanced.castShadow = false;
+
+    let berryIdx = 0;
+    bushPositions.forEach((bp, i) => {
       const bushY = this.getTerrainHeight(bp.x, bp.z);
-      bush.position.set(bp.x, bushY, bp.z);
+      position.set(bp.x, bushY + 0.45, bp.z);
+      rotation.set(0, 0, 0);
+      quaternion.setFromEuler(rotation);
+      scale.set(1, 1, 1);
+      matrix.compose(position, quaternion, scale);
+      bushInstanced.setMatrixAt(i, matrix);
 
-      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 8), bushMat);
-      bMesh.scale.set(1.2, 0.75, 1.0);
-      bMesh.position.y = 0.45;
-      bMesh.castShadow = true;
-      bush.add(bMesh);
-
-      // Piccole bacche rosse sul cespuglio
+      // 5 bacche rosse su ciascun cespuglio
       for (let b = 0; b < 5; b++) {
-        const berry = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), berryMat);
         const theta = b * 1.2;
-        berry.position.set(
-          Math.cos(theta) * 0.55,
-          0.55 + Math.sin(b) * 0.15,
-          Math.sin(theta) * 0.45
+        position.set(
+          bp.x + Math.cos(theta) * 0.55,
+          bushY + 0.55 + Math.sin(b) * 0.15,
+          bp.z + Math.sin(theta) * 0.45
         );
-        bush.add(berry);
+        matrix.compose(position, quaternion, scale);
+        berryInstanced.setMatrixAt(berryIdx++, matrix);
       }
-
-      this.group.add(bush);
     });
 
-    // Fiori selvatici sparsi a ciuffi
-    for (let f = 0; f < 24; f++) {
-      const flower = new THREE.Group();
-      const fx = (Math.random() - 0.5) * 32;
-      const fz = (Math.random() - 0.5) * 32;
-      const fy = this.getTerrainHeight(fx, fz);
-      flower.position.set(fx, fy, fz);
+    bushInstanced.instanceMatrix.needsUpdate = true;
+    berryInstanced.instanceMatrix.needsUpdate = true;
+    this.group.add(bushInstanced);
+    this.group.add(berryInstanced);
 
+    // 2. Fiori selvatici (24 centri e 120 petali raggruppati in 3 InstancedMesh)
+    const flowerCoords = [
+      { x: -5, z: 4 }, { x: -8, z: 6 }, { x: -3, z: 9 }, { x: 4, z: 5 },
+      { x: 7, z: 3 }, { x: 10, z: -2 }, { x: 5, z: -8 }, { x: -2, z: -10 },
+      { x: -6, z: -6 }, { x: 12, z: -9 }, { x: 15, z: -12 }, { x: 9, z: -16 },
+      { x: -11, z: -4 }, { x: -13, z: 5 }, { x: -9, z: 12 }, { x: -4, z: 14 },
+      { x: 3, z: 12 }, { x: 8, z: 11 }, { x: 13, z: 8 }, { x: 16, z: 2 },
+      { x: -15, z: -7 }, { x: -12, z: -12 }, { x: 2, z: -14 }, { x: 6, z: -12 }
+    ];
+
+    const centerGeom = new THREE.SphereGeometry(0.045, 6, 6);
+    const centerInstanced = new THREE.InstancedMesh(centerGeom, flowerCenterMat, flowerCoords.length);
+    centerInstanced.name = 'Instanced_FlowerCenters';
+    centerInstanced.castShadow = false;
+
+    const petalGeom = new THREE.SphereGeometry(0.06, 6, 4);
+    petalGeom.scale(1, 0.4, 1.6);
+
+    const petalBlueInstanced = new THREE.InstancedMesh(petalGeom, petalBlueMat, 12 * 5);
+    petalBlueInstanced.name = 'Instanced_PetalsBlue';
+    petalBlueInstanced.castShadow = false;
+
+    const petalWhiteInstanced = new THREE.InstancedMesh(petalGeom, petalWhiteMat, 12 * 5);
+    petalWhiteInstanced.name = 'Instanced_PetalsWhite';
+    petalWhiteInstanced.castShadow = false;
+
+    let bluePetalIdx = 0;
+    let whitePetalIdx = 0;
+
+    flowerCoords.forEach((fc, f) => {
+      const fy = this.getTerrainHeight(fc.x, fc.z);
       const isBlue = f % 2 === 0;
-      const pMat = isBlue ? petalBlueMat : petalWhiteMat;
-
-      // Fiore con 5 petali morbidi
-      for (let p = 0; p < 5; p++) {
-        const pAngle = (p * Math.PI * 2) / 5;
-        const petal = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), pMat);
-        petal.scale.set(1, 0.4, 1.6);
-        petal.position.set(Math.cos(pAngle) * 0.08, 0.18, Math.sin(pAngle) * 0.08);
-        petal.rotation.y = pAngle;
-        flower.add(petal);
-      }
 
       // Centro giallo
-      const center = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), flowerCenterMat);
-      center.position.y = 0.2;
-      flower.add(center);
+      position.set(fc.x, fy + 0.2, fc.z);
+      rotation.set(0, 0, 0);
+      quaternion.setFromEuler(rotation);
+      scale.set(1, 1, 1);
+      matrix.compose(position, quaternion, scale);
+      centerInstanced.setMatrixAt(f, matrix);
 
-      this.group.add(flower);
-    }
+      // 5 petali a raggiera
+      for (let p = 0; p < 5; p++) {
+        const pAngle = (p * Math.PI * 2) / 5;
+        position.set(
+          fc.x + Math.cos(pAngle) * 0.08,
+          fy + 0.18,
+          fc.z + Math.sin(pAngle) * 0.08
+        );
+        rotation.set(0, pAngle, 0);
+        quaternion.setFromEuler(rotation);
+        matrix.compose(position, quaternion, scale);
+
+        if (isBlue) {
+          petalBlueInstanced.setMatrixAt(bluePetalIdx++, matrix);
+        } else {
+          petalWhiteInstanced.setMatrixAt(whitePetalIdx++, matrix);
+        }
+      }
+    });
+
+    centerInstanced.instanceMatrix.needsUpdate = true;
+    petalBlueInstanced.instanceMatrix.needsUpdate = true;
+    petalWhiteInstanced.instanceMatrix.needsUpdate = true;
+
+    this.group.add(centerInstanced);
+    this.group.add(petalBlueInstanced);
+    this.group.add(petalWhiteInstanced);
   }
 
   /**
@@ -381,7 +465,7 @@ export class Island {
   }
 
   /**
-   * Pontile in legno cartoon con pali portanti e corde d'ormeggio.
+   * Pontile in legno cartoon con assi e pali uniti tramite mergeGeometries (2 sole draw calls).
    */
   private createDock(gradientMap: THREE.Texture): void {
     const dock = new THREE.Group();
@@ -398,33 +482,52 @@ export class Island {
       gradientMap,
     });
 
-    // 1. Assi di legno del pontile
+    const woodGeoms: THREE.BufferGeometry[] = [];
+    const ironGeoms: THREE.BufferGeometry[] = [];
+
+    // 1. Assi di legno del pontile (7 assi)
     for (let i = 0; i < 7; i++) {
       const plankGeom = new THREE.BoxGeometry(0.7, 0.12, 2.6);
-      const plank = new THREE.Mesh(plankGeom, woodMat);
-      plank.position.set(i * 0.8, 0, 0);
-      plank.rotation.y = (Math.random() - 0.5) * 0.04;
-      plank.castShadow = true;
-      plank.receiveShadow = true;
-      dock.add(plank);
+      const rotY = (Math.sin(i * 1.5) - 0.5) * 0.04;
+      plankGeom.rotateY(rotY);
+      plankGeom.translate(i * 0.8, 0, 0);
+      woodGeoms.push(plankGeom);
     }
 
-    // 2. Pali portanti verticali conficcati nel fondale
-    const postGeom = new THREE.CylinderGeometry(0.12, 0.14, 2.6, 8);
+    // 2. Pali portanti verticali conficcati nel fondale (6 pali)
     for (let x = 0; x <= 4.8; x += 2.4) {
       for (const z of [-1.15, 1.15]) {
-        const post = new THREE.Mesh(postGeom, woodMat);
-        post.position.set(x, -1.0, z);
-        post.castShadow = true;
-        dock.add(post);
+        const postGeom = new THREE.CylinderGeometry(0.12, 0.14, 2.6, 8);
+        postGeom.translate(x, -1.0, z);
+        woodGeoms.push(postGeom);
 
         // Bitta d'ormeggio in cima ai pali terminali
         if (x >= 4.0) {
-          const bitta = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8), ironMat);
-          bitta.position.set(x, 0.22, z);
-          dock.add(bitta);
+          const bittaGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8);
+          bittaGeom.translate(x, 0.22, z);
+          ironGeoms.push(bittaGeom);
         }
       }
+    }
+
+    // Unione di tutte le geometrie in legno in 1 sola mesh
+    if (woodGeoms.length > 0) {
+      const mergedWood = BufferGeometryUtils.mergeGeometries(woodGeoms);
+      const woodMesh = new THREE.Mesh(mergedWood, woodMat);
+      woodMesh.name = 'Dock_Wood_Merged';
+      woodMesh.castShadow = true;
+      woodMesh.receiveShadow = true;
+      dock.add(woodMesh);
+    }
+
+    // Unione delle bitte metalliche in 1 sola mesh
+    if (ironGeoms.length > 0) {
+      const mergedIron = BufferGeometryUtils.mergeGeometries(ironGeoms);
+      const ironMesh = new THREE.Mesh(mergedIron, ironMat);
+      ironMesh.name = 'Dock_Iron_Merged';
+      ironMesh.castShadow = true;
+      ironMesh.receiveShadow = true;
+      dock.add(ironMesh);
     }
 
     this.group.add(dock);
@@ -565,7 +668,10 @@ export class Island {
           this.group.add(t);
         }
       });
-      // Nasconde le chiome procedurali a sfere
+      // Rimuove fisicamente dal grafo di scena gli alberi procedurali a sfere
+      if (this.proceduralTreesGroup.parent) {
+        this.group.remove(this.proceduralTreesGroup);
+      }
       this.proceduralTreesGroup.visible = false;
     }
 
@@ -609,5 +715,14 @@ export class Island {
         this.isColorShifting = false;
       }
     }
+  }
+
+  public setQuality(quality: QualityPreset): void {
+    const enableShadows = quality !== 'low';
+    this.group.traverse((c) => {
+      if ((c as THREE.Mesh).isMesh || (c as THREE.InstancedMesh).isInstancedMesh) {
+        c.castShadow = enableShadows;
+      }
+    });
   }
 }

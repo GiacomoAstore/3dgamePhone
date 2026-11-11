@@ -1,7 +1,7 @@
 /**
  * Entità Giocatore (Pip) con fisica, controller di movimento e animazioni procedurali.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.7 (calcolo componenti orizzontali velocity.x e velocity.z per vettore velocità 3D)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (rimozione mesh primitive con modello GLB attivo e disattivazione ombre su profilo Bassa)
  */
 
 import * as THREE from 'three';
@@ -76,15 +76,23 @@ export class Player {
         this.glbModel = inst;
         this.meshComponents.root.add(inst);
 
-        // Nasconde TUTTE le parti primitive procedurali per non sovrapporsi al modello 3D
-        this.meshComponents.body.visible = false;
-        this.meshComponents.head.visible = false;
-        this.meshComponents.hat.visible = false;
-        this.meshComponents.leftArm.visible = false;
-        this.meshComponents.rightArm.visible = false;
-        this.meshComponents.leftLeg.visible = false;
-        this.meshComponents.rightLeg.visible = false;
-        if (this.meshComponents.scarfTail) this.meshComponents.scarfTail.visible = false;
+        // Rimuove e nasconde TUTTE le parti primitive procedurali per non occupare draw call
+        const toRemove = [
+          this.meshComponents.body,
+          this.meshComponents.head,
+          this.meshComponents.hat,
+          this.meshComponents.leftArm,
+          this.meshComponents.rightArm,
+          this.meshComponents.leftLeg,
+          this.meshComponents.rightLeg,
+          this.meshComponents.scarfTail,
+        ];
+        toRemove.forEach((part) => {
+          if (part && part.parent) {
+            part.parent.remove(part);
+          }
+          if (part) part.visible = false;
+        });
 
         // Aggancia la lanterna allo slot naturale della mano destra
         const handslot = inst.getObjectByName('handslotr');

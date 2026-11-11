@@ -252,7 +252,7 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
   3. **Texture Ufficiale CC0 Kenney Palette (`colormap.png`)**:
      - Integrata la palette `colormap.png` in `public/models/Textures/` e `public/Textures/` eliminando i 404 e gli errori del GLTFLoader.
 - **Conseguenze**:
-  Aderenza perfetta al suolo verificata con test automatici E2E in Google Chrome reale, zero errori in console, 90-115 FPS e resa grafica cartoon coerente e rifinita.
+  Aderenza perfetta al suolo verificata con test automatici E2E in Google Chrome reale, zero errori in console e resa grafica cartoon coerente e rifinita. *Nota di chiarimento sulle prestazioni*: Google Chrome in esecuzione headless nei test automatizzati adotta tipicamente un rasterizzatore software CPU (SwiftShader); i frame rate (FPS) ivi campionati non hanno valore rappresentativo delle prestazioni reali su GPU hardware (mobile o desktop).
 
 ---
 
@@ -305,3 +305,69 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - Rimozione del duplicato `public/Textures/colormap.png` mantenendo la copia canonica `public/models/Textures/colormap.png`.
 - **Conseguenze**:
   Base di codice solida, completamente testata sia a livello unitario (82 test Vitest verdi) che a livello E2E in browser reale Google Chrome, con tracciabilità crittografica di ogni risorsa e piano di ottimizzazione pronto per la Fase 4.
+
+---
+
+## ADR 014 - Registrazione Deviazione da ADR 008: Ricreazione Tag v0.3.7 e Nuova Politica Release Patch (v0.3.8)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  Dall'ispezione della cronologia Git (`git reflog` e `git for-each-ref --sort=creatordate refs/tags`), è emerso che il tag annotato `v0.3.7` era stato inizialmente associato al commit `a2e88ed` e successivamente ricreato sul commit `072bcc9`.
+  Tale operazione viola il principio di immutabilità dei tag stabilito nell'ADR 008 ("I tag Git devono essere immutabili e associati una volta sola").
+- **Decisione**:
+  1. Registrare formalmente la deviazione dall'ADR 008 nel registro delle decisioni architetturali.
+  2. È fatto divieto assoluto di spostare, cancellare o modificare il tag `v0.3.7`.
+  3. Qualsiasi modifica, correzione o ottimizzazione successiva deve essere rilasciata incrementando il numero di patch (`0.3.8`, `0.3.9`), con commit dedicati e tag nuovi e mai ricreati.
+- **Conseguenze**:
+  Tracciabilità cronologica rigorosa ripristinata e allineata alle direttive vincolanti dell'utente.
+
+---
+
+## ADR 015 - Riduzione Drastica delle Draw Call sotto il Budget (<100) tramite InstancedMesh e Geometry Merging (v0.3.8)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  Il profiling effettuato con `tests/profile_draw_calls.mjs` su v0.3.7 registrava tra 202 e 245 draw call a fronte di un budget prestazionale mobile fissato a `< 100` nel documento di design. L'analisi ha isolato le cause principali in:
+  - 174 mesh individuali per fiori (margherite, centolini) e cespugli procedurali.
+  - 72 mesh di alberi procedurali rimasti attivi nel grafo di scena anche dopo il caricamento degli alberi Kenney.
+  - Decine di geometrie statiche separate per il pontile (assi, pali, bitte), la balaustra dell'osservatorio e i monoliti del cerchio di pietre.
+- **Decisione**:
+  1. **`InstancedMesh` per Fogliame e Fiori (`Island.ts`)**:
+     - Sostituite le mesh singole di cespugli e bacche con 2 `InstancedMesh` (5 istanze cespuglio, 25 istanze bacche).
+     - Sostituite le mesh singole dei fiori con 3 `InstancedMesh` (24 centri margherita, 60 petali blu, 60 petali bianchi).
+  2. **Rimozione Fisica Alberi e Fantocci Procedurali**:
+     - Nel momento in cui i modelli GLB di alberi, Pip (`Rogue_Hooded.glb`) e Nonna Bussola (`Mage.glb`) sono pronti, i rispettivi gruppi procedurali vengono fisicamente rimossi dal grafo di scena (`remove(...)`).
+  3. **Unione delle Geometrie Statiche (`BufferGeometryUtils.mergeGeometries`)**:
+     - Balaustra osservatorio: 11 colonne in pietra fuse in un'unica mesh.
+     - Pontile di legno: 7 assi e 6 pali fusi in 1 mesh legno, 2 bitte fuse in 1 mesh ferro.
+     - Cerchio di pietre runico e basamento forziere fusi in un'unica geometria.
+     - Lanterna di Pip: struttura in ottone, manico e basamento fusi in un'unica mesh.
+  4. **Profilo Bassa Senza Shadow Pass e Senza Toon Outline**:
+     - Nel preset "Bassa", disattivato il passaggio delle ombre e impostato `castShadow = false` su tutte le mesh statiche, e outline disabilitato.
+- **Conseguenze**:
+  - Draw call totali crollate da 202-245 a **93** (obiettivo `< 100` ampiamente raggiunto sia nel profilo Alta che Bassa).
+  - Numero complessivo di mesh nella scena ridotto da 489 a **141** (-348 mesh).
+  - Conteggio triangoli contenuto a soli **34.957**, preservando intatta l'estetica cartoon.
+
+---
+
+## ADR 016 - Allineamento Parametri Discordanti, Test Scheletrico NPC e Camminata Continua E2E, Chiarimento Perimetro Fasi 4 e 5 (v0.3.9)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  In sede di audit pre-Fase 4, l'utente ha evidenziato discordanze tra documentazione e codice sorgente su tre parametri critici, la necessità di testare le ossa di Nonna Bussola (no T-pose) e la camminata continua di Pip al cerchio di pietre senza scorciatoie di teletrasporto (`spawnAt`), nonché l'esigenza di perimetrare in modo inequivocabile i contenuti della Fase 4 rispetto alla Fase 5.
+- **Decisione**:
+  1. **Allineamento Parametri Ufficiali**:
+     - *Auto-degrade qualitativo*: Fissato a **5.0 secondi** consecutivi con FPS < 24 (allineato al codice effettivo in `src/core/Game.ts:423`).
+     - *Luce ambientale notturna*: Fissata a **0.35** per la notte ordinaria e a **0.65** per la modalità accessibile "Notti Chiare" (`readableNight = true` in `DayNightCycle.ts:196`).
+     - *Densità della nebbia*: Fissata a **0.008** come valore nominale di ripristino (`restoredDensity` in `src/data/environment.json`), e a **0.0062** come risultato dinamico della formula progressiva al recupero del 1° frammento (riduzione del -65.6%).
+  2. **Verifica Scheletro Nonna Bussola (No T-Pose)**:
+     - Integrata asserzione quantitativa nel test unitario (`tests/altitude_grounding.test.ts`) e nel test E2E Chrome (`tests/test_chrome_real.mjs`): verifica che le mani (`handl`, `handr`) si trovino almeno $0.20\,\text{m}$ al di sotto delle spalle (`upperarml`, `upperarmr`), certificando la corretta posa naturale idle ($y_{\text{shoulder}} - y_{\text{hand}} \approx 0.30\,\text{m}$).
+  3. **Camminata Continua di Pip (Zero Teletrasporti)**:
+     - Eliminato ogni uso di `player.spawnAt` durante la missione nel test E2E Chrome e aggiunto test di integrazione dedicato: Pip percorre l'intera tratta dall'osservatorio al cerchio di pietre $(18, -15)$ in 82 passi fisici frame-by-frame, e la tratta di ritorno in 79 passi, mantenendo `isGrounded === true` e zero perdite di aderenza con il terreno 3D.
+  4. **Perimetro Ufficiale Roadmap**:
+     - **Fase 4**: Sistema di Salvataggio locale persistente (`localStorage`/`IndexedDB` versionato), Schermate Menu complete (Start/Pausa/Crediti), Supporto Web App / PWA (manifest, offline caching), audio settings storage.
+     - **Fase 5**: Capitano Marea (NPC barcaiolo con animazioni e dialogo), Viaggio in barca tra isole, Seconda Isola (Isola della Scogliera / Isola dei Sospiri, nuovi enigmi e collezionabili).
+- **Conseguenze**:
+  Documentazione e codice allineati al 100%, test E2E e unitari a massima aderenza fisica, perimetro delle prossime fasi chiaro e privo di ambiguità.
+

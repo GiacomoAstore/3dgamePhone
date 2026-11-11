@@ -1,7 +1,7 @@
 # Brumavento - L'Arcipelago della Nebbia
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.7 - Verifiche pre-Fase 4, test E2E Quest 1 Chrome, SHA-256 asset e regressioni altimetriche
+Ultima modifica: 2026-11-11 - v0.3.9 - Riduzione draw calls (<100), verifiche scheletro NPC e camminata continua senza teletrasporto, allineamento parametri ufficiali e DOCS_DESIGN
 -->
 
 **Brumavento** è un gioco 3D di esplorazione cartoon, giocabile direttamente nel browser da smartphone e desktop senza alcuna installazione.  
@@ -139,7 +139,7 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 2. **Corsa collina**: Avanza lungo il sentiero verso l'osservatorio di Nonna Bussola (inquadrando sia il terreno che l'orizzonte marino con onde animate).
 3. **Discesa scogliera**: Scende verso il cerchio di pietre della scogliera orientale con la Lanterna Magica accesa.
 4. **Sosta particelle**: Attesa di 5 secondi nel cerchio di pietre mentre lucciole, polline del vento e spuma marina sono contemporaneamente nel cono visivo.
-- Se il framerate su dispositivi modesti scende sotto i 26 FPS per oltre 5 secondi, il sistema **Auto-Degrade** riduce automaticamente il profilo grafico di un gradino e mostra un avviso a schermo.
+- Se il framerate su dispositivi modesti scende sotto i 24 FPS per oltre 5.0 secondi consecutivi, il sistema **Auto-Degrade** riduce automaticamente il profilo grafico di un gradino e mostra un avviso a schermo.
 
 ---
 
@@ -147,13 +147,15 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 
 - `npm run dev`: avvia il server Vite con Hot Module Replacement (HMR).
 - `npm run build`: esegue la compilazione TypeScript strict e la build di produzione in `dist/`.
-- `npm test`: esegue la suite completa di **82 test unitari e di integrazione** con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, quote dinamiche `getTerrainHeight`, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
+- `npm test`: esegue la suite completa di **84 test unitari e di integrazione** con **Vitest** (fisica, salti, collisioni BVH, quest, dialoghi, collezionabili, quote dinamiche `getTerrainHeight`, rig scheletrico NPC con mani sotto le spalle, camminata continua senza teletrasporto, priorità dell'azione, audio con fallback e lifecycle, cel-shading a gradini, contorni toon Inverted Hull, contrasto notturno WCAG 2.1, calcolo 1% low FPS, debug touch e persistenza impostazioni).
 - `npm run test:chrome`: esegue la suite automatizzata **E2E reale in Google Chrome headless** via Chrome DevTools Protocol (CDP), validando:
   - Posizionamento iniziale a terra e assenza di sprofondamento.
+  - Verifica delle ossa di Nonna Bussola nel rig GLB: mani sotto le spalle di oltre 0.20m (eliminazione T-pose).
   - Verifica dell'animazione `Running_A` e velocità orizzontale fisica *durante* la pressione di `KeyW`.
   - Calcolo dello spostamento reale ($\Delta d \ge 1.5\,\text{m}$) e ritorno a `Idle_A` all'arresto.
-  - Completamento dell'intera prima missione (dialogo con Nonna Bussola, cerchio di pietre con lanterna magica, raccolta 1° frammento, ritorno e chiusura).
-  - Misurazione quantitativa della riduzione nebbia (targetDensity pre e post missione).
+  - Raggiungimento del cerchio di pietre (18, -15) tramite camminata continua con fisica e gravità (zero teletrasporti `spawnAt`).
+  - Completamento dell'intera prima missione (dialogo con Nonna Bussola, cerchio di pietre con lanterna magica `F`, raccolta 1° frammento, ritorno camminando e chiusura).
+  - Misurazione quantitativa della riduzione nebbia (targetDensity da 0.018 a 0.0062, riduzione del -65.6%).
   - *Prerequisiti*: Google Chrome installato (percorso predefinito `C:\Program Files\Google\Chrome\Application\chrome.exe` o variabile d'ambiente `CHROME_PATH`), porta di debug 9225 libera, server di sviluppo Vite avviato su `http://localhost:5173/`.
   - *Nota Prestazionale*: Headless Chrome opera normalmente in software rendering (SwiftShader / CPU rasterization); gli FPS misurati in modalità headless non sono rappresentativi dell'hardware GPU reale.
 - `npm run test:ui`: esegue la suite di **test UI end-to-end su Chrome** con validazione di tutti i modal, bottoni, albero dei dialoghi, prompt di interazione e layout responsive smartphone 390x844.
@@ -164,8 +166,9 @@ Per validare le prestazioni in modo scientifico e ripetibile, definiamo l'hardwa
 
 ## 📐 Documentazione di Progetto
 - [GEMINI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/GEMINI.md): Regole vincolanti di sviluppo per l'IA.
+- [DOCS_DESIGN.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DOCS_DESIGN.md): Documento di Game Design, stack tecnico, budget, controlli e roadmap.
 - [ARCHITETTURA.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ARCHITETTURA.md): Mappa dei moduli, diagrammi di flusso e cartelle.
 - [CHANGELOG.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/CHANGELOG.md): Registro cronologico delle modifiche e versioning semantico.
-- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 012).
-- [TODO.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/TODO.md): Roadmap e backlog per le prossime fasi.
-- [ASSETS.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ASSETS.md): Registro degli asset 3D e licenze.
+- [DECISIONI.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/DECISIONI.md): Registro delle decisioni architetturali (ADR 001 - 016).
+- [TODO.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/TODO.md): Roadmap e backlog per le prossime fasi (Fase 4 vs Fase 5).
+- [ASSETS.md](file:///c:/Users/user/Desktop/workspace/3dgamePhone/ASSETS.md): Registro degli asset 3D, licenze, URL diretti e conformità TLS.

@@ -4,7 +4,7 @@
  * consumo dell'azione con priorità unificata, overlay di debug/benchmark e profili grafici.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.7 (aggiornamento animazione di Nonna Bussola nel game loop)
+ * Ultima modifica: 2026-11-11 - v0.3.9 (propagazione profili qualitativi per riduzione draw calls e ottimizzazione rendering)
  */
 
 import * as THREE from 'three';
@@ -477,6 +477,14 @@ export class Game {
 
     if (this.environment) {
       this.environment.setQuality(quality);
+    }
+
+    if (this.island) {
+      this.island.setQuality(quality);
+    }
+
+    if (this.nonnaBussola) {
+      this.nonnaBussola.setQuality(quality);
     }
   }
 

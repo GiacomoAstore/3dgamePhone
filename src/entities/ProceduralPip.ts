@@ -4,10 +4,11 @@
  * sciarpa svolazzante, zaino con pergamene, giacca con bottoni e lanterna rifinita).
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.2
+ * Ultima modifica: 2026-11-11 - v0.3.8 (mergeGeometries per elementi in ottone della lanterna)
  */
 
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { ToonShaderUtils } from '../world/ToonShaderUtils';
 
 export interface PipMeshComponents {
@@ -393,15 +394,17 @@ export class ProceduralPip {
     root.add(rightArm);
 
     // ==========================================
-    // 8. LANTERNA MAGICA OTTOCENTESCA RIFINITA
+    // 8. LANTERNA MAGICA OTTOCENTESCA RIFINITA (parti metalliche unite con mergeGeometries)
     // ==========================================
     const lantern = new THREE.Group();
     lantern.name = 'Pip_Lantern';
     lantern.position.set(0.42, 0.38, 0.18);
 
+    const brassGeoms: THREE.BufferGeometry[] = [];
+
     // Basamento esagonale ottone
-    const baseL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.05, 6), brassMaterial);
-    lantern.add(baseL);
+    const baseGeom = new THREE.CylinderGeometry(0.09, 0.11, 0.05, 6);
+    brassGeoms.push(baseGeom);
 
     // Cilindro/gabbia di vetro satinato
     const glass = new THREE.Mesh(
@@ -414,21 +417,27 @@ export class ProceduralPip {
     // 4 montanti metallici verticali della gabbia
     for (let i = 0; i < 4; i++) {
       const strutAngle = (i * Math.PI) / 2;
-      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.18, 6), brassMaterial);
-      strut.position.set(Math.cos(strutAngle) * 0.085, 0.11, Math.sin(strutAngle) * 0.085);
-      lantern.add(strut);
+      const strutGeom = new THREE.CylinderGeometry(0.01, 0.01, 0.18, 6);
+      strutGeom.translate(Math.cos(strutAngle) * 0.085, 0.11, Math.sin(strutAngle) * 0.085);
+      brassGeoms.push(strutGeom);
     }
 
     // Comignolo/cupolino superiore in ottone
-    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.1, 6), brassMaterial);
-    cap.position.y = 0.24;
-    lantern.add(cap);
+    const capGeom = new THREE.ConeGeometry(0.11, 0.1, 6);
+    capGeom.translate(0, 0.24, 0);
+    brassGeoms.push(capGeom);
 
     // Manico arcuato in ferro
     const handleGeom = new THREE.TorusGeometry(0.07, 0.012, 6, 12, Math.PI);
-    const handle = new THREE.Mesh(handleGeom, brassMaterial);
-    handle.position.y = 0.31;
-    lantern.add(handle);
+    handleGeom.translate(0, 0.31, 0);
+    brassGeoms.push(handleGeom);
+
+    if (brassGeoms.length > 0) {
+      const mergedBrass = BufferGeometryUtils.mergeGeometries(brassGeoms);
+      const brassMesh = new THREE.Mesh(mergedBrass, brassMaterial);
+      brassMesh.castShadow = true;
+      lantern.add(brassMesh);
+    }
 
     // Luce puntiforme calda con raggio magico
     const lanternLight = new THREE.PointLight(0xffbe0b, 1.8, 6.5, 1.4);
