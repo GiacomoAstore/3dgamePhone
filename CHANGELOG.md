@@ -2,6 +2,28 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.4] - 2026-11-11
+
+### Corretto
+- **Clonazione Scheletri SkinnedMesh in `AssetManager.ts`**:
+  - Risolto bug critico di visibilità: l'uso del metodo standard `original.clone(true)` scollegava i riferimenti delle ossa (`skeleton.bones`) di `SkinnedMesh` dalla nuova gerarchia, causando il collasso dei vertici e rendendo Pip (`Rogue_Hooded`) e Nonna Bussola (`Mage`) invisibili a schermo.
+  - Sostituito con `SkeletonUtils.clone(original)`, che clona correttamente scheletro, pesi di skinning e gerarchia.
+- **Preservazione Texture Atlasi & Skinning in `applyCartoonShading()`**:
+  - Evitata la sostituzione distruttiva di materiali con `new MeshToonMaterial`: i materiali standard originali vengono ora calibrati in-place con `roughness = 0.85` e `metalness = 0.05`, preservando le texture originali e le coordinate UV.
+- **Elevazione al Suolo di Alberi, Falò, Cartelli e Barca in `Island.ts`**:
+  - Implementato `getTerrainHeight(x, z)` per posizionare ogni albero, cartello, ceppo e forziere esattamente sopra la superficie del prato, correggendo l'anomalia per cui gli alberi venivano generati a $y = 0$ risultando sepolti sotto la collina.
+  - Corrette le coordinate della barca a vela `BoatWSail.glb` (`x = 25.5, z = 3.2`), ora visibile e ormeggiata lungo il pontile di legno.
+  - Corretta la scala della volpe `Fox.glb` (da 0.28 a 0.0028) proporzionandola correttamente a 1.56m di lunghezza.
+
+### File toccati
+- `src/core/AssetManager.ts`: adozione di `SkeletonUtils.clone` e calibrazione conservativa dei materiali.
+- `src/world/Island.ts`: funzione `getTerrainHeight()`, posizionamento accurato al suolo degli alberi e ormeggio della barca al molo.
+- `tests/asset_manager.test.ts`: test aggiornato per la calibrazione cartoon in-place.
+- `VERSION`, `package.json`: incremento a `0.3.4`.
+
+### Motivo
+- Correzione immediata dei modelli 3D invisibili o interrati emersi dallo screenshot utente.
+
 ## [0.3.3] - 2026-11-11
 
 ### Aggiunto

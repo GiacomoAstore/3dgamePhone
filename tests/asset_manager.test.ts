@@ -57,7 +57,7 @@ describe('AssetManager (Cache modelli 3D e Cel-shading)', () => {
     expect(meshFound).toBe(true);
   });
 
-  it('dovrebbe convertire i materiali standard in MeshToonMaterial con gradiente cartoon', () => {
+  it('dovrebbe ottimizzare i materiali standard con ruvidità cartoon e abilitare le ombre', () => {
     const manager = AssetManager.getInstance();
 
     const root = new THREE.Group();
@@ -69,9 +69,9 @@ describe('AssetManager (Cache modelli 3D e Cel-shading)', () => {
 
     manager.applyCartoonShading(root, mockGradient);
 
-    expect(mesh.material instanceof THREE.MeshToonMaterial).toBe(true);
-    const toonMat = mesh.material as unknown as THREE.MeshToonMaterial;
-    expect(toonMat.gradientMap).toBe(mockGradient);
-    expect(toonMat.color.getHex()).toBe(0x33aa55);
+    expect(stdMat.roughness).toBe(0.85);
+    expect(stdMat.metalness).toBe(0.05);
+    expect(mesh.castShadow).toBe(true);
+    expect(mesh.receiveShadow).toBe(true);
   });
 });

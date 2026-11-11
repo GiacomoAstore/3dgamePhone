@@ -63,34 +63,7 @@ export class Island {
     for (let i = 0; i < count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      const dist = Math.sqrt(x * x + z * z);
-      const normDist = dist / radius; // 0 al centro, 1 alla costa
-
-      // Profilo altimetrico naturale:
-      // - Centro/Nord (Osservatorio a x=0, z=-3): alta collina (y ~ 3.8m)
-      // - Est (verso il pontile a x=22, z=1.5): dolce declivio sabbioso fino a livello mare (y ~ 0.4m)
-      // - Sud/Ovest: ripide scogliere panoramiche
-      const hillPeak = Math.max(0, 1.0 - Math.sqrt(x * x + (z + 4) * (z + 4)) / 18.0);
-      const hillHeight = Math.pow(hillPeak, 1.6) * 4.2;
-
-      // Terrazzamento morbido cartoon
-      const terrace = Math.cos(normDist * Math.PI) * 0.5 + 0.5;
-      const noise =
-        Math.sin(x * 0.3) * 0.35 +
-        Math.cos(z * 0.3) * 0.35 +
-        Math.sin((x + z) * 0.5) * 0.2;
-
-      // A est verso il pontile digrada dolcemente
-      const eastSlope = Math.max(0, (x - 6.0) / 16.0);
-      let height = (hillHeight + terrace * 1.5 + noise) * (1.0 - eastSlope * 0.65);
-
-      // Alla battigia scende dolcemente verso la spiaggia (y >= 0.2)
-      if (normDist > 0.85) {
-        const edgeBlend = (normDist - 0.85) / 0.15;
-        height = THREE.MathUtils.lerp(height, 0.25, edgeBlend);
-      }
-
-      pos.setY(i, Math.max(0.2, height));
+      pos.setY(i, this.getTerrainHeight(x, z));
     }
 
     topGeom.computeVertexNormals();
@@ -448,6 +421,34 @@ export class Island {
   }
 
   /**
+   * Calcola l'altezza esatta della superficie dell'isola alle coordinate (x, z).
+   */
+  public getTerrainHeight(x: number, z: number): number {
+    const radius = 28.0;
+    const dist = Math.sqrt(x * x + z * z);
+    const normDist = dist / radius;
+
+    const hillPeak = Math.max(0, 1.0 - Math.sqrt(x * x + (z + 4) * (z + 4)) / 18.0);
+    const hillHeight = Math.pow(hillPeak, 1.6) * 4.2;
+
+    const terrace = Math.cos(normDist * Math.PI) * 0.5 + 0.5;
+    const noise =
+      Math.sin(x * 0.3) * 0.35 +
+      Math.cos(z * 0.3) * 0.35 +
+      Math.sin((x + z) * 0.5) * 0.2;
+
+    const eastSlope = Math.max(0, (x - 6.0) / 16.0);
+    let height = (hillHeight + terrace * 1.5 + noise) * (1.0 - eastSlope * 0.65);
+
+    if (normDist > 0.85) {
+      const edgeBlend = (normDist - 0.85) / 0.15;
+      height = THREE.MathUtils.lerp(height, 0.25, edgeBlend);
+    }
+
+    return Math.max(0.2, height);
+  }
+
+  /**
    * Carica in modo asincrono i modelli 3D cartoon (Kenney, Quaternius)
    * per sostituire o arricchire la vegetazione e gli elementi dell'isola con un impatto visivo rifinito.
    */
@@ -466,13 +467,14 @@ export class Island {
       assetMgr.loadModel('fox', '/models/Fox.glb'),
     ]);
 
-    // 2. Barca a vela splendida ormeggiata al pontile
+    // 2. Barca a vela splendida ormeggiata a fianco del pontile
     const boat = assetMgr.instantiate('boat');
     if (boat) {
       boat.name = 'Dock_Boat';
-      boat.position.set(5.8, -0.15, 23.5);
-      boat.rotation.set(0, -Math.PI / 6, 0);
-      boat.scale.setScalar(3.2);
+      // Posizionata lungo il pontile (che si trova a x=22, z=1.5)
+      boat.position.set(25.5, -0.15, 3.2);
+      boat.rotation.set(0, Math.PI / 8, 0);
+      boat.scale.setScalar(3.5);
       assetMgr.applyCartoonShading(boat, stepGradMap);
       this.group.add(boat);
     }
@@ -481,7 +483,8 @@ export class Island {
     const chest = assetMgr.instantiate('chest');
     if (chest) {
       chest.name = 'RuneCircle_Chest';
-      chest.position.set(18.0, 1.05, -15.0);
+      const groundY = this.getTerrainHeight(18.0, -15.0);
+      chest.position.set(18.0, groundY + 0.05, -15.0);
       chest.rotation.y = -Math.PI / 4;
       chest.scale.setScalar(1.6);
       assetMgr.applyCartoonShading(chest, stepGradMap);
@@ -490,10 +493,10 @@ export class Island {
 
     // 4. Barili al molo e all'osservatorio
     const barrelPositions = [
-      { x: 3.5, y: 0.15, z: 21.0, scale: 1.6 },
-      { x: 3.8, y: 0.15, z: 21.8, scale: 1.4 },
-      { x: -1.2, y: 3.75, z: -3.8, scale: 1.7 },
-      { x: -1.8, y: 3.75, z: -3.5, scale: 1.5 },
+      { x: 23.5, y: 0.45, z: 2.2, scale: 1.6 },
+      { x: 24.2, y: 0.45, z: 2.0, scale: 1.4 },
+      { x: -1.2, y: 3.82, z: -3.8, scale: 1.7 },
+      { x: -1.8, y: 3.82, z: -3.5, scale: 1.5 },
     ];
     barrelPositions.forEach((pos) => {
       const b = assetMgr.instantiate('barrel');
@@ -508,7 +511,8 @@ export class Island {
     // 5. Cartello di legno indicatore lungo il sentiero
     const sign = assetMgr.instantiate('sign');
     if (sign) {
-      sign.position.set(2.2, 0.45, 12.0);
+      const signY = this.getTerrainHeight(7.5, 3.0);
+      sign.position.set(7.5, signY, 3.0);
       sign.rotation.y = Math.PI / 4;
       sign.scale.setScalar(2.0);
       assetMgr.applyCartoonShading(sign, stepGradMap);
@@ -518,30 +522,35 @@ export class Island {
     // 6. Fuoco da campo con ceppi per l'accampamento
     const campfire = assetMgr.instantiate('campfire');
     if (campfire) {
-      campfire.position.set(-4.0, 1.2, 4.0);
+      const campY = this.getTerrainHeight(-3.5, 3.5);
+      campfire.position.set(-3.5, campY, 3.5);
       campfire.scale.setScalar(1.8);
       assetMgr.applyCartoonShading(campfire, stepGradMap);
       this.group.add(campfire);
     }
 
-    // 7. Alberi cartoon rifiniti Kenney a sostituzione
+    // 7. Alberi cartoon rifiniti Kenney a sostituzione, posizionati con quota al suolo reale
     if (assetMgr.hasModel('tree_oak') || assetMgr.hasModel('tree_detailed')) {
       const treePos = [
-        { x: -9, z: -8, type: 'tree_oak', scale: 3.2, rot: 0.4 },
-        { x: -14, z: 2, type: 'tree_detailed', scale: 3.0, rot: 1.2 },
-        { x: -11, z: 10, type: 'tree_oak', scale: 3.4, rot: 2.1 },
-        { x: 8, z: -14, type: 'tree_detailed', scale: 3.1, rot: 0.8 },
-        { x: 13, z: 4, type: 'tree_oak', scale: 2.9, rot: 3.0 },
-        { x: -6, z: 15, type: 'tree_detailed', scale: 3.3, rot: 1.7 },
-        { x: 6, z: 15, type: 'tree_oak', scale: 3.0, rot: 0.1 },
-        { x: -16, z: -10, type: 'tree_detailed', scale: 3.5, rot: 2.5 },
-        { x: 11, z: 12, type: 'tree_oak', scale: 2.8, rot: 1.1 },
+        { x: -9, z: -8, type: 'tree_oak', scale: 4.2, rot: 0.4 },
+        { x: -14, z: 2, type: 'tree_detailed', scale: 4.0, rot: 1.2 },
+        { x: -11, z: 10, type: 'tree_oak', scale: 4.4, rot: 2.1 },
+        { x: 8, z: -14, type: 'tree_detailed', scale: 4.1, rot: 0.8 },
+        { x: 13, z: 4, type: 'tree_oak', scale: 3.9, rot: 3.0 },
+        { x: -6, z: 15, type: 'tree_detailed', scale: 4.3, rot: 1.7 },
+        { x: 6, z: 15, type: 'tree_oak', scale: 4.0, rot: 0.1 },
+        { x: -16, z: -10, type: 'tree_detailed', scale: 4.5, rot: 2.5 },
+        { x: 11, z: 12, type: 'tree_oak', scale: 3.8, rot: 1.1 },
+        { x: -4, z: -14, type: 'tree_detailed', scale: 4.2, rot: 0.6 },
+        { x: -3, z: 8, type: 'tree_oak', scale: 4.0, rot: 1.9 },
+        { x: 4, z: -7, type: 'tree_detailed', scale: 3.8, rot: 2.8 },
       ];
 
       treePos.forEach((p) => {
         const t = assetMgr.instantiate(p.type);
         if (t) {
-          t.position.set(p.x, 0, p.z);
+          const groundY = this.getTerrainHeight(p.x, p.z);
+          t.position.set(p.x, groundY, p.z);
           t.rotation.y = p.rot;
           t.scale.setScalar(p.scale);
           assetMgr.applyCartoonShading(t, stepGradMap);
@@ -556,9 +565,10 @@ export class Island {
     const fox = assetMgr.instantiate('fox');
     if (fox) {
       fox.name = 'Island_Fox';
-      fox.position.set(-8.0, 0.4, 7.5);
+      const foxY = this.getTerrainHeight(-6.0, 7.0);
+      fox.position.set(-6.0, foxY, 7.0);
       fox.rotation.y = Math.PI / 3;
-      fox.scale.setScalar(0.28);
+      fox.scale.setScalar(0.0028); // 559 unità * 0.0028 = ~1.56m
       assetMgr.applyCartoonShading(fox, stepGradMap);
       this.group.add(fox);
 

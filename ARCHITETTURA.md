@@ -21,7 +21,7 @@ Questo documento descrive la struttura delle cartelle, i moduli implementati, le
 ├── DECISIONI.md                  # Registro delle decisioni architetturali (ADR 001 - 010)
 ├── TODO.md                       # Roadmap e backlog dei task per le prossime fasi
 ├── ASSETS.md                     # Censimento asset 3D, licenze e provenienza
-├── VERSION                       # Indicatore della versione corrente (0.3.3)
+├── VERSION                       # Indicatore della versione corrente (0.3.4)
 ├── package.json                  # Dipendenze con versioni bloccate (senza ^ o ~)
 ├── package-lock.json             # Lockfile deterministico delle dipendenze
 ├── tsconfig.json                 # Configurazione TypeScript strict

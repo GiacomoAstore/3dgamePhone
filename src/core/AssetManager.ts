@@ -10,6 +10,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 export interface ModelAssetInfo {
   id: string;
@@ -145,7 +146,7 @@ export class AssetManager {
     if (!original) {
       return null;
     }
-    const clone = original.clone(true);
+    const clone = SkeletonUtils.clone(original) as THREE.Group;
     // Assicura abilitazione ombre sulle mesh child
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
@@ -171,10 +172,11 @@ export class AssetManager {
   }
 
   /**
-   * Converte i materiali standard/fisici di un modello in MeshToonMaterial con gradiente cartoon.
+   * Ottimizza i materiali per una resa cartoon morbida (alta ruvidità, bassa riflettanza metallica)
+   * mantenendo le texture atlasi e i pesi di skinning originali.
    *
    * @param object Nodo radice del modello 3D
-   * @param gradientMap Mappa gradiente 1D a gradini per cel-shading
+   * @param gradientMap Mappa gradiente 1D a gradini per cel-shading (opzionale)
    */
   public applyCartoonShading(object: THREE.Object3D, gradientMap?: THREE.Texture): void {
     object.traverse((child) => {
@@ -182,22 +184,19 @@ export class AssetManager {
         const mesh = child as THREE.Mesh;
         if (mesh.material) {
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          const newMats = mats.map((mat) => {
-            if (mat instanceof THREE.MeshToonMaterial) {
-              if (gradientMap) mat.gradientMap = gradientMap;
-              return mat;
+          mats.forEach((mat) => {
+            if (mat instanceof THREE.MeshStandardMaterial) {
+              mat.roughness = 0.85;
+              mat.metalness = 0.05;
+              if (gradientMap && 'gradientMap' in mat) {
+                (mat as unknown as { gradientMap: THREE.Texture }).gradientMap = gradientMap;
+              }
+            } else if (mat instanceof THREE.MeshToonMaterial) {
+              if (gradientMap) {
+                mat.gradientMap = gradientMap;
+              }
             }
-
-            const stdMat = mat as THREE.MeshStandardMaterial;
-            const toonMat = new THREE.MeshToonMaterial({
-              color: stdMat.color ? stdMat.color.clone() : new THREE.Color(0xffffff),
-              map: stdMat.map || null,
-              gradientMap: gradientMap || null
-            });
-            return toonMat;
           });
-
-          mesh.material = Array.isArray(mesh.material) ? newMats : newMats[0];
           mesh.castShadow = true;
           mesh.receiveShadow = true;
         }
