@@ -4,6 +4,16 @@
       "initialDensity": 0.018,
       "restoredDensity": 0.008,
       "minDensity": 0.005,
+      "densityByFragments": {
+        "0": 0.018,
+        "1": 0.014,
+        "2": 0.012,
+        "3": 0.010,
+        "4": 0.0085,
+        "5": 0.0070,
+        "6": 0.0060,
+        "7": 0.0050
+      },
       "initialColor": "#a3b8cc",
       "restoredColor": "#8ecae6"
     },

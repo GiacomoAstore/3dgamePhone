@@ -34,7 +34,7 @@ export class Environment {
   private readonly config = envConfig.atmosphere;
 
   private currentDensity = envConfig.atmosphere.fog.initialDensity;
-  private targetDensity = envConfig.atmosphere.fog.initialDensity;
+  public targetDensity = envConfig.atmosphere.fog.initialDensity;
 
   private isRestoredState = false;
   private isTransitioning = false;
@@ -121,13 +121,36 @@ export class Environment {
 
   /**
    * Attiva l'effetto visibile di ritirata della nebbia e viraggio cromatico.
-   * La densità target è letta direttamente dal file di configurazione environment.json (unica fonte di verità).
+   * La densità target viene calcolata interrogando la tabella di densità per numero di frammenti
+   * presente in environment.json, sempre vincolata dal limite minDensity.
    */
-  public triggerIslandRestoration(_collected: number, _total: number): void {
-    // Lettura diretta da environment.json: restoredDensity = 0.008
-    this.targetDensity = this.config.fog.restoredDensity;
+  public triggerIslandRestoration(collected: number, total: number): void {
+    const table = this.config.fog.densityByFragments as Record<string, number> | undefined;
+    let target = this.config.fog.initialDensity;
+
+    if (table) {
+      const key = String(collected);
+      if (key in table) {
+        target = table[key];
+      } else if (total > 0) {
+        // Interpolazione lineare di sicurezza se il conteggio supera la tabella
+        const progress = Math.min(1, Math.max(0, collected / total));
+        target =
+          this.config.fog.initialDensity -
+          progress * (this.config.fog.initialDensity - this.config.fog.minDensity);
+      }
+    } else {
+      target = this.config.fog.restoredDensity;
+    }
+
+    // Rispetta tassativamente il limite minimo di densità
+    this.targetDensity = Math.max(this.config.fog.minDensity, target);
     this.isTransitioning = true;
-    this.isRestoredState = true;
+    this.isRestoredState = collected > 0;
+  }
+
+  public getTargetDensity(): number {
+    return this.targetDensity;
   }
 
   /**

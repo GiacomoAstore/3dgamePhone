@@ -30,6 +30,7 @@ import { JournalUI } from '../ui/JournalUI';
 import { QualitySettingsUI } from '../ui/QualitySettingsUI';
 import { NotificationBanner } from '../ui/NotificationBanner';
 import { DebugOverlay } from '../ui/DebugOverlay';
+import { AutoDegradeMonitor, AUTO_DEGRADE_CONFIG } from '../systems/AutoDegradeMonitor';
 
 export type QualityPreset = 'low' | 'medium' | 'high';
 
@@ -73,8 +74,8 @@ export class Game {
   private frameCount = 0;
   private fpsTimeAccumulator = 0;
   private currentFps = 60;
-  private lowFpsDuration = 0;
-  private autoDegradeCooldown = 0;
+  private isPaused = false;
+  public autoDegradeMonitor = new AutoDegradeMonitor();
 
   constructor(canvas: HTMLCanvasElement) {
     this.stateManager = new StateManager();
@@ -169,7 +170,7 @@ export class Game {
     if (this.debugOverlay.getIsBenchmarkRunning()) {
       this.environment.dayNightCycle.setHourLocked(true);
       this.environment.dayNightCycle.setTime(12.0);
-      this.autoDegradeCooldown = 9999;
+      this.autoDegradeMonitor.setCooldown(9999);
     }
 
     // Pulsante Impostazioni Top Bar
@@ -380,20 +381,17 @@ export class Game {
   }
 
   /**
-   * Calcola il framerate istantaneo e attiva l'auto-degrade se le prestazioni scendono troppo a lungo.
-   * Evita falsi positivi: ignora i primi 5 secondi di avvio, le schede in background (document.hidden)
-   * e la durata del benchmark. Cooldown rigoroso di 30s tra una degradazione e l'altra con pulsante Annulla.
+   * Calcola il framerate istantaneo e attiva l'auto-degrade se la media mobile su 5 secondi scende sotto 28 FPS.
+   * Evita falsi positivi escludendo warm-up iniziale (5s), pause, schede in background (document.hidden) e benchmark.
+   * Non declassa dispositivi stabili a 30 FPS. Cooldown rigoroso di 30s con banner e opzione Annulla.
    */
   private updateFps(dt: number): void {
     this.frameCount++;
     this.fpsTimeAccumulator += dt;
 
-    if (this.autoDegradeCooldown > 0) {
-      this.autoDegradeCooldown -= dt;
-    }
-
     if (this.fpsTimeAccumulator >= 0.5) {
-      this.currentFps = Math.round(this.frameCount / this.fpsTimeAccumulator);
+      const duration = this.fpsTimeAccumulator;
+      this.currentFps = Math.round(this.frameCount / duration);
       this.frameCount = 0;
       this.fpsTimeAccumulator = 0;
 
@@ -402,50 +400,47 @@ export class Game {
       }
       globalEventBus.emit('fps-updated', this.currentFps);
 
-      // 1. Ignora warm-up iniziale di 5 secondi
-      if (this.sessionElapsed < 5.0) return;
+      const isHidden = typeof document !== 'undefined' && document.hidden;
+      const isBenchmarking = !!(this.debugOverlay && this.debugOverlay.getIsBenchmarkRunning());
 
-      // 2. Ignora schede in background (rallentate nativamente dal browser)
-      if (typeof document !== 'undefined' && document.hidden) {
-        this.lowFpsDuration = 0;
-        return;
-      }
+      const shouldDegrade = this.autoDegradeMonitor.recordSample(
+        this.currentFps,
+        duration,
+        this.isPaused,
+        isHidden,
+        this.sessionElapsed,
+        isBenchmarking
+      );
 
-      // 3. Ignora durante le sessioni di benchmark automatizzato
-      if (this.debugOverlay && this.debugOverlay.getIsBenchmarkRunning()) {
-        this.lowFpsDuration = 0;
-        return;
-      }
-
-      // 4. Rilevamento FPS bassi persistenti (< 26 FPS per oltre 5 secondi consecutivi)
-      if (this.currentFps < 26 && this.autoDegradeCooldown <= 0) {
-        this.lowFpsDuration += 0.5;
-        if (this.lowFpsDuration >= 5.0) {
-          this.lowFpsDuration = 0;
-          this.autoDegradeCooldown = 30.0; // Cooldown di 30 secondi tra degradazioni successive
-          const newPreset = this.qualitySettingsUI.autoDegradeQuality();
-          if (newPreset) {
-            const msg = LocalizationSystem.t('ui.notification_quality_degraded', {
-              level: newPreset.toUpperCase(),
-            });
-            this.notificationBanner.show(msg, 5000, LocalizationSystem.t('ui.btn_undo'), () => {
-              const restored = this.qualitySettingsUI.revertQualityDrop();
-              if (restored) {
-                this.autoDegradeCooldown = 60.0; // Cooldown esteso se l'utente preferisce il profilo attuale
-                this.notificationBanner.show(
-                  LocalizationSystem.t('ui.notification_quality_restored', {
-                    level: restored.toUpperCase(),
-                  }),
-                  3000
-                );
-              }
-            });
-          }
+      if (shouldDegrade) {
+        const newPreset = this.qualitySettingsUI.autoDegradeQuality();
+        if (newPreset) {
+          const msg = LocalizationSystem.t('ui.notification_quality_degraded', {
+            level: newPreset.toUpperCase(),
+          });
+          this.notificationBanner.show(msg, 5000, LocalizationSystem.t('ui.btn_undo'), () => {
+            const restored = this.qualitySettingsUI.revertQualityDrop();
+            if (restored) {
+              this.autoDegradeMonitor.setCooldown(AUTO_DEGRADE_CONFIG.REVERT_COOLDOWN_SECONDS);
+              this.notificationBanner.show(
+                LocalizationSystem.t('ui.notification_quality_restored', {
+                  level: restored.toUpperCase(),
+                }),
+                3000
+              );
+            }
+          });
         }
-      } else {
-        this.lowFpsDuration = Math.max(0, this.lowFpsDuration - 0.25);
       }
     }
+  }
+
+  public getIsPaused(): boolean {
+    return this.isPaused;
+  }
+
+  public setPaused(paused: boolean): void {
+    this.isPaused = paused;
   }
 
   /**

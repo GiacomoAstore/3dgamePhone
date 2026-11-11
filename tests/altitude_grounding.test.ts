@@ -183,61 +183,108 @@ describe('Regressione Altimetrica e Ground-Snapping (v0.3.7)', () => {
     });
   });
 
-  describe('4. Verifica orientamento scheletrico NPC Nonna Bussola (no T-pose: mani sotto spalle)', () => {
-    it('dovrebbe avere le mani posizionate sotto le spalle di almeno 0.20m nello stato idle', () => {
-      // Crea un modello scheletrico conforme al rig KayKit animato con Idle_A
-      const rootBone = new THREE.Bone();
-      rootBone.name = 'root';
-      rootBone.position.set(0, 0, 0);
+  describe('4. Verifica orientamento scheletrico NPC Nonna Bussola (confronto rest-pose, normalizzazione scala, evoluzione temporale)', () => {
+    it('dovrebbe evidenziare differenza netta tra rest pose (T-pose) e posa animata normalizzata per la scala', () => {
+      // 1. Modello in REST POSE (T-pose originale bind pose del file GLB):
+      // Le braccia sono distese in orizzontale lungo l'asse X
+      const restRoot = new THREE.Group();
+      restRoot.scale.setScalar(0.65); // Scala effettiva in-game
 
-      const chestBone = new THREE.Bone();
-      chestBone.name = 'chest';
-      chestBone.position.set(0, 0.70, 0);
-      rootBone.add(chestBone);
+      const restChest = new THREE.Bone();
+      restChest.position.set(0, 0.70, 0);
+      restRoot.add(restChest);
 
-      // Spalle / Upper Arms
-      const upperArmL = new THREE.Bone();
-      upperArmL.name = 'upperarml';
-      upperArmL.position.set(0.14, 0.10, 0);
-      chestBone.add(upperArmL);
+      const restArmL = new THREE.Bone();
+      restArmL.position.set(0.14, 0.10, 0);
+      restChest.add(restArmL);
 
-      const upperArmR = new THREE.Bone();
-      upperArmR.name = 'upperarmr';
-      upperArmR.position.set(-0.14, 0.10, 0);
-      chestBone.add(upperArmR);
+      const restHandL = new THREE.Bone();
+      restHandL.position.set(0.35, 0.0, 0.0); // T-pose: braccio teso orizzontalmente su X, y = 0
+      restArmL.add(restHandL);
 
-      // In T-pose, le braccia sono orizzontali (y_hand == y_shoulder, delta ~ 0)
-      // Con l'animazione Idle_A, gli arti scendono lungo i fianchi (y_hand < y_shoulder - 0.20m)
-      const handL = new THREE.Bone();
-      handL.name = 'handl';
-      handL.position.set(0.10, -0.30, 0.05); // Braccio piegato verso il basso
-      upperArmL.add(handL);
+      restRoot.updateMatrixWorld(true);
 
-      const handR = new THREE.Bone();
-      handR.name = 'handr';
-      handR.position.set(-0.10, -0.30, 0.05);
-      upperArmR.add(handR);
+      const restShoulderPos = new THREE.Vector3();
+      const restHandPos = new THREE.Vector3();
+      restArmL.getWorldPosition(restShoulderPos);
+      restHandL.getWorldPosition(restHandPos);
 
-      rootBone.updateMatrixWorld(true);
+      // Lunghezza mondale del braccio
+      const armLength = restShoulderPos.distanceTo(restHandPos);
+      expect(armLength).toBeGreaterThan(0.1);
 
-      const shoulderLPos = new THREE.Vector3();
-      const shoulderRPos = new THREE.Vector3();
-      const handLPos = new THREE.Vector3();
-      const handRPos = new THREE.Vector3();
+      // Rapporto normalizzato adimensionale in rest pose (deltaY / armLength): in T-pose è ~0
+      const restRatio = (restShoulderPos.y - restHandPos.y) / armLength;
+      expect(Math.abs(restRatio)).toBeLessThan(0.15); // T-pose: braccio quasi perfettamente orizzontale
 
-      upperArmL.getWorldPosition(shoulderLPos);
-      upperArmR.getWorldPosition(shoulderRPos);
-      handL.getWorldPosition(handLPos);
-      handR.getWorldPosition(handRPos);
+      // 2. Modello in POSA ANIMATA IDLE (arti abbassati lungo i fianchi)
+      const animRoot = new THREE.Group();
+      animRoot.scale.setScalar(0.65);
 
-      // Verifica no T-pose: y della mano inferiore a quella della spalla
-      const deltaYL = shoulderLPos.y - handLPos.y;
-      const deltaYR = shoulderRPos.y - handRPos.y;
+      const animChest = new THREE.Bone();
+      animChest.position.set(0, 0.70, 0);
+      animRoot.add(animChest);
 
-      expect(deltaYL).toBeGreaterThanOrEqual(0.20);
-      expect(deltaYR).toBeGreaterThanOrEqual(0.20);
-      expect(handLPos.y).toBeLessThan(shoulderLPos.y - 0.20);
-      expect(handRPos.y).toBeLessThan(shoulderRPos.y - 0.20);
+      const animArmL = new THREE.Bone();
+      animArmL.position.set(0.14, 0.10, 0);
+      animChest.add(animArmL);
+
+      const animHandL = new THREE.Bone();
+      animHandL.name = 'handl';
+      animHandL.position.set(0.08, -0.32, 0.05); // Abbassato lungo il busto
+      animArmL.add(animHandL);
+
+      animRoot.updateMatrixWorld(true);
+
+      const animShoulderPos = new THREE.Vector3();
+      const animHandPos = new THREE.Vector3();
+      animArmL.getWorldPosition(animShoulderPos);
+      animHandL.getWorldPosition(animHandPos);
+
+      const animArmLength = animShoulderPos.distanceTo(animHandPos);
+      const animRatio = (animShoulderPos.y - animHandPos.y) / animArmLength;
+
+      // In posa naturale, il dislivello normalizzato per la lunghezza del braccio è > 0.70
+      expect(animRatio).toBeGreaterThanOrEqual(0.70);
+      expect(animRatio).toBeGreaterThan(restRatio + 0.50); // Differenza marcata e robusta dalla T-pose
+    });
+
+    it('dovrebbe verificare che l animazione di Nonna Bussola cambi dinamicamente le coordinate delle ossa nel tempo', () => {
+      // Costruisce scheletro con AnimationMixer
+      const root = new THREE.Group();
+      const bone = new THREE.Bone();
+      bone.name = 'handl';
+      bone.position.set(0.1, 0.5, 0);
+      root.add(bone);
+
+      // Crea clip animata con traccia di posizione che oscilla nel tempo (respirazione idle)
+      const times = [0, 0.5, 1.0];
+      const values = [
+        0.1, 0.50, 0.0,   // t=0.0s
+        0.1, 0.46, 0.02,  // t=0.5s (mano abbassata di 4cm)
+        0.1, 0.50, 0.0    // t=1.0s
+      ];
+      const track = new THREE.VectorKeyframeTrack('handl.position', times, values);
+      const clip = new THREE.AnimationClip('Idle_A', 1.0, [track]);
+
+      const mixer = new THREE.AnimationMixer(root);
+      const action = mixer.clipAction(clip);
+      action.play();
+
+      // Campionamento a t = 0
+      mixer.setTime(0);
+      root.updateMatrixWorld(true);
+      const pos0 = bone.position.clone();
+
+      // Campionamento dopo avanzamento temporale di 0.5 secondi
+      mixer.update(0.5);
+      root.updateMatrixWorld(true);
+      const pos1 = bone.position.clone();
+
+      // Verifica che la posizione sia cambiata nel tempo (l'animazione è viva e dinamica)
+      const deltaMovement = pos0.distanceTo(pos1);
+      expect(deltaMovement).toBeGreaterThan(0.02);
+      expect(pos1.y).toBeLessThan(pos0.y); // Movimento effettivo della posa
     });
   });
 

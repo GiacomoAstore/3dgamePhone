@@ -88,11 +88,23 @@ Ultima modifica: 2026-11-11 - v0.3.9 - Riduzione draw calls (<100) completata, t
 
 ---
 
-## 🐛 Bug Noti
-*(Nessun bug attivo).*
+## 🐛 Bug Noti & Difetti Aperti (Identificati da Screenshot)
+
+- [ ] **[Priorità Media] D5 - Orientamento InstancedMesh (fiori e cespugli) su pendenze scoscese**:
+  - *Descrizione*: Le matrici di trasformazione delle istanze usano traslazione pura posizionando la base a $y = \text{getTerrainHeight}(x, z)$, senza allineare il vettore `up` alla normale della superficie triangolare.
+  - *Mitigazione pianificata*: Calcolare il vettore normale del triangolo BVH locale e orientare il quaternione d'istanza.
+- [ ] **[Priorità Bassa] D7 - Rifinitura visiva particelle d'atmosfera**:
+  - *Descrizione*: La texture radiale additiva introdotta mitiga l'effetto quadrato, ma densità, velocità di traslazione e trasparenza delle lucciole e del polline necessitano di ulteriore calibrazione estetica.
+  - *Mitigazione pianificata*: Shader particellare con dissolvenza morbida sui bordi e moto browniano armonico.
+- [ ] **[Priorità Media] D9 - Giunzione geometrica tra molo e scarpata rocciosa**:
+  - *Descrizione*: Le geometrie del pontile sono state unificate con `mergeGeometries`, ma il punto di innesto con la roccia naturale presenta una sovrapposizione geometrica netta priva di zoccolo o raccordo.
+  - *Mitigazione pianificata*: Inserimento di una base in muratura / ciottoli a raccordo tra le assi di legno e il pendio roccioso.
+- [ ] **[Priorità Bassa] D10 - Latenza percepita nei comandi touch durante transizioni UI**:
+  - *Descrizione*: Il blocco logico dell'input durante dialoghi e schermate funziona, ma la dissolvenza CSS di 300ms a schermo crea una lieve percezione di ritardo tra la pressione del tasto di chiusura e la reattività del joystick virtuale.
+  - *Mitigazione pianificata*: Anticipare lo sblocco logico dei controlli al `pointerdown` di chiusura anziché attendere l'evento `transitionend`.
 
 ---
 
 ## 💳 Debito Tecnico e Manutenzione
-- [x] ~~Riduzione draw call sotto il budget <100~~ (Risolto in v0.3.8: 93 draw calls).
-- [ ] Rimozione opzionale dei 6 modelli GLB inutilizzati in `public/models/` (previa conferma dell'utente) per risparmiare 158.8 KB.
+- [x] ~~Riduzione draw call sotto il budget <100~~ (Risolto in v0.3.8: 90-93 draw calls).
+- [x] ~~Rimozione dei 6 modelli GLB inutilizzati in `public/models/`~~ (Risolto in v0.3.9 - commit `b38876b`, risparmiati 158.8 KB).

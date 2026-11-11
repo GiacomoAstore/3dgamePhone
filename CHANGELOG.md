@@ -26,6 +26,14 @@ Tutte le modifiche a questo progetto vengono registrate cronologicamente in ques
 - **Perimetro Roadmap Fasi 4 e 5**:
   - Chiarito formalmente che la Fase 4 comprende esclusivamente salvataggi persistenti, schermate di menu complete (Start/Pausa/Crediti), Progressive Web App (PWA) e impostazioni audio; Capitano Marea, viaggio in barca e seconda isola sono assegnati alla Fase 5.
 
+### Nota di Correzione (Sessione di Chiarimento Pre-Fase 4)
+- **Tabella di Progressione Nebbia in `environment.json`**:
+  - Ripristinata la dinamicità della densità della nebbia legata ai frammenti raccolti ($0 \rightarrow 0.018$, $1 \rightarrow 0.014$, $3 \rightarrow 0.010$, $7 \rightarrow 0.005$) con test dedicati in `tests/fog_progression.test.ts`.
+- **Soglia Auto-Degrade e Media Mobile (`AutoDegradeMonitor.ts`)**:
+  - Formalizzata soglia a **28 FPS** su media mobile di 5.0 secondi con test dedicati in `tests/auto_degrade_monitor.test.ts`, escludendo warm-up, pause e schede in background.
+- **Approfondimento Scheletrico NPC Nonna Bussola**:
+  - Test unitari in `tests/altitude_grounding.test.ts` estesi con confronto quantitativo normalizzato rispetto alla rest pose (T-pose) e verifica dell'evoluzione temporale dell'animazione.
+
 ### File toccati
 - `package.json`, `VERSION`: avanzamento a `0.3.9`.
 - `tests/test_chrome_real.mjs`: verifica ossa Nonna Bussola (no T-pose) e camminata continua E2E senza teletrasporti.

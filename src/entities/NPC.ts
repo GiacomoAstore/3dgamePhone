@@ -189,9 +189,8 @@ export class NPC {
             inst.scale.setScalar(0.65);
             inst.position.set(0, 0, 0);
             AssetManager.getInstance().applyCartoonShading(inst, stepGradMap);
-            characterGroup.add(inst);
-
-            // Carica animazioni generali per animare Nonna Bussola (idle naturale, fine T-pose)
+            // Carica animazioni generali prima di aggiungere il modello alla scena,
+            // garantendo che Nonna Bussola non appaia mai nella rest pose orizzontale (T-pose)
             const anims = await AssetManager.getInstance().loadAnimations(
               'npc_general',
               '/models/Rig_Medium_General.glb'
@@ -203,8 +202,13 @@ export class NPC {
                 const action = this.mixer.clipAction(idleClip);
                 action.setLoop(THREE.LoopRepeat, Infinity);
                 action.play();
+                // Forza immediatamente la valutazione del mixer per applicare la posa naturale delle ossa
+                this.mixer.update(0.01);
               }
             }
+
+            // Aggiunge il modello GLB al grafo di scena solo quando è pronto e animato
+            characterGroup.add(inst);
 
             // Rimuove e nasconde la versione procedurale primitiva quando il modello 3D è pronto
             if (proceduralMeshGroup.parent) {

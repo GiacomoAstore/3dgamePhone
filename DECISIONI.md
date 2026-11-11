@@ -371,3 +371,10 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
 - **Conseguenze**:
   Documentazione e codice allineati al 100%, test E2E e unitari a massima aderenza fisica, perimetro delle prossime fasi chiaro e privo di ambiguità.
 
+### Nota di Correzione (Post-Audit Pre-Fase 4 - 2026-11-11)
+- **Ripristino Progressione Nebbia basata su Frammenti**:
+  Per preservare il senso di progressione e ricompensa dell'esplorazione, la densità della nebbia non è un valore fisso statico ma segue la tabella `densityByFragments` definita in `src/data/environment.json` per ciascun frammento raccolto ($0 \rightarrow 0.018$, $1 \rightarrow 0.014$, $2 \rightarrow 0.012$, $3 \rightarrow 0.010$, $4 \rightarrow 0.0085$, $5 \rightarrow 0.007$, $6 \rightarrow 0.006$, $7 \rightarrow 0.005 = \text{minDensity}$). Il metodo `triggerIslandRestoration(collected, total)` interroga questa tabella rispettando sempre il vincolo `minDensity`. Test unitari dedicati in `tests/fog_progression.test.ts`.
+- **Raffinamento Soglia Auto-Degrade**:
+  La soglia di declassamento è formalizzata a **28 FPS** calcolata come **media mobile ponderata su finestra continua di 5.0 secondi** (`AutoDegradeMonitor.ts`), escludendo pausa, schede nascoste (`document.hidden`), benchmark e warm-up iniziale (5.0s), evitando declassamenti su macchine stabili a 30 FPS.
+
+
