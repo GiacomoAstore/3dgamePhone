@@ -4,7 +4,7 @@
  * consumo dell'azione con priorità unificata, overlay di debug/benchmark e profili grafici.
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.6 (calcolo quote di spawn reali per Pip, Nonna Bussola e collezionabili)
+ * Ultima modifica: 2026-11-11 - v0.3.7 (aggiornamento animazione di Nonna Bussola nel game loop)
  */
 
 import * as THREE from 'three';
@@ -320,6 +320,7 @@ export class Game {
     // 1. Aggiorna ambiente (sole, luna, onde, particelle) e isola
     this.environment.update(dt);
     this.island.update(dt);
+    this.nonnaBussola.update(dt);
 
     // 2. Aggiorna quest system (timer suggerimenti)
     this.questSystem.update(dt);

@@ -2,6 +2,35 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.7] - 2026-11-11
+
+### Aggiunto
+- **Suite di Test UI End-to-End su Google Chrome Reale (`tests/test_chrome_ui.mjs` e `npm run test:ui`)**:
+  - Script automatizzato per verificare l'intera interfaccia utente in Chrome via CDP:
+    1. *Start Screen*: titolo, sottotitolo, istruzioni e dismissibilità al click (`#btn-start`).
+    2. *HUD Top Bar*: badge titolo, contatore FPS e persistenza pulsanti.
+    3. *Modal Guida Controlli (`#help-modal`)*: apertura da HUD (o tasto `H`), sezioni desktop/touch e chiusura da pulsante o tastiera.
+    4. *Modal Diario del Cartografo (`#journal-modal`)*: apertura da HUD (o tasto `Tab`), visualizzazione missione attiva, frammenti 0/7 e reperti (conchiglie, funghi, stelle).
+    5. *Modal Impostazioni (`#settings-modal`)*: selettori preset qualità grafica (Bassa, Media, Alta), slider volumi audio e opzioni giorno/notte.
+    6. *Interaction Badge (`#interaction-prompt`)*: comparsa dinamica in prossimità di Nonna Bussola ("Parla con Nonna Bussola").
+    7. *Dialogue Box (`#dialogue-box`)*: avatar, nome speaker, ruolo, battuta iniziale, bottoni di scelta multipla ed avanzamento dell'albero di dialogo al click.
+    8. *Mobile Layout Responsive*: emulazione smartphone 390x844 (touch screen), comparsa joystick virtuale e pulsanti touch, occultamento barra desktop e adattamento dei modali senza overflow orizzontale.
+    9. *Screenshot diagnostici*: cattura automatica di 10 screenshot in `tests/ui_screenshots/`.
+
+### Corretto
+- **Risoluzione T-Pose di Nonna Bussola (`NPC.ts` e `Game.ts`)**:
+  - Il modello 3D `Mage.glb` non possedeva un `AnimationMixer` collegato e rimaneva bloccato nella bind-pose orizzontale con braccia tese (T-pose).
+  - Collegato `AnimationMixer` con clip `Idle_A` da `Rig_Medium_General.glb`, aggiunto metodo `update(dt)` in `NPC.ts` e inserito nel loop principale `Game.ts`: Nonna Bussola ora respira e tiene le braccia distese naturalmente lungo i fianchi.
+
+### File toccati
+- `package.json`, `VERSION`: incremento a `0.3.7`, aggiunto script `npm run test:ui`.
+- `src/entities/NPC.ts`: animazione `Idle_A` e `update(dt)` per Nonna Bussola.
+- `src/core/Game.ts`: chiamata `this.nonnaBussola.update(dt)` nel loop principale.
+- `tests/test_chrome_ui.mjs`: suite completa di test automatizzati per la UI su Chrome.
+
+### Motivo
+- Richiesta utente: esecuzione di test UI completi su Chrome e correzione della T-pose di Nonna Bussola evidenziata dagli screenshot.
+
 ## [0.3.6] - 2026-11-11
 
 ### Aggiunto

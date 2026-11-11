@@ -4,7 +4,7 @@
  * e Osservatorio Astronomico (grande telescopio in ottone, treppiede tornito, tavolo cartografico).
  *
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-11 - v0.3.2
+ * Ultima modifica: 2026-11-11 - v0.3.7 (animazione idle per Nonna Bussola ed eliminazione T-pose)
  */
 
 import * as THREE from 'three';
@@ -19,6 +19,7 @@ export class NPC {
   public name: string;
   public position: THREE.Vector3;
   public interactionRadius = 3.2;
+  private mixer: THREE.AnimationMixer | null = null;
 
   constructor(id: string, name: string, position: THREE.Vector3) {
     this.id = id;
@@ -180,7 +181,7 @@ export class NPC {
     // Caricamento asincrono del modello 3D cartoon di Nonna Bussola (KayKit Mage CC0)
     AssetManager.getInstance()
       .loadModel('mage', '/models/Mage.glb')
-      .then((model) => {
+      .then(async (model) => {
         if (model) {
           const inst = AssetManager.getInstance().instantiate('mage');
           if (inst) {
@@ -188,6 +189,22 @@ export class NPC {
             inst.position.set(0, 0, 0);
             AssetManager.getInstance().applyCartoonShading(inst, stepGradMap);
             characterGroup.add(inst);
+
+            // Carica animazioni generali per animare Nonna Bussola (idle naturale, fine T-pose)
+            const anims = await AssetManager.getInstance().loadAnimations(
+              'npc_general',
+              '/models/Rig_Medium_General.glb'
+            );
+            if (anims && anims.length > 0) {
+              this.mixer = new THREE.AnimationMixer(inst);
+              const idleClip = anims.find((c) => c.name.toLowerCase().includes('idle')) || anims[0];
+              if (idleClip) {
+                const action = this.mixer.clipAction(idleClip);
+                action.setLoop(THREE.LoopRepeat, Infinity);
+                action.play();
+              }
+            }
+
             // Nasconde la versione procedurale primitiva quando il modello 3D è pronto
             proceduralMeshGroup.visible = false;
           }
@@ -306,6 +323,12 @@ export class NPC {
     tableGroup.add(compBox);
 
     this.group.add(tableGroup);
+  }
+
+  public update(dt: number): void {
+    if (this.mixer) {
+      this.mixer.update(dt);
+    }
   }
 
   public interact(dialogueSystem: DialogueSystem, questSystem: QuestSystem): void {

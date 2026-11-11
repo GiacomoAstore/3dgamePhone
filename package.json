@@ -1,6 +1,6 @@
 {
   "name": "brumavento",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:chrome": "node tests/test_chrome_real.mjs",
+    "test:ui": "node tests/test_chrome_ui.mjs",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
   },

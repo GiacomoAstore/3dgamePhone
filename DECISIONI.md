@@ -253,3 +253,20 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
      - Integrata la palette `colormap.png` in `public/models/Textures/` e `public/Textures/` eliminando i 404 e gli errori del GLTFLoader.
 - **Conseguenze**:
   Aderenza perfetta al suolo verificata con test automatici E2E in Google Chrome reale, zero errori in console, 90-115 FPS e resa grafica cartoon coerente e rifinita.
+
+---
+
+## ADR 012 - Suite di Test End-to-End per l'Interfaccia Utente (UI) su Chrome e Animazione Naturale per gli NPC (v0.3.7)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  L'utente ha richiesto una verifica completa e mirata dell'interfaccia utente su Google Chrome ("devi fare i test ui su chrome"), allegando screenshot che evidenziavano la presenza di Nonna Bussola bloccata in T-pose durante l'interazione.
+- **Decisione**:
+  1. **Suite di Test UI su Chrome (`tests/test_chrome_ui.mjs` e `npm run test:ui`)**:
+     - Verifica automatizzata di tutti gli 8 flussi UI: Start Screen, Top Bar HUD, Modal Guida Controlli, Modal Diario, Modal Impostazioni, Interaction Prompt pill, Dialogue Box e Responsive Layout Mobile (390x844).
+     - Cattura automatica e archiviazione di 10 screenshot in `tests/ui_screenshots/`.
+  2. **Animazione Idle e Rigging degli NPC (`NPC.ts`)**:
+     - Condivisione delle tracce di animazione `Rig_Medium_General.glb` tra Pip e Nonna Bussola (che condividono il medesimo rig scheletrico KayKit).
+     - Aggiunta di `AnimationMixer` e clip `Idle_A` in loop infinito per Nonna Bussola, con chiamata `this.nonnaBussola.update(dt)` nel loop principale.
+- **Conseguenze**:
+  Copertura E2E totale dell'esperienza utente in-browser, assenza di difetti visivi (T-pose eliminata) e validazione visiva su layout sia desktop che smartphone.

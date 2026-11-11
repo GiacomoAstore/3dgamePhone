@@ -1,7 +1,7 @@
 # Roadmap & Backlog (TODO)
 
 <!--
-Ultima modifica: 2026-11-11 - v0.3.6 - Test E2E Chrome Reale, Binding Altimetrico e Palette Kenney
+Ultima modifica: 2026-11-11 - v0.3.7 - Test UI Chrome, Animazione NPC Idle e Risoluzione T-Pose
 -->
 
 ## 🏁 Fasi Completate
@@ -50,6 +50,8 @@ Ultima modifica: 2026-11-11 - v0.3.6 - Test E2E Chrome Reale, Binding Altimetric
 - [x] **Verifica Contrasto Notturno WCAG 2.1**: Test matematico relativo alle luminanze ITU-R BT.709 che prova contrasto silhouette $\ge 3.0:1$ e contorno $\ge 3.5:1$.
 - [x] **Suite di Test Completa**: 75 test in 19 file, tutti verdi (`npm test`).
 - [x] **Test E2E Reale su Google Chrome (`npm run test:chrome`)**: Suite automatizzata su Chrome headless reale via CDP che valida WebGL, spawn physically grounded, input WASD/movimento, interazione dialogo con Nonna Bussola e cattura screenshot ad alta risoluzione senza errori JS.
+- [x] **Suite di Test UI Completa su Chrome (`npm run test:ui`)**: Validazione automatizzata di tutti gli 8 componenti UI (Start Screen, HUD, Modal Guida, Modal Diario, Modal Impostazioni, Interaction Badge, Dialogue Box e Responsive Mobile 390x844).
+- [x] **Eliminazione T-Pose Nonna Bussola**: Animazione scheletrica `Idle_A` in loop continuo integrata nell'NPC.
 - [x] **Checklist di Verifica Manuale**: File `tests/MANUAL_CHECKLIST.md` creato per la validazione fisica su smartphone e desktop.
 
 ---
