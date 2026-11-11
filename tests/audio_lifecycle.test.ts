@@ -12,6 +12,9 @@ describe('AudioSystem Lifecycle & Autoplay Policy', () => {
   const mockResume = vi.fn(async () => {
     mockState = 'running';
   });
+  const mockSuspend = vi.fn(async () => {
+    mockState = 'suspended';
+  });
 
   const mockAudioContext = vi.fn().mockImplementation(() => ({
     get state() {
@@ -52,11 +55,13 @@ describe('AudioSystem Lifecycle & Autoplay Policy', () => {
       connect: vi.fn(),
     })),
     resume: mockResume,
+    suspend: mockSuspend,
   }));
 
   beforeEach(() => {
     mockState = 'suspended';
     mockResume.mockClear();
+    mockSuspend.mockClear();
     vi.stubGlobal('AudioContext', mockAudioContext);
     vi.stubGlobal('window', {
       AudioContext: mockAudioContext,
@@ -106,5 +111,26 @@ describe('AudioSystem Lifecycle & Autoplay Policy', () => {
     await audio.handleVisibilityChange(true);
 
     expect(mockResume).not.toHaveBeenCalled();
+  });
+
+  it('NON chiama resume al ritorno alla visibilità se la pausa di gioco è attiva', async () => {
+    const audio = new AudioSystem();
+    await audio.unlockAudio();
+    expect(audio.getIsUnlocked()).toBe(true);
+    expect(mockResume).toHaveBeenCalledTimes(1);
+
+    // Mette il gioco in pausa
+    audio.setPaused(true);
+    expect(audio.getIsPaused()).toBe(true);
+
+    // Simula passaggio in background
+    mockState = 'suspended';
+
+    // Ritorno alla visibilità con pausa ATTIVA
+    await audio.handleVisibilityChange(true);
+
+    // mockResume NON deve essere stato invocato una seconda volta!
+    expect(mockResume).toHaveBeenCalledTimes(1);
+    expect(audio.getContextState()).toBe('suspended');
   });
 });

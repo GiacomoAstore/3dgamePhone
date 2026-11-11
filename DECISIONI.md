@@ -377,4 +377,28 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
 - **Raffinamento Soglia Auto-Degrade**:
   La soglia di declassamento è formalizzata a **28 FPS** calcolata come **media mobile ponderata su finestra continua di 5.0 secondi** (`AutoDegradeMonitor.ts`), escludendo pausa, schede nascoste (`document.hidden`), benchmark e warm-up iniziale (5.0s), evitando declassamenti su macchine stabili a 30 FPS.
 
+---
+
+## ADR 017 - Service Worker Nativo PWA, Riduzione Shadow Casters in Media (<100 Calls) e Ciclo di Vita Audio con Pausa (v0.4.0)
+- **Data**: 2026-11-11
+- **Stato**: Approvata
+- **Contesto**:
+  In preparazione alla Fase 4, è necessario garantire:
+  1. Il rispetto del budget totale di draw call (<100) anche nel profilo grafico Media, finora gravato da 116 chiamate nella shadow pass.
+  2. L'esclusione di riprese audio involontarie (`resume()`) al ritorno alla visibilità mobile se la pausa di gioco è attiva.
+  3. L'architettura PWA per l'esecuzione offline e l'aggiornamento controllato senza dipendenze opache (come workbox).
+- **Decisione**:
+  1. **Riduzione Selettiva Caster d'Ombra nel Profilo Media**:
+     - In Media, la shadow pass viene ristretta esclusivamente alle mesh volumetriche dei personaggi (Pip e Nonna Bussola), disattivando le ombre sugli elementi scenici statici (alberi, cespugli, rocce, pontile).
+     - *Risultato*: i shadow caster scendono a 5, la shadow pass richiede sole 5 chiamate, portando il totale del profilo Media a **95 draw call totali** (ampiamente <100). Bassa rimane a **90 draw call totali**.
+  2. **Ciclo di Vita Audio con Stato di Pausa**:
+     - `AudioSystem.handleVisibilityChange(isVisible)` verifica rigorosamente `isPaused`. Se il gioco è in pausa, il ritorno alla visibilità NON invoca `resume()`, preservando il silenzio assoluto e azzerando i consumi finché l'utente non seleziona "Riprendi".
+  3. **Service Worker Nativo Scritto a Mano**:
+     - Si adotta un Service Worker nativo versionato (`brumavento-cache-v0.4.0`) privo di dipendenze esterne.
+     - Strategia *Cache-First* per file statici e modelli 3D con query string versionata o hash; strategia *Network-First* per `index.html`.
+     - Nessun ricaricamento forzato in-game su `updatefound` senza previo salvataggio sincrono immediato.
+- **Conseguenze**:
+  Draw call conformi al budget in Bassa e Media, audio robusto al 100% su mobile, architettura PWA trasparente, controllabile e testabile via `adb reverse`.
+
+
 

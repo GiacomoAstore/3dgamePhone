@@ -2,7 +2,6 @@
   "atmosphere": {
     "fog": {
       "initialDensity": 0.018,
-      "restoredDensity": 0.008,
       "minDensity": 0.005,
       "densityByFragments": {
         "0": 0.018,

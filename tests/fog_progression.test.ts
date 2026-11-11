@@ -70,4 +70,31 @@ describe('Progressione Densità Nebbia basata su Frammenti (environment.json)', 
 
     expect(env.getTargetDensity()).toBeGreaterThanOrEqual(envConfig.atmosphere.fog.minDensity);
   });
+
+  it('dovrebbe far evolvere il colore della nebbia proporzionalmente al progresso dei frammenti', () => {
+    const scene = new THREE.Scene();
+    const env = new Environment(scene);
+
+    const initialColor = new THREE.Color(envConfig.atmosphere.fog.initialColor);
+    const restoredColor = new THREE.Color(envConfig.atmosphere.fog.restoredColor);
+
+    // 0 frammenti -> colore iniziale identico a initialColor
+    env.triggerIslandRestoration(0, 7);
+    expect(env.getTargetFogColor().getHexString()).toBe(initialColor.getHexString());
+    expect(env.getRestorationProgress()).toBe(0);
+
+    // 1 frammento -> progresso 1/7 (~0.143)
+    env.triggerIslandRestoration(1, 7);
+    const expectedColor1 = initialColor.clone().lerp(restoredColor, 1 / 7);
+    expect(env.getTargetFogColor().r).toBeCloseTo(expectedColor1.r, 3);
+    expect(env.getTargetFogColor().g).toBeCloseTo(expectedColor1.g, 3);
+    expect(env.getTargetFogColor().b).toBeCloseTo(expectedColor1.b, 3);
+    expect(env.getRestorationProgress()).toBeCloseTo(1 / 7, 3);
+
+    // 7 frammenti -> colore finale identico a restoredColor
+    env.triggerIslandRestoration(7, 7);
+    expect(env.getTargetFogColor().getHexString()).toBe(restoredColor.getHexString());
+    expect(env.getRestorationProgress()).toBe(1.0);
+  });
 });
+

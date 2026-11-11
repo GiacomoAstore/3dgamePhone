@@ -297,7 +297,15 @@ export class Player {
     if (this.glbModel) {
       this.glbModel.traverse((c) => {
         if ((c as THREE.Mesh).isMesh) {
-          c.castShadow = quality !== 'low';
+          if (quality === 'low') {
+            c.castShadow = false;
+          } else if (quality === 'medium') {
+            // In Media: proiettano ombre solo le mesh volumetriche principali (busto e mantello)
+            const name = (c.name || '').toLowerCase();
+            c.castShadow = name.includes('body') || name.includes('cape');
+          } else {
+            c.castShadow = true;
+          }
         }
       });
     }

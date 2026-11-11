@@ -1,0 +1,11 @@
+{
+  "gameTitle": "Brumavento",
+  "gameVersion": "0.4.0",
+  "authorName": "Pip & Nonna Bussola dev team",
+  "authorNotice": "Modificabile liberamente dall'utente",
+  "safeSpawn": {
+    "x": 0.0,
+    "z": 2.0
+  },
+  "licenseNotice": "Licenza CC0 dichiarata (in attesa di verifica utente)"
+}

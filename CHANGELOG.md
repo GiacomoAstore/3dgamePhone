@@ -2,6 +2,60 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.4.0] - 2026-11-11
+
+### Aggiunto
+- **Riduzione Shadow Caster e Ottimizzazione Totale Draw Call Profilo Media (< 100)**:
+  - Ristretta la shadow pass in Media alle sole mesh volumetriche dei personaggi (`Player.ts`, `NPC.ts`), disattivando le ombre sugli elementi scenici statici dell'isola (`Island.ts`, `Collectibles.ts`).
+  - Misurazione totale: **Bassa: 90 draw calls**, **Media: 95 draw calls**, **Alta: 223 draw calls** (forward pass stabile a 90 per tutti).
+- **Tabella di Progressione e Viraggio Cromatico Nebbia (`Environment.ts` e `environment.json`)**:
+  - Densità della nebbia governata dalla tabella `densityByFragments` ($0 \rightarrow 0.018$, $1 \rightarrow 0.014$, $3 \rightarrow 0.010$, $7 \rightarrow 0.005 = \text{minDensity}$).
+  - Viraggio cromatico dinamico: interpolazione continua tra `initialColor` (`#a3b8cc`) e `restoredColor` (`#8ecae6`) in base al rapporto di frammenti raccolti. Rimossi rami di ripiego inutilizzati.
+  - Test unitari dedicati in `tests/fog_progression.test.ts`.
+- **Monitoraggio Auto-Degrade con Media Mobile su 5s e Soglia 28 FPS (`AutoDegradeMonitor.ts`)**:
+  - Modulo isolato con test unitari (`tests/auto_degrade_monitor.test.ts`).
+  - Esclusione rigorosa di warm-up (5.0s), pause, schede in background (`document.hidden`) e benchmark automatico.
+  - Nessun declassamento su dispositivi stabili a 30 FPS.
+- **Verifica Scheletrica NPC con Dimostrazione Bug e Posa Naturale (`tests/t_pose_bug_demonstration.test.ts`)**:
+  - Valori reali misurati: rest pose ratio = 0.000, idle animata ratio = 0.959 ($\ge 0.70$).
+  - Dimostrazione che il test fallisce riproducendo il bug del modello aggiunto prima del mixer.
+- **Generatore Asset Manifest in Fase di Build e Test di Coerenza (`scripts/generate_asset_manifest.mjs`, `tests/asset_manifest_coherence.test.ts`)**:
+  - Manifest JSON automatico con conteggio (13 file), pesi e checksum SHA-256 confrontato con `ASSETS.md`.
+  - Configurazione autore centralizzata in `src/data/config.json`.
+- **Protezione Audio su Ritorno alla Visibilità in Pausa (`AudioSystem.ts`, `tests/audio_lifecycle.test.ts`)**:
+  - Il metodo `handleVisibilityChange(true)` verifica `isPaused` e non invoca `resume()` se il gioco è in pausa.
+- **Checklist di Collaudo Manuale su Dispositivo Reale (`tests/MANUAL_CHECKLIST.md`)**:
+  - Dettaglio peso del caricamento iniziale (~3.0 MB non compresso, ~2.4 MB gzip, < 20% del budget di 15-20 MB).
+  - Protocollo di test step-by-step per task switcher, chiusura forzata ("swipe close") e ripristino stato.
+
+### Modificato
+- `package.json`, `VERSION`: avanzamento ufficiale a `0.4.0`.
+- `TODO.md`: prioritizzazione dei difetti D5 (Media), D7 (Bassa), D9 (Media), D10 (Bassa) sotto `## 🐛 Bug Noti & Difetti Aperti`.
+- `DECISIONI.md`: aggiunta ADR 017.
+
+### File toccati
+- `package.json`, `VERSION`: versione 0.4.0.
+- `src/core/Game.ts`: integrazione `AutoDegradeMonitor` e setQuality collezionabili.
+- `src/data/environment.json`: rimozione `restoredDensity`, tabella densità frammenti e colori.
+- `src/data/config.json`: configurazione autore e avvisi licenze.
+- `src/entities/Player.ts`, `src/entities/NPC.ts`, `src/world/Island.ts`, `src/entities/Collectibles.ts`: filtro selettivo caster d'ombra per profilo Media.
+- `src/systems/AudioSystem.ts`: gestione pausa e protezione visibilità.
+- `src/world/Environment.ts`: viraggio cromatico nebbia proporzionale ai frammenti e pulizia rami morti.
+- `scripts/generate_asset_manifest.mjs`: script di generazione manifest asset 3D.
+- `tests/altitude_grounding.test.ts`: test scheletrico con confronto rest pose e avanzamento temporale.
+- `tests/asset_manifest_coherence.test.ts`: test coerenza manifest vs `ASSETS.md`.
+- `tests/audio_lifecycle.test.ts`: test protezione audio su ritorno da background con pausa attiva.
+- `tests/auto_degrade_monitor.test.ts`: test media mobile 5s e soglia 28 FPS.
+- `tests/fog_progression.test.ts`: test densità e colore della nebbia per 0, 1, 3 e 7 frammenti.
+- `tests/t_pose_bug_demonstration.test.ts`: test regressione bug originale T-pose.
+- `tests/MANUAL_CHECKLIST.md`: checklist collaudo manuale smartphone e pesi.
+- `TODO.md`, `DECISIONI.md`, `CHANGELOG.md`: documentazione e allineamenti.
+
+### Motivo
+- Completamento delle correzioni e rimisurazioni preliminari richieste prima di avviare il codice della Fase 4.
+
+---
+
 ## [0.3.9] - 2026-11-11
 
 ### Aggiunto

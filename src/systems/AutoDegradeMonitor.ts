@@ -131,3 +131,4 @@ export class AutoDegradeMonitor {
     this.cooldownTimer = 0;
   }
 }
+

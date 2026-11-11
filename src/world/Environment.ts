@@ -35,6 +35,8 @@ export class Environment {
 
   private currentDensity = envConfig.atmosphere.fog.initialDensity;
   public targetDensity = envConfig.atmosphere.fog.initialDensity;
+  public targetFogColor = new THREE.Color(envConfig.atmosphere.fog.initialColor);
+  public restorationProgress = 0;
 
   private isRestoredState = false;
   private isTransitioning = false;
@@ -123,34 +125,47 @@ export class Environment {
    * Attiva l'effetto visibile di ritirata della nebbia e viraggio cromatico.
    * La densità target viene calcolata interrogando la tabella di densità per numero di frammenti
    * presente in environment.json, sempre vincolata dal limite minDensity.
+   * Anche la tonalità cromatica evolve proporzionalmente dal grigio nebbioso iniziale al turchese radioso.
    */
   public triggerIslandRestoration(collected: number, total: number): void {
-    const table = this.config.fog.densityByFragments as Record<string, number> | undefined;
+    const table = this.config.fog.densityByFragments as Record<string, number>;
     let target = this.config.fog.initialDensity;
 
-    if (table) {
-      const key = String(collected);
-      if (key in table) {
-        target = table[key];
-      } else if (total > 0) {
-        // Interpolazione lineare di sicurezza se il conteggio supera la tabella
-        const progress = Math.min(1, Math.max(0, collected / total));
-        target =
-          this.config.fog.initialDensity -
-          progress * (this.config.fog.initialDensity - this.config.fog.minDensity);
-      }
-    } else {
-      target = this.config.fog.restoredDensity;
+    const progress = total > 0 ? Math.min(1, Math.max(0, collected / total)) : 0;
+    this.restorationProgress = progress;
+
+    const key = String(collected);
+    if (key in table) {
+      target = table[key];
+    } else if (total > 0) {
+      // Interpolazione lineare di sicurezza se il conteggio supera la tabella
+      target =
+        this.config.fog.initialDensity -
+        progress * (this.config.fog.initialDensity - this.config.fog.minDensity);
     }
 
     // Rispetta tassativamente il limite minimo di densità
     this.targetDensity = Math.max(this.config.fog.minDensity, target);
+
+    // Progressione cromatica del colore della nebbia / atmosfera
+    const initialCol = new THREE.Color(this.config.fog.initialColor);
+    const restoredCol = new THREE.Color(this.config.fog.restoredColor);
+    this.targetFogColor.copy(initialCol).lerp(restoredCol, progress);
+
     this.isTransitioning = true;
     this.isRestoredState = collected > 0;
   }
 
   public getTargetDensity(): number {
     return this.targetDensity;
+  }
+
+  public getTargetFogColor(): THREE.Color {
+    return this.targetFogColor;
+  }
+
+  public getRestorationProgress(): number {
+    return this.restorationProgress;
   }
 
   /**

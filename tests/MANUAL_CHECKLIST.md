@@ -1,33 +1,76 @@
-# Checklist di Verifica Manuale - Brumavento
+# Checklist di Collaudo Manuale su Dispositivo Reale (Fase 4)
 
-Documento di riferimento per i test funzionali ed esperienziali su dispositivi fisici (smartphone touch e desktop).
-Questa checklist copre gli aspetti non automatizzabili nei test headless (touch reale, WebGL mobile, audio hardware, rendering toon).
-
-**Versione corrente:** 0.3.2  
-**Data revisione:** 2026-11-11  
+Documento di riferimento per i test fisici su smartphone (Android / iOS) e desktop touch.
 
 ---
 
-## Tabella delle Verifiche Manuali
+## 1. Budget e Peso del Caricamento Iniziale Totale
 
-| ID | Ambito | Procedura di Test | Criterio di Accettazione | Esito (Pass/Fail) | Dispositivo / Browser | Note & Osservazioni |
-|:---|:---|:---|:---|:---:|:---|:---|
-| **MAN-01** | **Connessione Wi-Fi Mobile** | Avviare `npm run preview -- --host 0.0.0.0 --port 5173` su PC. Aprire l'indirizzo IP del PC (es. `http://192.168.1.X:5173`) da smartphone connesso allo stesso Wi-Fi. | La pagina iniziale di Brumavento si carica entro 3 secondi senza schermate nere o errori di connessione. | [ ] | Smartphone Android / iOS | In caso di blocco, verificare firewall Windows e disattivare isolamento AP sul router. |
-| **MAN-02** | **Multi-Touch Simultaneo** | Con il pollice sinistro muovere il joystick virtuale; contemporaneamente, con il pollice destro, ruotare la visuale o toccare il pulsante salto (⤴). | Il movimento di Pip non si interrompe mentre si ruota la telecamera o si salta. Zero interferenze tra tocchi. | [ ] | Touchscreen | Verificabile con `?debug=1` per visualizzare i touch identifier tracciati da `TouchOverlay`. |
-| **MAN-03** | **Sblocco Audio al 1° Tocco** | Caricare la pagina (inizialmente silenziosa per autoplay policy). Toccare "Inizia Esplorazione" o lo schermo. | Il motore audio Web Audio si attiva istantaneamente: si ode la brezza marina e le onde in sottofondo. | [ ] | Mobile / Desktop | Nessun errore audio in console; volume regolabile dal menu impostazioni (⚙️). |
-| **MAN-04** | **Ciclo di Vita Audio (Background)** | Con il gioco avviato e audio attivo, cambiare scheda nel browser o minimizzare l'app per 10 secondi, poi riaprirla. | L'AudioContext non resta muto o bloccato: al ritorno in primo piano l'audio riprende regolarmente. | [ ] | Safari iOS / Chrome Android | Gestito da `visibilitychange` in `AudioSystem.ts`. |
-| **MAN-05** | **Contorno Toon Pip (Silhouette)** | Osservare Pip su sfondo erboso e sabbioso durante il giorno e durante la notte. | Il corpo e la testa hanno un sottile contorno scuro Inverted Hull (`#162238`) che stacca la figura dal suolo. | [ ] | Schermo IPS / OLED | Contrasto misurato: >= 3.5:1 verso l'erba e >= 4.5:1 verso il cappotto. |
-| **MAN-06** | **Disattivazione Outline (Profilo Bassa)** | Aprire Impostazioni (⚙️) e selezionare "Bassa". Osservare Pip. Poi rimettere "Media" o "Alta". | Su "Bassa" il contorno scompare (riduzione draw calls per GPU modeste). Su "Media/Alta" il contorno riappare. | [ ] | Dispositivo di test | Confermato dal test `tests/debug_and_benchmark.test.ts`. |
-| **MAN-07** | **Contrasto e Leggibilità Notturna** | Nelle Impostazioni attivare "Notti Chiare" o attendere la fase notturna. | Il terreno dell'isola, la sagoma dei monoliti e la posizione di Pip rimangono chiaramente distinguibili anche sotto luce riflessa. | [ ] | Smartphone all'aperto / in stanza illuminata | Intensità ambientale minima garantita a 0.65. |
-| **MAN-08** | **Auto-Degrade con Annulla** | Forzare lag o simulare FPS < 26 per oltre 5 secondi su profilo Alta. | Compare il toast "⚡ Qualità grafica ridotta a MEDIA". Cliccando "Annulla", il profilo torna ad ALTA con 60s di cooldown. | [ ] | Dispositivo con thermal throttling o FPS limitati | L'auto-degrade non si attiva nei primi 5s né con scheda in background. |
-| **MAN-09** | **Benchmark Ripetibile (30s)** | Aprire l'URL con `?benchmark=1` (es. `http://localhost:5173/?benchmark=1`). Non toccare lo schermo per 30 secondi. | La camera segue un'orbita deterministica attorno all'isola; al termine compare il report con FPS medio, min, 1% low, draw calls e triangoli. | [ ] | Dispositivo di riferimento | Permette confronti oggettivi tra diverse build e profili. |
-| **MAN-10** | **Copia Report & Fallback HTTP** | Nel pannello di debug/benchmark cliccare "Copia Report" su connessione HTTP non protetta (`http://192.168.x.x`). | Se gli appunti di sistema sono inaccessibili, si apre il modal con `<textarea>` selezionabile e pulsante "Seleziona Tutto". | [ ] | Browser mobile su rete locale | Nessun blocco silencioso o perdita del testo del report. |
-| **MAN-11** | **Salita Pendenze e Ground Snapping** | Correre con Pip su per il pendio dell'isola verso l'Osservatorio e poi ridiscendere verso la spiaggia. | Pip non si incastra contro il terreno salendo le pendenze; in discesa non si verificano sfarfallii o scatti di caduta/atterraggio continui. | [ ] | Tastiera WASD / Joystick touch | Risolto con threshold normale $Y \ge 0.55$ e tolleranza snap estesa a $0.50\,\text{m}$. |
-| **MAN-12** | **Guida Controlli HUD & Modal** | Cliccare il pulsante "❓ Controlli" o premere `H` sulla tastiera; verificare anche la barra tasti permanente in basso a sinistra. | Il modal dei controlli illustrato si apre sospendendo l'input di gioco; alla chiusura Pip riprende il controllo regolarmente. | [ ] | Desktop / Smartphone | Text rendering in `textContent`, layout responsive. |
+| Componente | Dimensione Non Compressa | Dimensione Trasferita (Gzip) | Note |
+| :--- | :---: | :---: | :--- |
+| **`index.html`** | 9.7 KB | 2.7 KB | Entrypoint HTML con scheletro UI |
+| **`index-[hash].css`** | 11.1 KB | 2.8 KB | Stili CSS, HUD, modali e dialoghi cartoon |
+| **`index-[hash].js`** | 773.9 KB | 204.3 KB | Bundle TypeScript, Three.js, BVH e logica di gioco |
+| **Texture Palette (`colormap.png`)** | 9.8 KB | 9.8 KB | Texture unica condivisa modelli Kenney |
+| **Pip (`Rogue_Hooded.glb`)** | 372.5 KB | 372.5 KB | Modello 3D protagonista |
+| **Nonna Bussola (`Mage.glb`)** | 344.2 KB | 344.2 KB | Modello 3D NPC osservatorio |
+| **Rig Animazioni (`General` + `Movement`)** | 1.48 MB | 1.48 MB | Clip `Idle_A`, `Running_A`, `Walking_A` |
+| **TOTALE CARICAMENTO INIZIALE** | **~3.0 MB** | **~2.4 MB** | **Ampiamente entro il budget di 15-20 MB (< 20%)** |
 
 ---
 
-## Note per il Tester
-- Quando si compila la tabella, indicare il modello esatto del dispositivo (es. *Google Pixel 7*, *iPhone 13*, *Samsung Galaxy A53*) e il browser utilizzato.
-- Per inviare i risultati del benchmark, incollare il report generato da `?benchmark=1` direttamente nella discussione o annotarlo in `CHANGELOG.md`.
+## 2. Protocollo di Test Manuale su Smartphone (Android / iOS)
 
+### Prerequisiti:
+1. Smartphone Android collegato al PC con cavo USB (Debug USB attivo).
+2. Da terminale PC eseguire:
+   ```bash
+   adb reverse tcp:5173 tcp:5173
+   ```
+3. Aprire Google Chrome su Android e navigare all'indirizzo: `http://localhost:5173`.
+   *(Su iOS Safari: avviare un tunnel sicuro HTTPS locale o server locale autorizzato).*
+
+---
+
+### Step 1: Installazione PWA e Schermata Home
+- [ ] Verificare che compaia il prompt del browser "Aggiungi a schermata Home" o che sia selezionabile dal menu di Chrome.
+- [ ] Aggiungere l'app: verificare che l'icona cartoon di Brumavento e il nome appaiano correttamente nel launcher dello smartphone.
+- [ ] Avviare Brumavento dall'icona nella schermata Home: verificare che si apra in modalità `standalone` a tutto schermo (senza barra degli indirizzi o controlli del browser).
+
+---
+
+### Step 2: Test Lifecycle "Swipe-Close" dal Task Switcher (Verifica Salvataggio)
+1. Cliccare su **"Nuova Partita"** nel menu principale.
+2. Parlare con Nonna Bussola all'osservatorio per avviare la quest della lanterna.
+3. Camminare con il joystick virtuale fino all'antico cerchio di pietre della scogliera $(18, -15)$.
+4. Accendere la Lanterna Magica (tasto `F` o icona lanterna) e raccogliere il 1° Frammento dell'Atlante Vivo.
+5. Verificare che compaia il messaggio di notifica "Frammento raccolto!".
+6. **Azione critica di chiusura improvvisa**:
+   - Senza aprire menu di pausa, aprire il **Task Switcher** dello smartphone (swipe verso l'alto o tasto multitasking).
+   - Chiudere forzatamente l'app/scheda con uno swipe deciso verso l'alto (interrompendo il processo di sistema).
+7. **Riapertura e Ripresa**:
+   - Riaprire Brumavento dalla schermata Home.
+   - Verificare che il menu principale mostri il pulsante **"Continua"** abilitato con l'indicazione dei progressi (es. *"Frammenti: 1/7"*).
+   - Cliccare **"Continua"**.
+8. **Verifica dello Stato di Gioco**:
+   - [ ] Pip compare esattamente nella posizione in cui si trovava presso il cerchio di pietre.
+   - [ ] Pip è solidamente a terra (quota $y$ ricalcolata correttamente da `getTerrainHeight`, nessun sprofondamento né galleggiamento).
+   - [ ] L'inventario contiene 1 frammento raccolto.
+   - [ ] La nebbia ha densità ridotta a `0.014` (invece di `0.018`).
+   - [ ] L'obiettivo della quest indica correttamente: *"Torna da Nonna Bussola per completare la prima sezione dell'Atlante"*.
+
+---
+
+### Step 3: Test Menu di Pausa e Sospensione Audio
+- [ ] Con la musica o l'effetto delle onde attivo, premere l'icona "Pausa" in alto a destra.
+- [ ] Verificare che il gioco si fermi (Pip e volpe congelati).
+- [ ] Verificare che l'audio sia istantaneamente e totalmente muto (zero sibili o consumi in background).
+- [ ] Cambiare app o bloccare lo schermo del telefono.
+- [ ] Sbloccare lo schermo e tornare a Brumavento: **verificare che l'audio rimanga muto finché non si preme "Riprendi"**.
+- [ ] Premere "Riprendi": verificare che il movimento e l'audio ripartano fluidamente.
+
+---
+
+### Step 4: Accessibilità Touch
+- [ ] Verificare che tutti i pulsanti (Start, Opzioni, Diario, Risposte di dialogo, Pausa) abbiano un'area di tocco confortevole $\ge 44 \times 44\,\text{px}$.
+- [ ] Verificare che il joystick virtuale non scivoli né si blocchi durante rapide virate con il pollice.

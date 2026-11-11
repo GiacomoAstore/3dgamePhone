@@ -255,4 +255,13 @@ export class CollectiblesManager {
   public getItems(): RuntimeCollectible[] {
     return this.items;
   }
+
+  public setQuality(quality: 'low' | 'medium' | 'high'): void {
+    const enableShadows = quality === 'high';
+    this.group.traverse((c) => {
+      if ((c as THREE.Mesh).isMesh) {
+        c.castShadow = enableShadows;
+      }
+    });
+  }
 }

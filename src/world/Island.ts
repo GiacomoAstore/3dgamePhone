@@ -718,10 +718,13 @@ export class Island {
   }
 
   public setQuality(quality: QualityPreset): void {
-    const enableShadows = quality !== 'low';
+    // In Alta: tutti gli elementi scenici proiettano ombre complete.
+    // In Media e Bassa: gli elementi statici dell'isola NON proiettano ombre dinamiche,
+    // azzerando la shadow pass su decine di mesh e contenendo le draw call totali sotto 100.
+    const enableSceneryShadows = quality === 'high';
     this.group.traverse((c) => {
       if ((c as THREE.Mesh).isMesh || (c as THREE.InstancedMesh).isInstancedMesh) {
-        c.castShadow = enableShadows;
+        c.castShadow = enableSceneryShadows;
       }
     });
   }

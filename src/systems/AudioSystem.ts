@@ -16,6 +16,7 @@ export interface AudioSystemOptions {
 export class AudioSystem {
   private ctx: AudioContext | null = null;
   private isUnlocked = false;
+  private isPaused = false;
   private masterGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private ambientGain: GainNode | null = null;
@@ -446,7 +447,25 @@ export class AudioSystem {
     }
   }
 
+  public setPaused(paused: boolean): void {
+    this.isPaused = paused;
+    if (this.isPaused && this.ctx && this.ctx.state === 'running') {
+      this.ctx.suspend().catch(() => {});
+    } else if (!this.isPaused && this.isUnlocked && this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  public getIsPaused(): boolean {
+    return this.isPaused;
+  }
+
   public async handleVisibilityChange(isVisible: boolean): Promise<void> {
+    // Se la pausa di gioco è attiva, la visibilità NON deve riavviare l'audio
+    if (this.isPaused) {
+      return;
+    }
+
     if (isVisible && this.isUnlocked && this.ctx) {
       if (this.ctx.state === 'suspended' || (this.ctx.state as string) === 'interrupted') {
         try {
@@ -455,6 +474,10 @@ export class AudioSystem {
           console.warn('[AudioSystem] Ripresa AudioContext fallita:', err);
         }
       }
+    } else if (!isVisible && this.ctx && this.ctx.state === 'running') {
+      try {
+        await this.ctx.suspend();
+      } catch {}
     }
   }
 

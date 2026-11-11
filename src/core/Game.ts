@@ -481,6 +481,10 @@ export class Game {
     if (this.nonnaBussola) {
       this.nonnaBussola.setQuality(quality);
     }
+
+    if (this.collectiblesManager) {
+      this.collectiblesManager.setQuality(quality);
+    }
   }
 
   public getCurrentFps(): number {

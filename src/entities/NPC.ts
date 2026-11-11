@@ -355,10 +355,29 @@ export class NPC {
   }
 
   public setQuality(quality: QualityPreset): void {
-    const enableShadows = quality !== 'low';
+    const isLow = quality === 'low';
+    const isMedium = quality === 'medium';
     this.group.traverse((c) => {
       if ((c as THREE.Mesh).isMesh) {
-        c.castShadow = enableShadows;
+        if (isLow) {
+          c.castShadow = false;
+        } else if (isMedium) {
+          // In Media, solo le mesh volumetriche del personaggio (busto e mantello) proiettano ombra
+          let p: THREE.Object3D | null = c;
+          let isChar = false;
+          while (p && p !== this.group) {
+            const name = (p.name || '').toLowerCase();
+            if (name.includes('mage') || name.includes('character') || name.includes('nonna')) {
+              isChar = true;
+              break;
+            }
+            p = p.parent;
+          }
+          const meshName = (c.name || '').toLowerCase();
+          c.castShadow = isChar && (meshName.includes('body') || meshName.includes('cape'));
+        } else {
+          c.castShadow = true;
+        }
       }
     });
   }
