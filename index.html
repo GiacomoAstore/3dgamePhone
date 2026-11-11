@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#1a2332" />
     <title>Brumavento - L'Arcipelago della Nebbia</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -35,6 +36,9 @@
           <button id="btn-hud-settings" class="hud-pill btn-settings" aria-label="Impostazioni di Gioco">
             <span class="icon">⚙️</span>
           </button>
+          <button id="btn-hud-pause" class="hud-pill btn-pause" aria-label="Menu di Pausa">
+            <span class="icon">⏸️</span>
+          </button>
           <div class="hud-pill badge-fps" id="fps-counter">60 FPS</div>
         </div>
       </header>
@@ -53,14 +57,19 @@
 
       <!-- Schermata di caricamento / inizio -->
       <div id="start-screen" class="screen-overlay">
-        <div class="dialog-card">
+        <div class="dialog-card start-menu-card">
           <h1>Brumavento</h1>
           <p class="subtitle">L'Arcipelago della Nebbia</p>
           <div class="instructions">
-            <p><strong>Desktop:</strong> WASD o Frecce per muoverti, Spazio per saltare, Mouse per ruotare la visuale, E per interagire/lanterna, Tab per il Diario.</p>
-            <p><strong>Smartphone:</strong> Joystick virtuale a sinistra, pulsanti azione/salto a destra, trascina lo schermo a destra per la visuale, icona 📖 per il Diario.</p>
+            <p><strong>Desktop:</strong> WASD o Frecce per muoverti, Spazio per saltare, Mouse per ruotare la visuale, E per interagire/lanterna, Tab per il Diario, Esc per Pausa.</p>
+            <p><strong>Smartphone:</strong> Joystick virtuale a sinistra, pulsanti azione/salto a destra, trascina lo schermo a destra per la visuale, icona 📖 per il Diario, ⏸️ per Pausa.</p>
           </div>
-          <button id="btn-start" class="primary-button">Inizia Esplorazione</button>
+          <div class="start-button-group">
+            <button id="btn-continue" class="primary-button menu-btn hidden">▶️ Continua Partita</button>
+            <button id="btn-start" class="primary-button menu-btn">✨ Nuova Partita</button>
+            <button id="btn-start-options" class="secondary-button menu-btn">⚙️ Opzioni & Qualità</button>
+            <button id="btn-start-credits" class="secondary-button menu-btn">📜 Crediti</button>
+          </div>
         </div>
       </div>
 

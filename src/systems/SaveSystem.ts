@@ -41,6 +41,9 @@ export interface InventorySaveData {
   fragmentsCollected: number;
   notesCollected: number;
   activeCompass: boolean;
+  seashells?: number;
+  mushrooms?: number;
+  starfish?: number;
   items: string[];
 }
 
@@ -48,6 +51,7 @@ export interface QuestSaveData {
   activeQuestId: string;
   stageIndex: number;
   completedQuestIds: string[];
+  questStages?: Record<string, number>;
 }
 
 export interface DialogueSaveData {
@@ -295,6 +299,9 @@ export class SaveSystem {
     const inv = candidate.inventory || ({} as Partial<InventorySaveData>);
     const fragmentsCollected = Math.max(0, Math.min(7, typeof inv.fragmentsCollected === 'number' ? inv.fragmentsCollected : 0));
     const notesCollected = Math.max(0, typeof inv.notesCollected === 'number' ? inv.notesCollected : 0);
+    const seashells = typeof inv.seashells === 'number' && inv.seashells >= 0 ? inv.seashells : 0;
+    const mushrooms = typeof inv.mushrooms === 'number' && inv.mushrooms >= 0 ? inv.mushrooms : 0;
+    const starfish = typeof inv.starfish === 'number' && inv.starfish >= 0 ? inv.starfish : 0;
     const activeCompass = Boolean(inv.activeCompass);
     const validItems: string[] = Array.isArray(inv.items)
       ? inv.items.filter((it) => typeof it === 'string' && it.length > 0 && it.length < 64)
@@ -307,6 +314,14 @@ export class SaveSystem {
     const completedQuestIds = Array.isArray(q.completedQuestIds)
       ? q.completedQuestIds.filter((cid) => typeof cid === 'string')
       : [];
+    const questStages: Record<string, number> = {};
+    if (q.questStages && typeof q.questStages === 'object') {
+      for (const [k, v] of Object.entries(q.questStages)) {
+        if (typeof k === 'string' && typeof v === 'number') {
+          questStages[k] = v;
+        }
+      }
+    }
 
     // Controllo di coerenza logica: se quest_1 è completata, deve esserci almeno 1 frammento
     let consistentFragments = fragmentsCollected;
@@ -345,12 +360,16 @@ export class SaveSystem {
         fragmentsCollected: consistentFragments,
         notesCollected,
         activeCompass,
+        seashells,
+        mushrooms,
+        starfish,
         items: validItems,
       },
       quest: {
         activeQuestId,
         stageIndex,
         completedQuestIds,
+        questStages,
       },
       dialogue: {
         visitedNodeIds,

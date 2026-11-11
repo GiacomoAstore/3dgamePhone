@@ -200,4 +200,25 @@ export class QuestSystem {
     globalEventBus.emit('quest-updated', this.getActiveQuestInfo());
     globalEventBus.emit('inventory-updated', this.getInventoryStats());
   }
+
+  /**
+   * Resetta lo stato delle missioni e dell'inventario ai valori iniziali di Nuova Partita.
+   */
+  public reset(): void {
+    this.state = {
+      activeQuestId: 'quest_1',
+      questStages: { quest_1: 0 },
+      completedQuests: [],
+      fragmentsCollected: 0,
+      totalFragments: 7,
+      inventory: {
+        seashells: 0,
+        mushrooms: 0,
+        starfish: 0,
+      },
+      timeInCurrentStage: 0,
+    };
+    globalEventBus.emit('quest-updated', this.getActiveQuestInfo());
+    globalEventBus.emit('inventory-updated', this.getInventoryStats());
+  }
 }

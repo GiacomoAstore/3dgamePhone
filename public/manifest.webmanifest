@@ -1,0 +1,17 @@
+{
+  "name": "Brumavento - L'Arcipelago della Nebbia",
+  "short_name": "Brumavento",
+  "description": "Gioco 3D cartoon di esplorazione rilassante per smartphone e desktop.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a2332",
+  "theme_color": "#1a2332",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

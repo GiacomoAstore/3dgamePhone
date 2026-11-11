@@ -31,6 +31,16 @@ import { QualitySettingsUI } from '../ui/QualitySettingsUI';
 import { NotificationBanner } from '../ui/NotificationBanner';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { AutoDegradeMonitor, AUTO_DEGRADE_CONFIG } from '../systems/AutoDegradeMonitor';
+import {
+  SaveSystem,
+  CURRENT_SCHEMA_VERSION,
+  CURRENT_GAME_VERSION,
+  type SaveData,
+} from '../systems/SaveSystem';
+import { PauseMenuUI } from '../ui/PauseMenuUI';
+import { CreditsUI } from '../ui/CreditsUI';
+import { ConfirmModalUI } from '../ui/ConfirmModalUI';
+import gameConfig from '../data/config.json';
 
 export type QualityPreset = 'low' | 'medium' | 'high';
 
@@ -64,6 +74,9 @@ export class Game {
   public qualitySettingsUI!: QualitySettingsUI;
   public notificationBanner!: NotificationBanner;
   public debugOverlay!: DebugOverlay;
+  public pauseMenuUI!: PauseMenuUI;
+  public creditsUI!: CreditsUI;
+  public saveSystem = SaveSystem.getInstance();
 
   private clock: THREE.Clock;
   private isRunning = false;
@@ -218,7 +231,60 @@ export class Game {
       }
     });
 
-    // 8. Eventi di sospensione comandi e resize
+    // 9. Modale Crediti e Menu di Pausa (Fase 4)
+    this.creditsUI = new CreditsUI();
+    this.pauseMenuUI = new PauseMenuUI({
+      onResume: () => {
+        this.isPaused = false;
+        this.inputManager.setBlocked(false);
+        this.audioSystem.setPaused(false);
+      },
+      onSave: () => {
+        this.saveGame(false);
+      },
+      onOpenSettings: () => {
+        this.qualitySettingsUI.open();
+      },
+      onOpenHelp: () => {
+        toggleHelp();
+      },
+      onReturnToMainMenu: () => {
+        this.returnToMainMenu();
+      },
+    });
+
+    const btnPause = document.getElementById('btn-hud-pause');
+    btnPause?.addEventListener('click', () => {
+      this.pauseMenuUI.toggle();
+      if (this.pauseMenuUI.getIsOpen()) {
+        this.isPaused = true;
+        this.inputManager.setBlocked(true);
+        this.audioSystem.setPaused(true);
+      }
+    });
+    btnPause?.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.pauseMenuUI.toggle();
+      if (this.pauseMenuUI.getIsOpen()) {
+        this.isPaused = true;
+        this.inputManager.setBlocked(true);
+        this.audioSystem.setPaused(true);
+      }
+    });
+
+    // Configurazione salvataggio automatico (ciclo di vita e eventi di gioco)
+    this.saveSystem.initLifecycleAutosave(() => this.createSavePayload());
+    globalEventBus.on('quest-updated', () => {
+      if (this.isRunning) this.saveGame(true);
+    });
+    globalEventBus.on('inventory-updated', () => {
+      if (this.isRunning) this.saveGame(true);
+    });
+    globalEventBus.on('dialogue-closed', () => {
+      if (this.isRunning) this.saveGame(true);
+    });
+
+    // 10. Eventi di sospensione comandi e resize
     this.initPauseAndBlockListeners();
     window.addEventListener('resize', () => this.onWindowResize());
   }
@@ -288,6 +354,8 @@ export class Game {
   public start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.isPaused = false;
+    this.audioSystem.setPaused(false);
     this.clock.start();
     this.stateManager.setState(GameState.PLAYING);
     this.loop();
@@ -300,15 +368,11 @@ export class Game {
     if (!this.isRunning) return;
     requestAnimationFrame(this.loop);
 
-    const dt = this.clock.getDelta();
-
-    // Aggiornamento logica di gioco (update)
-    this.update(dt);
-
-    // Rendering a schermo (render)
+    const dt = Math.min(this.clock.getDelta(), 0.1);
+    if (!this.isPaused) {
+      this.update(dt);
+    }
     this.render();
-
-    // Calcolo FPS e monitoraggio prestazioni
     this.updateFps(dt);
   };
 
@@ -495,5 +559,172 @@ export class Game {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  /**
+   * Genera l'oggetto POJO di salvataggio dello stato di gioco corrente.
+   */
+  public createSavePayload(): SaveData {
+    const activeQuest = this.questSystem.getActiveQuestInfo();
+    const inventoryStats = this.questSystem.getInventoryStats();
+    return {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      gameVersion: CURRENT_GAME_VERSION,
+      timestamp: Date.now(),
+      player: {
+        x: Number(this.player.position.x.toFixed(3)),
+        z: Number(this.player.position.z.toFixed(3)),
+        yaw: Number(this.cameraController.yaw.toFixed(3)),
+      },
+      inventory: {
+        fragmentsCollected: inventoryStats.fragmentsCollected,
+        notesCollected: 0,
+        activeCompass: true,
+        seashells: inventoryStats.seashells,
+        mushrooms: inventoryStats.mushrooms,
+        starfish: inventoryStats.starfish,
+        items: [],
+      },
+      quest: {
+        activeQuestId: activeQuest?.id || 'quest_1',
+        stageIndex: activeQuest?.stageIndex || 0,
+        completedQuestIds: activeQuest?.isCompleted ? [activeQuest.id] : [],
+      },
+      dialogue: {
+        visitedNodeIds: [],
+      },
+      settings: {
+        qualityPreset: this.qualitySettingsUI.getCurrentQuality(),
+        dayNightMode: this.environment.dayNightCycle.getIsHourLocked()
+          ? this.environment.dayNightCycle.getHour() > 18 || this.environment.dayNightCycle.getHour() < 6
+            ? 'night'
+            : 'day'
+          : 'dynamic',
+        readableNight: this.environment.dayNightCycle.getReadableNight(),
+        masterVolume: this.audioSystem.getMasterVolume(),
+        isManualQualitySelection: this.qualitySettingsUI.getIsManualSelection(),
+      },
+    };
+  }
+
+  /**
+   * Salva lo stato corrente della partita.
+   */
+  public saveGame(isAutosave = false): boolean {
+    const payload = this.createSavePayload();
+    const success = this.saveSystem.save(payload);
+    if (success && !isAutosave) {
+      this.notificationBanner.show('💾 Partita salvata con successo!');
+    }
+    return success;
+  }
+
+  /**
+   * Carica la partita salvata e ripristina la scena 3D.
+   */
+  public loadSavedGame(): boolean {
+    const res = this.saveSystem.load();
+    if (!res.success) {
+      if (res.reason === 'newer_schema') {
+        ConfirmModalUI.getInstance().show({
+          title: 'Salvataggio Più Recente',
+          message:
+            'È stato rilevato un salvataggio creato con una versione più recente del gioco. I dati sono stati protetti nello slot di backup. Desideri iniziare una nuova partita?',
+          confirmLabel: 'Nuova Partita',
+          cancelLabel: 'Annulla',
+          onConfirm: () => {
+            this.startNewGame();
+          },
+        });
+        return false;
+      } else if (res.reason === 'corrupted') {
+        ConfirmModalUI.getInstance().show({
+          title: 'Dati Corrotti',
+          message: `I dati salvati risultano corrotti. È stata creata una copia di sicurezza nello slot "${res.backupSlot}". Desideri avviare una nuova partita?`,
+          confirmLabel: 'Nuova Partita',
+          cancelLabel: 'Annulla',
+          isDanger: true,
+          onConfirm: () => {
+            this.startNewGame();
+          },
+        });
+        return false;
+      }
+      return false;
+    }
+
+    const data = res.data;
+    // 1. Ripristina posizione Pip calcolando y da getTerrainHeight per massima sicurezza
+    const targetX = data.player.x;
+    const targetZ = data.player.z;
+    const terrainY = this.island.getTerrainHeight(targetX, targetZ);
+    this.player.spawnAt(targetX, Math.max(0.2, terrainY + 0.1), targetZ);
+    this.cameraController.yaw = data.player.yaw;
+
+    // 2. Ripristina stato quest e inventario
+    this.questSystem.deserializeState({
+      activeQuestId: data.quest.activeQuestId,
+      questStages: { [data.quest.activeQuestId]: data.quest.stageIndex },
+      completedQuests: data.quest.completedQuestIds,
+      fragmentsCollected: data.inventory.fragmentsCollected,
+      totalFragments: 7,
+      inventory: {
+        seashells: data.inventory.seashells || 0,
+        mushrooms: data.inventory.mushrooms || 0,
+        starfish: data.inventory.starfish || 0,
+      },
+      timeInCurrentStage: 0,
+    });
+
+    // 3. Ripristina stato collezionabili e ambiente nebbia
+    this.collectiblesManager.restoreCollectedItems(data.inventory.fragmentsCollected);
+    if (data.inventory.fragmentsCollected > 0) {
+      this.environment.triggerIslandRestoration(data.inventory.fragmentsCollected, 7);
+    }
+
+    // 4. Ripristina impostazioni grafiche e audio
+    this.setQuality(data.settings.qualityPreset);
+    this.audioSystem.setMasterVolume(data.settings.masterVolume);
+    this.environment.dayNightCycle.setReadableNight(data.settings.readableNight);
+
+    return true;
+  }
+
+  /**
+   * Avvia una Nuova Partita pulita con reset completo di mondo, quest e collezionabili.
+   */
+  public startNewGame(): void {
+    this.questSystem.reset();
+    this.dialogueSystem.reset();
+    this.collectiblesManager.resetAll();
+    this.environment.resetFogAndAtmosphere();
+
+    const spawnX = gameConfig.safeSpawn.x;
+    const spawnZ = gameConfig.safeSpawn.z;
+    const terrainY = this.island.getTerrainHeight(spawnX, spawnZ);
+    this.player.spawnAt(spawnX, Math.max(0.2, terrainY + 0.1), spawnZ);
+
+    this.start();
+    this.saveGame(true);
+  }
+
+  /**
+   * Torna alla schermata principale salvando automaticamente lo stato di gioco.
+   */
+  public returnToMainMenu(): void {
+    this.saveGame(true);
+    this.isRunning = false;
+    this.isPaused = false;
+    this.audioSystem.setPaused(true);
+
+    const startScreen = document.getElementById('start-screen');
+    const btnContinue = document.getElementById('btn-continue');
+    if (startScreen) {
+      startScreen.style.display = 'flex';
+      startScreen.style.opacity = '1';
+    }
+    if (btnContinue) {
+      btnContinue.classList.remove('hidden');
+    }
   }
 }

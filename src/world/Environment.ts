@@ -164,6 +164,19 @@ export class Environment {
     return this.targetFogColor;
   }
 
+  /**
+   * Resetta la nebbia e l'atmosfera allo stato iniziale non restaurato (per Nuova Partita).
+   */
+  public resetFogAndAtmosphere(): void {
+    this.targetDensity = this.config.fog.initialDensity;
+    this.fog.density = this.config.fog.initialDensity;
+    this.fog.color.set(this.config.fog.initialColor);
+    this.targetFogColor.set(this.config.fog.initialColor);
+    this.isRestoredState = false;
+    this.isTransitioning = false;
+    this.restorationProgress = 0;
+  }
+
   public getRestorationProgress(): number {
     return this.restorationProgress;
   }

@@ -801,3 +801,104 @@ kbd {
   margin: 0;
 }
 
+/* ==========================================================================
+   Fase 4: Menu Iniziale, Pausa, Crediti e Finestre di Conferma
+   ========================================================================== */
+
+.start-button-group,
+.pause-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.menu-btn {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7ede2;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.secondary-button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.secondary-button:active {
+  transform: scale(0.97);
+}
+
+.danger-hover:hover {
+  background: rgba(231, 111, 81, 0.35);
+  border-color: #e76f51;
+  color: #ffd6cc;
+}
+
+.danger-btn {
+  background: #e76f51 !important;
+  color: white !important;
+}
+
+.danger-btn:hover {
+  background: #f4a261 !important;
+}
+
+.btn-pause {
+  background: rgba(244, 162, 97, 0.85);
+  color: #1a2332;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-pause:hover {
+  background: #e76f51;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-pause:active {
+  transform: scale(0.95);
+}
+
+.confirm-card {
+  max-width: 440px;
+  text-align: center;
+}
+
+.confirm-message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  margin: 12px 0 20px 0;
+}
+
+.confirm-btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-btn-group .menu-btn {
+  flex: 1;
+}
+
+.credits-card {
+  max-width: 640px;
+}
+

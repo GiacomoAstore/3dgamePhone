@@ -167,4 +167,15 @@ export class DialogueSystem {
       this.emitCurrentView();
     }
   }
+
+  /**
+   * Resetta lo stato dei dialoghi ai valori iniziali di Nuova Partita.
+   */
+  public reset(): void {
+    this.state = {
+      activeCharacterId: null,
+      currentNodeId: null,
+      isActive: false,
+    };
+  }
 }

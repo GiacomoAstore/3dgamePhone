@@ -256,6 +256,37 @@ export class CollectiblesManager {
     return this.items;
   }
 
+  /**
+   * Ripristina lo stato dei collezionabili rimovendo quelli già raccolti nel salvataggio.
+   */
+  public restoreCollectedItems(collectedFragmentCount: number, collectedIds?: string[]): void {
+    for (const item of this.items) {
+      if (item.config.type === 'fragment' && collectedFragmentCount > 0) {
+        item.isCollected = true;
+        if (item.meshGroup.parent) {
+          this.group.remove(item.meshGroup);
+        }
+      } else if (collectedIds && collectedIds.includes(item.config.id)) {
+        item.isCollected = true;
+        if (item.meshGroup.parent) {
+          this.group.remove(item.meshGroup);
+        }
+      }
+    }
+  }
+
+  /**
+   * Ripristina tutti i collezionabili nella scena (per Nuova Partita).
+   */
+  public resetAll(): void {
+    for (const item of this.items) {
+      item.isCollected = false;
+      if (!item.meshGroup.parent) {
+        this.group.add(item.meshGroup);
+      }
+    }
+  }
+
   public setQuality(quality: 'low' | 'medium' | 'high'): void {
     const enableShadows = quality === 'high';
     this.group.traverse((c) => {

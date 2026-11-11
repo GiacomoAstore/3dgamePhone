@@ -326,6 +326,10 @@ export class AudioSystem {
     }
   }
 
+  public getMasterVolume(): number {
+    return this.masterVol;
+  }
+
   public setSfxVolume(val: number): void {
     this.sfxVol = Math.max(0, Math.min(1, val));
     if (this.sfxGain && this.ctx) {

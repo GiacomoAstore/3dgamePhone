@@ -44,6 +44,7 @@ export class QualitySettingsUI {
 
   private currentQuality: QualityPreset = 'high';
   private previousQuality: QualityPreset | null = null;
+  private isManualSelection = false;
   private audioSystem: AudioSystem;
   private dayNightCycle?: DayNightCycle;
   private onQualityChange: (quality: QualityPreset) => void;
@@ -217,17 +218,26 @@ export class QualitySettingsUI {
     this.lowBtn = document.createElement('button');
     this.lowBtn.className = 'quality-btn';
     this.lowBtn.textContent = LocalizationSystem.t('ui.quality_low');
-    this.lowBtn.addEventListener('click', () => this.selectQuality('low'));
+    this.lowBtn.addEventListener('click', () => {
+      this.isManualSelection = true;
+      this.selectQuality('low');
+    });
 
     this.medBtn = document.createElement('button');
     this.medBtn.className = 'quality-btn';
     this.medBtn.textContent = LocalizationSystem.t('ui.quality_medium');
-    this.medBtn.addEventListener('click', () => this.selectQuality('medium'));
+    this.medBtn.addEventListener('click', () => {
+      this.isManualSelection = true;
+      this.selectQuality('medium');
+    });
 
     this.highBtn = document.createElement('button');
     this.highBtn.className = 'quality-btn active';
     this.highBtn.textContent = LocalizationSystem.t('ui.quality_high');
-    this.highBtn.addEventListener('click', () => this.selectQuality('high'));
+    this.highBtn.addEventListener('click', () => {
+      this.isManualSelection = true;
+      this.selectQuality('high');
+    });
 
     btnGroup.appendChild(this.lowBtn);
     btnGroup.appendChild(this.medBtn);
@@ -459,5 +469,13 @@ export class QualitySettingsUI {
 
   public getCurrentQuality(): QualityPreset {
     return this.currentQuality;
+  }
+
+  public getIsManualSelection(): boolean {
+    return this.isManualSelection;
+  }
+
+  public setIsManualSelection(val: boolean): void {
+    this.isManualSelection = val;
   }
 }
