@@ -2,7 +2,7 @@
  * Ambiente di gioco di Brumavento: illuminazione toon, ciclo giorno/notte,
  * cielo dinamico, mare animato, nebbia progressiva e sistema particellare.
  * Autore: Pip & Nonna Bussola dev team
- * Ultima modifica: 2026-11-10 - v0.3.0
+ * Ultima modifica: 2026-11-11 - v0.3.9 (environment.json come unica fonte di verità per targetDensity della nebbia: 0.008)
  */
 
 import * as THREE from 'three';
@@ -121,16 +121,11 @@ export class Environment {
 
   /**
    * Attiva l'effetto visibile di ritirata della nebbia e viraggio cromatico.
+   * La densità target è letta direttamente dal file di configurazione environment.json (unica fonte di verità).
    */
-  public triggerIslandRestoration(collected: number, total: number): void {
-    const progress = collected / total;
-
-    // Formula calibrazione: scende a restoredDensity sull'isola iniziale per effetto marcato
-    this.targetDensity = Math.max(
-      this.config.fog.minDensity,
-      this.config.fog.initialDensity * (1 - progress * 0.7) -
-        (collected >= 1 ? this.config.fog.initialDensity - this.config.fog.restoredDensity : 0)
-    );
+  public triggerIslandRestoration(_collected: number, _total: number): void {
+    // Lettura diretta da environment.json: restoredDensity = 0.008
+    this.targetDensity = this.config.fog.restoredDensity;
     this.isTransitioning = true;
     this.isRestoredState = true;
   }

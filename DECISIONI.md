@@ -360,7 +360,7 @@ Questo documento traccia le decisioni architetturali rilevanti per il progetto, 
   1. **Allineamento Parametri Ufficiali**:
      - *Auto-degrade qualitativo*: Fissato a **5.0 secondi** consecutivi con FPS < 24 (allineato al codice effettivo in `src/core/Game.ts:423`).
      - *Luce ambientale notturna*: Fissata a **0.35** per la notte ordinaria e a **0.65** per la modalità accessibile "Notti Chiare" (`readableNight = true` in `DayNightCycle.ts:196`).
-     - *Densità della nebbia*: Fissata a **0.008** come valore nominale di ripristino (`restoredDensity` in `src/data/environment.json`), e a **0.0062** come risultato dinamico della formula progressiva al recupero del 1° frammento (riduzione del -65.6%).
+     - *Densità della nebbia*: Fissata e letta direttamente da `src/data/environment.json` come UNICA fonte di verità (`restoredDensity = 0.008`, con densità iniziale `initialDensity = 0.018` e riduzione netta del -55.6%), eliminando la formula empirica ad-hoc e allineando perfettamente il codice con l'ADR 005.
   2. **Verifica Scheletro Nonna Bussola (No T-Pose)**:
      - Integrata asserzione quantitativa nel test unitario (`tests/altitude_grounding.test.ts`) e nel test E2E Chrome (`tests/test_chrome_real.mjs`): verifica che le mani (`handl`, `handr`) si trovino almeno $0.20\,\text{m}$ al di sotto delle spalle (`upperarml`, `upperarmr`), certificando la corretta posa naturale idle ($y_{\text{shoulder}} - y_{\text{hand}} \approx 0.30\,\text{m}$).
   3. **Camminata Continua di Pip (Zero Teletrasporti)**:

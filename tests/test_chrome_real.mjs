@@ -173,58 +173,56 @@ async function runChromeTest() {
     throw new Error(`Pip non è solidamente a terra allo start: y=${initState?.playerPosition?.y}`);
   }
 
-  // 1.1 VERIFICA RIGIDITÀ ED ELIMINAZIONE T-POSE SU NONNA BUSSOLA
-  console.log('\n👵 1.1 VERIFICA SCHELETRO E MANI DI NONNA BUSSOLA (NO T-POSE):');
-  const nonnaBonesEval = await send('Runtime.evaluate', {
-    expression: `
-      (() => {
-        const npc = window.game?.nonnaBussola;
-        if (!npc) return { error: 'Nonna Bussola non trovata' };
-        const bones = [];
-        npc.group.traverse((obj) => {
-          if (obj.isBone) {
-            const pos = obj.position.clone();
-            obj.getWorldPosition(pos);
-            bones.push({
-              name: obj.name,
-              x: Number(pos.x.toFixed(3)),
-              y: Number(pos.y.toFixed(3)),
-              z: Number(pos.z.toFixed(3))
-            });
-          }
-        });
-        const shoulderL = bones.find((b) => b.name === 'upperarml');
-        const shoulderR = bones.find((b) => b.name === 'upperarmr');
-        const handL = bones.find((b) => b.name === 'handl');
-        const handR = bones.find((b) => b.name === 'handr');
-        return {
-          boneCount: bones.length,
-          hasMixer: !!npc.mixer,
-          shoulderL,
-          shoulderR,
-          handL,
-          handR
-        };
-      })()
-    `,
-    returnByValue: true
-  });
-
-  const nonnaBones = nonnaBonesEval.result?.result?.value;
-  console.log('   - Struttura ossa campionata:', JSON.stringify(nonnaBones, null, 2));
-
-  if (!nonnaBones || !nonnaBones.shoulderL || !nonnaBones.handL || !nonnaBones.shoulderR || !nonnaBones.handR) {
-    throw new Error('Impossibile localizzare le ossa di spalle e mani di Nonna Bussola nel rig GLB!');
+  // Helper per verificare le ossa di Nonna Bussola nei momenti chiave
+  async function verifyNonnaBones(momentDescription) {
+    const res = await send('Runtime.evaluate', {
+      expression: `
+        (() => {
+          const npc = window.game?.nonnaBussola;
+          if (!npc) return { error: 'Nonna Bussola non trovata' };
+          const bones = [];
+          npc.group.traverse((obj) => {
+            if (obj.isBone) {
+              const pos = obj.position.clone();
+              obj.getWorldPosition(pos);
+              bones.push({
+                name: obj.name,
+                y: Number(pos.y.toFixed(3))
+              });
+            }
+          });
+          const shoulderL = bones.find((b) => b.name === 'upperarml');
+          const shoulderR = bones.find((b) => b.name === 'upperarmr');
+          const handL = bones.find((b) => b.name === 'handl');
+          const handR = bones.find((b) => b.name === 'handr');
+          return {
+            boneCount: bones.length,
+            shoulderL,
+            shoulderR,
+            handL,
+            handR,
+            isDialogueOpen: window.game.dialogueSystem.getIsActive()
+          };
+        })()
+      `,
+      returnByValue: true
+    });
+    const data = res.result?.result?.value;
+    if (!data || !data.shoulderL || !data.handL || !data.shoulderR || !data.handR) {
+      throw new Error(`[${momentDescription}] Impossibile localizzare le ossa di Nonna Bussola nel rig GLB!`);
+    }
+    const deltaL = data.shoulderL.y - data.handL.y;
+    const deltaR = data.shoulderR.y - data.handR.y;
+    console.log(`   👵 [${momentDescription}] Delta Y spalla/mano: L=${deltaL.toFixed(3)}m, R=${deltaR.toFixed(3)}m (dialogo attivo: ${data.isDialogueOpen})`);
+    if (deltaL < 0.20 || deltaR < 0.20) {
+      throw new Error(`[${momentDescription}] Asserzione fallita: Nonna Bussola è in T-pose! (deltaL=${deltaL}, deltaR=${deltaR})`);
+    }
+    return data;
   }
 
-  const deltaL = nonnaBones.shoulderL.y - nonnaBones.handL.y;
-  const deltaR = nonnaBones.shoulderR.y - nonnaBones.handR.y;
-  console.log(`   - Delta Y spalla/mano sinistra: ${deltaL.toFixed(3)}m`);
-  console.log(`   - Delta Y spalla/mano destra:   ${deltaR.toFixed(3)}m`);
-
-  if (deltaL < 0.20 || deltaR < 0.20) {
-    throw new Error(`Asserzione fallita: Nonna Bussola è in T-pose! Mani non abbassate (deltaL=${deltaL}, deltaR=${deltaR})`);
-  }
+  // 1.1 VERIFICA RIGIDITÀ ED ELIMINAZIONE T-POSE SU NONNA BUSSOLA (START)
+  console.log('\n👵 1.1 VERIFICA SCHELETRO E MANI DI NONNA BUSSOLA ALLO START:');
+  await verifyNonnaBones('Start partita all osservatorio');
   console.log('   ✅ Eliminazione T-pose verificata: le mani di Nonna Bussola sono naturalmente abbassate lungo i fianchi!');
 
   // 2. TEST WASD RIGOROSO: VALUTAZIONE DURANTE IL MOVIMENTO
@@ -321,11 +319,19 @@ async function runChromeTest() {
   // 3. ESECUZIONE COMPLETA PRIMA MISSIONE (QUEST 1)
   console.log('\n📜 3. COMPLETAMENTO PRIMA MISSIONE (DIALOGO -> FRAMMENTO CON LANTERNA -> RITORNO):');
 
+  // Momento 1: Pip è vicino a Nonna Bussola (prima di aprire il dialogo)
+  console.log('   [Momento 1] Verifica ossa di Nonna Bussola prima del dialogo (vicino a lei)...');
+  await verifyNonnaBones('1. Vicino a lei prima del dialogo');
+
   // A. Dialogo con Nonna Bussola: apertura e completamento albero opzioni
   console.log('   A. Apertura dialogo con Nonna Bussola (Tasto E)...');
   await send('Input.dispatchKeyEvent', { type: 'keyDown', code: 'KeyE', key: 'e' });
   await send('Input.dispatchKeyEvent', { type: 'keyUp', code: 'KeyE', key: 'e' });
   await new Promise((r) => setTimeout(r, 400));
+
+  // Momento 2: Durante il dialogo attivo (dialogue box aperto a schermo)
+  console.log('   [Momento 2] Verifica ossa di Nonna Bussola durante il dialogo...');
+  await verifyNonnaBones('2. Durante il dialogo aperto');
 
   // Clic su prima opzione (opt_help -> passa al nodo lantern_quest)
   await send('Runtime.evaluate', {
@@ -338,6 +344,10 @@ async function runChromeTest() {
     expression: `document.querySelector('.dialogue-option-btn')?.click();`
   });
   await new Promise((r) => setTimeout(r, 400));
+
+  // Momento 3: Dopo la chiusura del dialogo (dialogo terminato, quest attiva a stadio 1)
+  console.log('   [Momento 3] Verifica ossa di Nonna Bussola dopo il dialogo...');
+  await verifyNonnaBones('3. Dopo il dialogo completato');
 
   // Verifica che lo stage della missione sia avanzato allo stadio 1
   const questStageCheck = await send('Runtime.evaluate', {
