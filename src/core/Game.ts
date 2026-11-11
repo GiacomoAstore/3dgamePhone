@@ -108,7 +108,7 @@ export class Game {
     // 6. Entità
     this.player = new Player();
     this.scene.add(this.player.meshComponents.root);
-    this.player.position.set(0, 5, 0);
+    this.player.position.set(0, 2.8, 0);
 
     // Nonna Bussola all'osservatorio
     this.nonnaBussola = new NPC('nonna_bussola', 'Nonna Bussola', new THREE.Vector3(0, 3.8, -2));

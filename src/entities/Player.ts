@@ -14,7 +14,7 @@ import type { QualityPreset } from '../ui/QualitySettingsUI';
 
 export class Player {
   public meshComponents: PipMeshComponents;
-  public position: THREE.Vector3 = new THREE.Vector3(0, 2, 0);
+  public position: THREE.Vector3 = new THREE.Vector3(0, 2.8, 0);
   public velocity: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
 
   // Parametri di movimento (senza numeri magici, configurati qui)
@@ -58,17 +58,30 @@ export class Player {
         this.glbModel = inst;
         this.meshComponents.root.add(inst);
 
-        // Nasconde le parti primitive procedurali
+        // Nasconde TUTTE le parti primitive procedurali per non sovrapporsi al modello 3D
         this.meshComponents.body.visible = false;
         this.meshComponents.head.visible = false;
         this.meshComponents.hat.visible = false;
+        this.meshComponents.leftArm.visible = false;
+        this.meshComponents.rightArm.visible = false;
+        this.meshComponents.leftLeg.visible = false;
+        this.meshComponents.rightLeg.visible = false;
         if (this.meshComponents.scarfTail) this.meshComponents.scarfTail.visible = false;
 
-        // Setup animazioni
+        // Aggancia la lanterna allo slot naturale della mano destra
+        const handslot = inst.getObjectByName('handslotr');
+        if (handslot && this.meshComponents.lantern) {
+          handslot.add(this.meshComponents.lantern);
+          this.meshComponents.lantern.position.set(0, -0.1, 0.05);
+          this.meshComponents.lantern.scale.setScalar(1.3);
+        }
+
+        // Setup animazioni con loop corretto
         this.mixer = new THREE.AnimationMixer(inst);
         const allClips = [...moveAnims, ...generalAnims];
         for (const clip of allClips) {
           const action = this.mixer.clipAction(clip);
+          action.setLoop(THREE.LoopRepeat, Infinity);
           this.actions.set(clip.name, action);
         }
 
@@ -161,7 +174,7 @@ export class Player {
 
     // Se per qualche motivo si cade sotto il mare (y < -5), respawn sull'isola
     if (this.position.y < -5.0) {
-      this.position.set(0, 3, 0);
+      this.position.set(0, 2.8, 0);
       this.velocity.set(0, 0, 0);
     }
 
@@ -173,7 +186,7 @@ export class Player {
       this.mixer.update(clampedDt);
       let desiredAction = 'Idle_A';
       if (!this.isGrounded) {
-        desiredAction = 'Jump_Start';
+        desiredAction = 'Jump_Idle';
       } else if (inputMove.length > 0.05) {
         desiredAction = inputMove.length > 0.7 ? 'Running_A' : 'Walking_A';
         // Genera passi audio

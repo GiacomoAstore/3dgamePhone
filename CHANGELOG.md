@@ -2,6 +2,31 @@
 
 Tutte le modifiche a questo progetto vengono registrate cronologicamente in questo documento seguendo il Semantic Versioning (`MAGGIORE.MINORE.PATCH`).
 
+## [0.3.5] - 2026-11-11
+
+### Corretto
+- **Eliminazione Foro al Centro del Terreno (`Island.ts`)**:
+  - `RingGeometry` era istanziato con raggio interno `0.1`, creando un foro di 10 cm esattamente alle coordinate `(0, 0)` dove Pip spawna (`x = 0, z = 0`).
+  - Il raggio interno è stato impostato a `0`: il terreno ora è una superficie solida continua e chiusa, eliminando la caduta infinita di Pip nel mare.
+- **Risoluzione Animazioni Scheletriche di Pip (`Player.ts`)**:
+  - Nascoste tutte le mesh procedurali primitive residue (`leftArm`, `rightArm`, `leftLeg`, `rightLeg`) che creavano un groviglio di arti sovrapposti al modello 3D.
+  - Agganciata la lanterna magica al bone `handslotr` della mano destra di `Rogue_Hooded`.
+  - Configurato il loop infinito su tutte le animazioni (`setLoop(LoopRepeat, Infinity)`).
+  - Sostituito lo stato aereo da `Jump_Start` a `Jump_Idle`, consentendo posture fluide sia in salto che in camminata/corsa.
+- **Quota di Spawn e Portata Raycast (`Game.ts` e `PhysicsSystem.ts`)**:
+  - Altezza iniziale di Pip regolata a `y = 2.8` (0.3m sopra la collina centrale a `y = 2.5`), garantendo l'aggancio a terra immediato al primo frame.
+  - Portata massima di raycasting `maxDistance` aumentata da `3.0m` a `6.0m` per non perdere mai il contatto col terreno durante salti o discese veloci.
+
+### File toccati
+- `src/world/Island.ts`: chiusura foro centrale di `RingGeometry` (`innerRadius = 0`).
+- `src/entities/Player.ts`: pulizia mesh procedurali residue, aggancio lanterna a `handslotr` e transizione ad `Jump_Idle`.
+- `src/systems/PhysicsSystem.ts`: estensione `maxDistance = 6.0`.
+- `src/core/Game.ts`: quota spawn a `(0, 2.8, 0)`.
+- `VERSION`, `package.json`: incremento a `0.3.5`.
+
+### Motivo
+- Segnalazione utente con screenshot: eliminazione della caduta attraverso il terreno e correzione delle animazioni sdoppiate di Pip.
+
 ## [0.3.4] - 2026-11-11
 
 ### Corretto

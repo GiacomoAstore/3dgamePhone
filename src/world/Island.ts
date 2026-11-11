@@ -54,7 +54,7 @@ export class Island {
     const segmentsCirc = 64;
 
     // 1. Superficie calpestabile superiore dell'isola
-    const topGeom = new THREE.RingGeometry(0.1, radius, segmentsCirc, segmentsRad);
+    const topGeom = new THREE.RingGeometry(0, radius, segmentsCirc, segmentsRad);
     topGeom.rotateX(-Math.PI / 2);
 
     const pos = topGeom.attributes.position;

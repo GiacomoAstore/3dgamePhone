@@ -57,7 +57,7 @@ export class PhysicsSystem {
     position: THREE.Vector3,
     wasGrounded = false,
     castHeight = 1.0,
-    maxDistance = 3.0
+    maxDistance = 6.0
   ): GroundCheckResult {
     const origin = new THREE.Vector3(position.x, position.y + castHeight, position.z);
     this.raycaster.set(origin, this.downDirection);
